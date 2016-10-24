@@ -27,8 +27,9 @@ typedef struct smtpinfo {
 } smtpinfo_t;
 
 #define SMTPINFO ((smtpinfo_t *)smfi_getpriv(ctx))
-#define DEBUG_SMFI_SYMVAL(macro_name) fprintf(stderr, #macro_name ": %s\n", smfi_getsymval(ctx, "{" #macro_name "}"))
-#define DEBUG_SMFI_CHAR(val) fprintf(stderr, #val ": %s\n", val)
+#define DEBUG_SMFI_SYMVAL(macro_name) fprintf(stderr, "    " #macro_name ": %s\n", smfi_getsymval(ctx, "{" #macro_name "}"))
+#define DEBUG_SMFI_CHAR(val) fprintf(stderr, "    " #val ": %s\n", val)
+#define DEBUG_SMFI_INT(val) fprintf(stderr, "    " #val ": %d\n", val)
 
 extern sfsistat mrb_xxfi_cleanup(SMFICTX *, bool);
 
@@ -81,10 +82,10 @@ _SOCK_ADDR *hostaddr;
   if (info->ipaddr == NULL) {
     return SMFIS_TEMPFAIL;
   }
-  fprintf(stderr, "ipaddr: %s\n", info->ipaddr);
-
   info->connect_daemon = smfi_getsymval(ctx, "{daemon_name}");
-  fprintf(stderr, "connect_daemon: %s\n", info->connect_daemon);
+
+  DEBUG_SMFI_CHAR(info->ipaddr);
+  DEBUG_SMFI_CHAR(info->connect_daemon);
 
   DEBUG_SMFI_SYMVAL(if_name);
   DEBUG_SMFI_SYMVAL(if_addr);
@@ -118,7 +119,7 @@ char **argv;
   smtpinfo_t *info = SMTPINFO;
 
   info->envelope_from = strdup(argv[0]);
-  fprintf(stderr, "envelope_from; %s\n", info->envelope_from);
+  DEBUG_SMFI_CHAR(info->envelope_from);
 
   DEBUG_SMFI_SYMVAL(i);
   DEBUG_SMFI_SYMVAL(auth_type);
@@ -139,7 +140,7 @@ char **argv;
   smtpinfo_t *info = SMTPINFO;
 
   info->envelope_to = smfi_getsymval(ctx, "{rcpt_addr}");
-  fprintf(stderr, "envelope_to: %s\n", info->envelope_to);
+  DEBUG_SMFI_CHAR(info->envelope_to);
 
   DEBUG_SMFI_CHAR(argv[0]);
 
@@ -194,7 +195,9 @@ sfsistat mrb_xxfi_eom(ctx) SMFICTX *ctx;
 
   time(&accept_time);
   info->receive_time = accept_time;
-  fprintf(stderr, "receive_time: %d\n", info->receive_time);
+
+  DEBUG_SMFI_INT(info->receive_time);
+
 
   DEBUG_SMFI_SYMVAL(msg_id);
 
