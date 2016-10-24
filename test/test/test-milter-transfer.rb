@@ -35,8 +35,7 @@ class TestMilterTransfer < Test::Unit::TestCase
                          ["--envelope-from", "from@example.com"],
                          ["--envelope-recipient", "to@example.com"])
     assert_equal("pass", result.status)
-    assert_recipients(["to@example.com"] + MilterTransfer::EMERGENCY_ADDRESSES,
-                      result.envelope_recipients)
+    assert_recipients(["to@example.com"], result.envelope_recipients)
   end
 
   private
