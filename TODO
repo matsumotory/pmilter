@@ -1,1 +1,16 @@
 - Support mruby handler each milter phases
+
+    mrb_xxfi_connect,              /* connection info filter */
+    mrb_xxfi_helo,                 /* SMTP HELO command filter */
+    mrb_xxfi_envfrom,              /* envelope sender filter */
+    mrb_xxfi_envrcpt,              /* envelope recipient filter */
+    mrb_xxfi_header,               /* header filter */
+    mrb_xxfi_eoh,                  /* end of header */
+    mrb_xxfi_body,                 /* body block filter */
+    mrb_xxfi_eom,                  /* end of message */
+    mrb_xxfi_abort,                /* message aborted */
+    mrb_xxfi_close,                /* connection cleanup */
+    mrb_xxfi_unknown,              /* unknown SMTP commands */
+    mrb_xxfi_data,                 /* DATA command */
+    mrb_xxfi_negotiate             /* Once, at the start of each SMTP connection */
+
