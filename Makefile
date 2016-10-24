@@ -3,7 +3,7 @@ all: pmilter
 
 #   compile binary
 pmilter:
-	gcc pmilter.c -lmilter -lpthread -o pmilter
+	gcc src/pmilter.c -lmilter -lpthread -o pmilter
 
 #   run
 run:
