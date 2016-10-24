@@ -1,0 +1,18 @@
+#! /usr/bin/env ruby
+require "pathname"
+
+top_dir = Pathname(__FILE__).realpath.dirname.parent
+$LOAD_PATH.unshift((top_dir + "lib").to_s)
+
+require "milter-transfer"
+
+begin
+  require "bundler/setup"
+rescue LoadError
+end
+
+command_line = Milter::Client::CommandLine.new
+
+command_line.run do |client, _options|
+  client.register(MilterTransfer, _options)
+end
