@@ -1,4 +1,4 @@
-# [PoC] pmilter
+# [PoC] pmilter handling by mruby
 
 ## milter install and run
 
