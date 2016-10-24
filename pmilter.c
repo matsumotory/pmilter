@@ -28,6 +28,7 @@ typedef struct smtpinfo {
 
 #define SMTPINFO ((smtpinfo_t *)smfi_getpriv(ctx))
 #define DEBUG_SMFI_SYMVAL(macro_name) fprintf(stderr, #macro_name ": %s\n", smfi_getsymval(ctx, "{" #macro_name "}"))
+#define DEBUG_SMFI_CHAR(val) fprintf(stderr, #val ": %s\n", val)
 
 extern sfsistat mrb_xxfi_cleanup(SMFICTX *, bool);
 
@@ -72,6 +73,8 @@ _SOCK_ADDR *hostaddr;
     return SMFIS_TEMPFAIL;
   }
 
+  DEBUG_SMFI_CHAR(hostname);
+
   memset(info, 0, sizeof(*info));
 
   info->ipaddr = ipaddrdup(hostname, hostaddr);
@@ -97,6 +100,8 @@ _SOCK_ADDR *hostaddr;
 sfsistat mrb_xxfi_helo(ctx, helohost) SMFICTX *ctx;
 char *helohost;
 {
+  DEBUG_SMFI_CHAR(helohost);
+
   DEBUG_SMFI_SYMVAL(tls_version);
   DEBUG_SMFI_SYMVAL(cipher);
   DEBUG_SMFI_SYMVAL(cipher_bits);
@@ -136,6 +141,8 @@ char **argv;
   info->envelope_to = smfi_getsymval(ctx, "{rcpt_addr}");
   fprintf(stderr, "envelope_to: %s\n", info->envelope_to);
 
+  DEBUG_SMFI_CHAR(argv[0]);
+
   DEBUG_SMFI_SYMVAL(rcpt_mailer);
   DEBUG_SMFI_SYMVAL(rcpt_host);
   DEBUG_SMFI_SYMVAL(rcpt_addr);
@@ -148,6 +155,9 @@ sfsistat mrb_xxfi_header(ctx, headerf, headerv) SMFICTX *ctx;
 char *headerf;
 unsigned char *headerv;
 {
+  DEBUG_SMFI_CHAR(headerf);
+  DEBUG_SMFI_CHAR(headerv);
+
   return SMFIS_CONTINUE;
 }
 
@@ -162,6 +172,16 @@ sfsistat mrb_xxfi_body(ctx, bodyp, bodylen) SMFICTX *ctx;
 unsigned char *bodyp;
 size_t bodylen;
 {
+  char *body = malloc(bodylen);
+
+  memcpy(body, bodyp, bodylen);
+
+  body[bodylen] = '\0';
+
+  DEBUG_SMFI_CHAR(body);
+
+  free(body);
+
   return SMFIS_CONTINUE;
 }
 
@@ -232,6 +252,7 @@ sfsistat mrb_xxfi_unknown(ctx, cmd) SMFICTX *ctx;
 char *cmd;
 {
   smtpinfo_t *info;
+  DEBUG_SMFI_CHAR(cmd);
   return SMFIS_CONTINUE;
 }
 
