@@ -36,7 +36,8 @@ typedef struct command_rec_t {
 } command_rec;
 
 #define COMMAND_REC_CTX ((command_rec *)smfi_getpriv(ctx))
-#define DEBUG_SMFI_SYMVAL(macro_name) fprintf(stderr, "    " #macro_name ": %s\n", smfi_getsymval(ctx, "{" #macro_name "}"))
+#define DEBUG_SMFI_SYMVAL(macro_name)                                                                                  \
+  fprintf(stderr, "    " #macro_name ": %s\n", smfi_getsymval(ctx, "{" #macro_name "}"))
 #define DEBUG_SMFI_CHAR(val) fprintf(stderr, "    " #val ": %s\n", val)
 #define DEBUG_SMFI_INT(val) fprintf(stderr, "    " #val ": %d\n", val)
 #define DEBUG_SMFI_HOOK(val) fprintf(stderr, #val "\n")
@@ -227,7 +228,6 @@ sfsistat mrb_xxfi_eom(ctx) SMFICTX *ctx;
   cmd->receive_time = accept_time;
 
   DEBUG_SMFI_INT(cmd->receive_time);
-
 
   DEBUG_SMFI_SYMVAL(msg_id);
 
