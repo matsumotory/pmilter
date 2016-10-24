@@ -18,15 +18,24 @@
 #define FALSE 0
 #endif /* ! bool */
 
-typedef struct smtpinfo {
-  char *connect_daemon;
+typedef struct connection_rec_t {
+
   char *ipaddr;
+  const _SOCK_ADDR *hostaddr;
+
+} connection_rec;
+
+typedef struct command_rec_t {
+
+  connection_rec *conn;
+  char *connect_daemon;
   char *envelope_from;
   char *envelope_to;
   int receive_time;
-} smtpinfo_t;
 
-#define SMTPINFO ((smtpinfo_t *)smfi_getpriv(ctx))
+} command_rec;
+
+#define COMMAND_REC_CTX ((command_rec *)smfi_getpriv(ctx))
 #define DEBUG_SMFI_SYMVAL(macro_name) fprintf(stderr, "    " #macro_name ": %s\n", smfi_getsymval(ctx, "{" #macro_name "}"))
 #define DEBUG_SMFI_CHAR(val) fprintf(stderr, "    " #val ": %s\n", val)
 #define DEBUG_SMFI_INT(val) fprintf(stderr, "    " #val ": %d\n", val)
@@ -70,31 +79,39 @@ sfsistat mrb_xxfi_connect(ctx, hostname, hostaddr) SMFICTX *ctx;
 char *hostname;
 _SOCK_ADDR *hostaddr;
 {
-  smtpinfo_t *info = (smtpinfo_t *)malloc(sizeof(smtpinfo_t));
-  if (info == NULL) {
+  command_rec *cmd;
+  connection_rec *conn;
+
+  cmd = (command_rec *)calloc(1, sizeof(command_rec));
+  if (cmd == NULL) {
     return SMFIS_TEMPFAIL;
   }
+  conn = (connection_rec *)calloc(1, sizeof(connection_rec));
+  if (conn == NULL) {
+    return SMFIS_TEMPFAIL;
+  }
+
   DEBUG_SMFI_HOOK(mrb_xxfi_connect);
 
   DEBUG_SMFI_CHAR(hostname);
 
-  memset(info, 0, sizeof(*info));
-
-  info->ipaddr = ipaddrdup(hostname, hostaddr);
-  if (info->ipaddr == NULL) {
+  cmd->conn = conn;
+  cmd->conn->hostaddr = hostaddr;
+  cmd->conn->ipaddr = ipaddrdup(hostname, hostaddr);
+  if (cmd->conn->ipaddr == NULL) {
     return SMFIS_TEMPFAIL;
   }
-  info->connect_daemon = smfi_getsymval(ctx, "{daemon_name}");
+  cmd->connect_daemon = smfi_getsymval(ctx, "{daemon_name}");
 
-  DEBUG_SMFI_CHAR(info->ipaddr);
-  DEBUG_SMFI_CHAR(info->connect_daemon);
+  DEBUG_SMFI_CHAR(cmd->conn->ipaddr);
+  DEBUG_SMFI_CHAR(cmd->connect_daemon);
 
   DEBUG_SMFI_SYMVAL(if_name);
   DEBUG_SMFI_SYMVAL(if_addr);
   DEBUG_SMFI_SYMVAL(j);
   DEBUG_SMFI_SYMVAL(_);
 
-  smfi_setpriv(ctx, info);
+  smfi_setpriv(ctx, cmd);
 
   return SMFIS_CONTINUE;
 }
@@ -120,12 +137,12 @@ char *helohost;
 sfsistat mrb_xxfi_envfrom(ctx, argv) SMFICTX *ctx;
 char **argv;
 {
-  smtpinfo_t *info = SMTPINFO;
+  command_rec *cmd = COMMAND_REC_CTX;
 
   DEBUG_SMFI_HOOK(mrb_xxfi_envfrom);
 
-  info->envelope_from = strdup(argv[0]);
-  DEBUG_SMFI_CHAR(info->envelope_from);
+  cmd->envelope_from = strdup(argv[0]);
+  DEBUG_SMFI_CHAR(cmd->envelope_from);
 
   DEBUG_SMFI_SYMVAL(i);
   DEBUG_SMFI_SYMVAL(auth_type);
@@ -143,12 +160,12 @@ char **argv;
 sfsistat mrb_xxfi_envrcpt(ctx, argv) SMFICTX *ctx;
 char **argv;
 {
-  smtpinfo_t *info = SMTPINFO;
+  command_rec *cmd = COMMAND_REC_CTX;
 
   DEBUG_SMFI_HOOK(mrb_xxfi_envrcpt);
 
-  info->envelope_to = smfi_getsymval(ctx, "{rcpt_addr}");
-  DEBUG_SMFI_CHAR(info->envelope_to);
+  cmd->envelope_to = smfi_getsymval(ctx, "{rcpt_addr}");
+  DEBUG_SMFI_CHAR(cmd->envelope_to);
 
   DEBUG_SMFI_CHAR(argv[0]);
 
@@ -200,16 +217,16 @@ size_t bodylen;
 /* end of message */
 sfsistat mrb_xxfi_eom(ctx) SMFICTX *ctx;
 {
-  smtpinfo_t *info = SMTPINFO;
+  command_rec *cmd = COMMAND_REC_CTX;
   time_t accept_time;
   bool ok = TRUE;
 
   DEBUG_SMFI_HOOK(mrb_xxfi_eom);
 
   time(&accept_time);
-  info->receive_time = accept_time;
+  cmd->receive_time = accept_time;
 
-  DEBUG_SMFI_INT(info->receive_time);
+  DEBUG_SMFI_INT(cmd->receive_time);
 
 
   DEBUG_SMFI_SYMVAL(msg_id);
@@ -235,31 +252,32 @@ bool ok;
 /* connection cleanup */
 sfsistat mrb_xxfi_close(ctx) SMFICTX *ctx;
 {
-  smtpinfo_t *info = SMTPINFO;
+  command_rec *cmd = COMMAND_REC_CTX;
 
   DEBUG_SMFI_HOOK(mrb_xxfi_close);
 
-  if (info == NULL) {
+  if (cmd == NULL) {
     return SMFIS_CONTINUE;
   }
 
-  if (info->ipaddr != NULL) {
-    free(info->ipaddr);
+  if (cmd->conn->ipaddr != NULL) {
+    free(cmd->conn->ipaddr);
   }
 
-  if (info->envelope_from != NULL) {
-    free(info->envelope_from);
+  if (cmd->envelope_from != NULL) {
+    free(cmd->envelope_from);
   }
 
-  if (info->envelope_to != NULL) {
-    info->envelope_to = NULL;
+  if (cmd->envelope_to != NULL) {
+    cmd->envelope_to = NULL;
   }
 
-  if (info->receive_time != 0) {
-    info->receive_time = 0;
+  if (cmd->receive_time != 0) {
+    cmd->receive_time = 0;
   }
 
-  free(info);
+  free(cmd->conn);
+  free(cmd);
   smfi_setpriv(ctx, NULL);
 
   fprintf(stderr, "------------\n");
@@ -268,19 +286,20 @@ sfsistat mrb_xxfi_close(ctx) SMFICTX *ctx;
 }
 
 /* Once, at the start of each SMTP connection */
-sfsistat mrb_xxfi_unknown(ctx, cmd) SMFICTX *ctx;
-char *cmd;
+sfsistat mrb_xxfi_unknown(ctx, scmd) SMFICTX *ctx;
+char *scmd;
 {
-  smtpinfo_t *info;
+  command_rec *cmd;
+
   DEBUG_SMFI_HOOK(mrb_xxfi_unknown);
-  DEBUG_SMFI_CHAR(cmd);
+  DEBUG_SMFI_CHAR(scmd);
   return SMFIS_CONTINUE;
 }
 
 /* DATA command */
 sfsistat mrb_xxfi_data(ctx) SMFICTX *ctx;
 {
-  smtpinfo_t *info;
+  command_rec *cmd;
   DEBUG_SMFI_HOOK(mrb_xxfi_data);
   return SMFIS_CONTINUE;
 }
@@ -296,7 +315,7 @@ unsigned long *pf1;
 unsigned long *pf2;
 unsigned long *pf3;
 {
-  smtpinfo_t *info;
+  command_rec *cmd;
   DEBUG_SMFI_HOOK(mrb_xxfi_negotiate);
   return SMFIS_ALL_OPTS;
 }
