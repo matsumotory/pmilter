@@ -15,7 +15,7 @@ bundle install --path vendor/bundle
 ./test/run-test.rb
 ```
 
-- pmilter output debug meesages
+### pmilter output debug meesages
 
 ```
 ubuntu@ubuntu-xenial:~/pmilter$ ./pmilter -p hoge.sock
