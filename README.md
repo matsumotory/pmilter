@@ -16,7 +16,7 @@ make test
 ### pmilter output debug meesages
 
 ```
-ubuntu@ubuntu-xenial:~/pmilter$ ./pmilter -p hoge.sock
+ubuntu@ubuntu-xenial:~/pmilter$ make run # make test by other terminal
 ------------
 mrb_xxfi_negotiate
 mrb_xxfi_connect
