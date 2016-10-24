@@ -1,18 +1,16 @@
 # [PoC] pmilter
 
-## milter start
+## milter install and run
 
 ```
-gcc pmilter.c -lmilter -lpthread -o pmilter
-./pmilter -p hoge.sock
+make
+make run
 ```
 
-## milter test
+## milter test after `make run`
 
 ```
-cd milter-test-sample
-bundle install --path vendor/bundle
-./test/run-test.rb
+make test
 ```
 
 ### pmilter output debug meesages
