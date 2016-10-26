@@ -500,7 +500,7 @@ char **argv;
   toml_dump(toml_root, stdout);
   toml_tojson(toml_root, stdout);
 
-  return smfi_main();
+  return smfi_main(NULL);
 
 bail:
   toml_free(toml_root);
