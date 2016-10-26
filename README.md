@@ -8,13 +8,13 @@
 - autoreconf
 - autoconf
 - libtool
-- automake
 - cmake
 - pkg-config
 - libcunit1-dev
 - libicu-dev
 - ragel
-
+- ruby (for mruby)
+- bison (for mruby)
 
 ## milter install and run
 
