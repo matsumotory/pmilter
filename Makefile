@@ -28,7 +28,7 @@ mruby:
 
 #   run
 run:
-	./pmilter -p hoge.sock -c src/libtoml/examples/example.toml
+	./pmilter -p hoge.sock -c pmilter.conf
 
 #   test
 test:
