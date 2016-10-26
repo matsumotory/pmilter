@@ -11,7 +11,7 @@ pmilter-all: libmilter libtoml mruby
 #    compile libmilter
 libmilter:
 	test -f $(PMILTER_BUILD_DIR)/lib/libmilter.a || (cd src/libmilter && autoreconf -i && automake && \
-		autoconf && ./configure --enable-static=yes --enable-shared=no --prefix=$(PMILTER_BUILD_DIR) && \
+		autoconf && ./configure --enable-static=yes --enable-shared=no --prefix=$(PMILTER_BUILD_DIR) --includedir=$(PMILTER_BUILD_DIR)/include/libmilter && \
 		ln -sf include/sm/os/sm_os_linux.h sm_os.h)
 	test -f $(PMILTER_BUILD_DIR)/lib/libmilter.a || (cd src/libmilter && make && make install)
 

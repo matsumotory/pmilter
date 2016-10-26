@@ -1,6 +1,3 @@
-#include "libmilter/mfapi.h"
-#include "libmilter/mfdef.h"
-#include "pthread.h"
 #include <arpa/inet.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -13,6 +10,11 @@
 #include <sysexits.h>
 #include <time.h>
 #include <unistd.h>
+
+#include "pthread.h"
+
+#include "libmilter/mfapi.h"
+#include "libmilter/mfdef.h"
 
 #include "toml.h"
 
