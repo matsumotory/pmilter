@@ -1,0 +1,14 @@
+#!/bin/bash
+
+#  git remote add dep-mruby https://github.com/mruby/mruby.git
+#  git remote add dep-libmilter https://github.com/matsumoto-r/libmilter.git
+#  git remote add dep-libtoml https://github.com/ajwans/libtoml.git
+
+#git subtree add --prefix=src/mruby --squash dep-mruby master
+#git subtree add --prefix=src/libmilter --squash dep-libmilter master
+#git subtree add --prefix=src/libtoml --squash dep-libtoml master
+
+git subtree pull --prefix=src/mruby --squash dep-mruby master
+git subtree pull --prefix=src/libmilter --squash dep-libmilter master
+git subtree pull --prefix=src/libtoml --squash dep-libtoml master
+
