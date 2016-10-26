@@ -1,0 +1,32 @@
+this version of libmilter is divorced from the rest of sendmail because
+holy shit that is the worst build system ever, how about we use some
+standardized gnu tools instead?
+
+
+LICENSE
+
+these sources (.c and .h files) were taken from sendmail-8.15.1, and a copy of
+the LICENSE file is included
+
+the original files are present in the commit history of this git project:
+  https://github.com/jons/libmilter
+
+if you are not receiving these files from that project, you are not reading
+the author's compliance notes, you are reading a copy distributed by someone
+else, and i am not liable for their noncompliance
+
+an up-to-date copy of the sendmail license terms should be available here:
+
+http://www.sendmail.com/pdfs/open_source/sendmail_license.pdf
+
+
+NOTES
+
+symlink the appropriate header in include/sm/os/ to sm_os.h, for example:
+
+  sm_os.h -> include/sm/os/sm_os_linux.h
+
+
+TODO
+
+  make that symlink part of the config process
