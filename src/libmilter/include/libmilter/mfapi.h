@@ -166,7 +166,7 @@ struct smfiDesc
 
 LIBMILTER_API int smfi_opensocket __P((bool));
 LIBMILTER_API int smfi_register __P((struct smfiDesc));
-LIBMILTER_API int smfi_main __P((void));
+LIBMILTER_API int smfi_main __P((void *));
 LIBMILTER_API int smfi_setbacklog __P((int));
 LIBMILTER_API int smfi_setdbg __P((int));
 LIBMILTER_API int smfi_settimeout __P((int));
