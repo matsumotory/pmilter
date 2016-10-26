@@ -6,6 +6,8 @@ RUN apt -y install \
     libtool cmake pkg-config libcunit1-dev libicu-dev \
     ruby bison
 
+RUN apt -y install libmilter-dev
+
 VOLUME /pmilter
 
 WORKDIR /pmilter
