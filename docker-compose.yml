@@ -1,0 +1,11 @@
+pmilter:
+  build: misc/dockerfiles
+  volumes:
+    - ./:/pmilter
+  command: /usr/bin/make
+
+pmilter_test:
+  image: pmilter_pmilter
+  volumes:
+    - ./:/pmilter
+  command: /usr/bin/make && /usr/bin/make run
