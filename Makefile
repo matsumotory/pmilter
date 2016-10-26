@@ -2,24 +2,24 @@ PMILTER_ROOT=$(shell pwd)
 PMILTER_BUILD_DIR=$(PMILTER_ROOT)/build
 
 #   the default target
-all: pmilter
+all: pmilter-all
 
 #   compile binary
-pmilter: libmilter libtoml mruby
-	gcc src/pmilter.c -lmilter -lpthread -o pmilter
+pmilter-all: libmilter libtoml mruby
+	gcc -I$(PMILTER_BUILD_DIR)/include -L$(PMILTER_BUILD_DIR)/lib src/pmilter.c -o pmilter -ltoml -lmilter -lmruby -lpthread
 
 #    compile libmilter
 libmilter:
-	cd src/libmilter && autoreconf -i && automake && autoconf && ./configure --enable-static=yes --enable-shared=no --prefix=$(PMILTER_BUILD_DIR) && ln -sf include/sm/os/sm_os_linux.h sm_os.h
-	cd src/libmilter && make && make install
+	test -f $(PMILTER_BUILD_DIR)/lib/libmilter.a || (cd src/libmilter && autoreconf -i && automake && autoconf && ./configure --enable-static=yes --enable-shared=no --prefix=$(PMILTER_BUILD_DIR) && ln -sf include/sm/os/sm_os_linux.h sm_os.h)
+	test -f $(PMILTER_BUILD_DIR)/lib/libmilter.a || (cd src/libmilter && make && make install)
 
 #    compile libtoml
 libtoml:
-	cd src/libtoml && cmake . && make && cp libtoml.a $(PMILTER_BUILD_DIR)/lib/. && cp toml.h $(PMILTER_BUILD_DIR)/include/.
+	test -f $(PMILTER_BUILD_DIR)/lib/libtoml.a || (cd src/libtoml && cmake . && make && cp libtoml.a $(PMILTER_BUILD_DIR)/lib/. && cp toml.h $(PMILTER_BUILD_DIR)/include/.)
 
 #    compile mruby
 mruby:
-	cd src/mruby && make && cp build/host/lib/libmruby.a $(PMILTER_BUILD_DIR)/lib/. && cp -r include/* $(PMILTER_BUILD_DIR)/include/.
+	test -f $(PMILTER_BUILD_DIR)/lib/libmruby.a || (cd src/mruby && make && cp build/host/lib/libmruby.a $(PMILTER_BUILD_DIR)/lib/. && cp -r include/* $(PMILTER_BUILD_DIR)/include/.)
 
 #   run
 run:
