@@ -4,8 +4,14 @@ pmilter:
     - ./:/pmilter
   command: /usr/bin/make
 
+pmilter_clean:
+  image: pmilter_pmilter
+  volumes:
+    - ./:/pmilter
+  command: /usr/bin/make clean
+
 pmilter_test:
   image: pmilter_pmilter
   volumes:
     - ./:/pmilter
-  command: /usr/bin/make && /usr/bin/make run
+  command: /usr/bin/make run
