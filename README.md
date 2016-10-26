@@ -13,6 +13,7 @@
 - pkg-config
 - libcunit1-dev
 - libicu-dev
+- ragel
 
 
 ## milter install and run
