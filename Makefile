@@ -2,8 +2,21 @@
 all: pmilter
 
 #   compile binary
-pmilter:
+pmilter: libmilter libtoml mruby
 	gcc src/pmilter.c -lmilter -lpthread -o pmilter
+
+#    compile libmilter
+libmilter:
+	cd src/libmilter && autoreconf -i && automake && autoconf && ./configure --prefix=`pwd`/build && ln -sf include/sm/os/sm_os_linux.h sm_os.h
+	cd src/libmilter && make && make install
+
+#    compile libtoml
+libtoml:
+	cd src/libtoml && cmake . && make
+
+#    compile mruby
+mruby:
+	cd src/mruby && make
 
 #   run
 run:
