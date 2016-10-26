@@ -12,6 +12,8 @@
 #include <time.h>
 #include <unistd.h>
 
+#include "toml.h"
+
 #ifndef bool
 #define bool int
 #define TRUE 1
@@ -344,6 +346,40 @@ static void usage(prog) char *prog;
   fprintf(stderr, "Usage: %s -p socket-addr [-t timeout]\n", prog);
 }
 
+static struct toml_node *mrb_pmilter_config_init(const char *path)
+{
+  struct toml_node *root;
+  char *buf = "[foo]\nbar = 1\n";
+  size_t len = sizeof(buf);
+
+  /* TODO: file open */
+  toml_init(&root);
+  toml_parse(root, buf, len);
+
+  return root;
+}
+
+static void mrb_pmilter_config_free(struct toml_node *root)
+{
+  toml_free(root);
+}
+
+static void mrb_pmilter_config_value_free(char *v)
+{
+  free(v);
+}
+
+static char *mrb_pmilter_config_value(struct toml_node *root, const char *key)
+{
+  struct toml_node *node;
+  char *v;
+  
+  node = toml_get(root, (char *)key);
+  v = toml_value_as_string(node);
+  
+  return v;
+}
+
 int main(argc, argv) int argc;
 char **argv;
 {
@@ -351,6 +387,8 @@ char **argv;
   int c;
   const char *args = "p:t:h";
   extern char *optarg;
+  struct toml_node *root;
+
   /* Process command line options */
   while ((c = getopt(argc, argv, args)) != -1) {
     switch (c) {
@@ -399,6 +437,12 @@ char **argv;
     fprintf(stderr, "smfi_register failed\n");
     exit(EX_UNAVAILABLE);
   }
+
+  root = mrb_pmilter_config_init(NULL);
+  char *cval = mrb_pmilter_config_value(root, "foo.bar");
+  DEBUG_SMFI_CHAR(cval);
+  mrb_pmilter_config_value_free(cval);
+  mrb_pmilter_config_free(root);
 
   return smfi_main();
 }
