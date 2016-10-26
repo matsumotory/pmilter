@@ -1,5 +1,20 @@
 # [PoC] pmilter handling by mruby
 
+## dependency (on ubuntu 16.04)
+
+- build essential
+- automake
+- m4
+- autoreconf
+- autoconf
+- libtool
+- automake
+- cmake
+- pkg-config
+- libcunit1-dev
+- libicu-dev
+
+
 ## milter install and run
 
 ```
