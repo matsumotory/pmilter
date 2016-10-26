@@ -3,9 +3,11 @@
 #include "pthread.h"
 #include <arpa/inet.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/mman.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sysexits.h>
@@ -343,13 +345,13 @@ struct smfiDesc smfilter = {
 
 static void usage(prog) char *prog;
 {
-  fprintf(stderr, "Usage: %s -p socket-addr [-t timeout]\n", prog);
+  fprintf(stderr, "Usage: %s -p socket-addr -c config.toml [-t timeout]\n", prog);
 }
 
 static struct toml_node *mrb_pmilter_config_init(const char *path)
 {
   struct toml_node *root;
-  char *buf = "[foo]\nbar = 1\n";
+  char *buf = "[foo]\nbar = 'fuga'\n";
   size_t len = sizeof(buf);
 
   /* TODO: file open */
@@ -364,34 +366,27 @@ static void mrb_pmilter_config_free(struct toml_node *root)
   toml_free(root);
 }
 
-static void mrb_pmilter_config_value_free(char *v)
-{
-  free(v);
-}
-
-static char *mrb_pmilter_config_value(struct toml_node *root, const char *key)
-{
-  struct toml_node *node;
-  char *v;
-  
-  node = toml_get(root, (char *)key);
-  v = toml_value_as_string(node);
-  
-  return v;
-}
-
 int main(argc, argv) int argc;
 char **argv;
 {
   bool setconn = FALSE;
   int c;
-  const char *args = "p:t:h";
+  const char *args = "c:p:t:h";
   extern char *optarg;
-  struct toml_node *root;
+  struct toml_node *toml_root, *node;
+  char *file = NULL;
+  void *toml_content = NULL;
+  int fd, ret, toml_content_size = 0;
+  struct stat st;
+  int exit_code = EXIT_SUCCESS;
 
   /* Process command line options */
   while ((c = getopt(argc, argv, args)) != -1) {
     switch (c) {
+    case 'c':
+      file = optarg;
+      break;
+
     case 'p':
       if (optarg == NULL || *optarg == '\0') {
         (void)fprintf(stderr, "Illegal conn: %s\n", optarg);
@@ -438,11 +433,75 @@ char **argv;
     exit(EX_UNAVAILABLE);
   }
 
-  root = mrb_pmilter_config_init(NULL);
-  char *cval = mrb_pmilter_config_value(root, "foo.bar");
-  DEBUG_SMFI_CHAR(cval);
-  mrb_pmilter_config_value_free(cval);
-  mrb_pmilter_config_free(root);
+  if (file) {
+    fd = open(file, O_RDONLY);
+    if (fd == -1) {
+      fprintf(stderr, "open: %s\n", strerror(errno));
+      exit(1);
+    }
+
+    ret = fstat(fd, &st);
+    if (ret == -1) {
+      fprintf(stderr, "stat: %s\n", strerror(errno));
+      exit(EXIT_FAILURE);
+    }
+
+    toml_content = mmap(NULL, st.st_size, PROT_READ, MAP_FILE | MAP_PRIVATE, fd, 0);
+    if (!toml_content) {
+      fprintf(stderr, "mmap: %s\n", strerror(errno));
+      exit(EXIT_FAILURE);
+    }
+
+    toml_content_size = st.st_size;
+  } else {
+    fprintf(stderr, "%s: Missing required -c argument\n", argv[0]);
+    usage(argv[0]);
+    exit(EX_USAGE);
+  }
+
+  ret = toml_init(&toml_root);
+  if (ret == -1) {
+    fprintf(stderr, "toml_init: %s\n", strerror(errno));
+    exit(EXIT_FAILURE);
+  }
+
+  ret = toml_parse(toml_root, toml_content, toml_content_size);
+  if (ret) {
+    exit_code = EXIT_FAILURE;
+    goto bail;
+  }
+
+  if (file) {
+    ret = munmap(toml_content, toml_content_size);
+    if (ret) {
+      fprintf(stderr, "munmap: %s\n", strerror(errno));
+      exit_code = EXIT_FAILURE;
+      goto bail;
+    }
+
+    close(fd);
+  }
+
+  /*
+    node = toml_get(toml_root, get);
+
+    if (!node) {
+      fprintf(stderr, "no node '%s'\n", get);
+      exit_code = EXIT_FAILURE;
+      goto bail;
+    }
+
+
+    toml_dump(node, stdout);
+  */
+
+  toml_dump(toml_root, stdout);
+  toml_tojson(toml_root, stdout);
 
   return smfi_main();
+
+bail:
+  toml_free(toml_root);
+
+  exit(exit_code);
 }
