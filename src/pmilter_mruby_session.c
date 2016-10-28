@@ -10,6 +10,7 @@
 
 #include "pmilter.h"
 
+/* use libmilter object via mruby user data */
 static mrb_value pmilter_mrb_session_client_ipaddr(mrb_state *mrb, mrb_value self)
 {
   pmilter_mrb_shared_state *pmilter = (pmilter_mrb_shared_state *)mrb->ud;
@@ -17,10 +18,19 @@ static mrb_value pmilter_mrb_session_client_ipaddr(mrb_state *mrb, mrb_value sel
   return mrb_str_new_cstr(mrb, pmilter->cmd->conn->ipaddr);
 }
 
+/* use smfi_getsymval and ctx */
+static mrb_value pmilter_mrb_session_client_daemon(mrb_state *mrb, mrb_value self)
+{
+  pmilter_mrb_shared_state *pmilter = (pmilter_mrb_shared_state *)mrb->ud;
+
+  return mrb_str_new_cstr(mrb, smfi_getsymval(pmilter->ctx, "{daemon_name}"));
+}
+
 void pmilter_mrb_session_class_init(mrb_state *mrb, struct RClass *class)
 {
   struct RClass *class_session = mrb_define_class_under(mrb, class, "Session", mrb->object_class);
 
   mrb_define_method(mrb, class_session, "client_ipaddr", pmilter_mrb_session_client_ipaddr, MRB_ARGS_NONE());
+  mrb_define_method(mrb, class_session, "client_daemon", pmilter_mrb_session_client_daemon, MRB_ARGS_NONE());
 
 }
