@@ -228,15 +228,14 @@ static pmilter_config *pmilter_config_init()
 
 static void command_rec_free(command_rec *cmd)
 {
-  if (cmd->conn->ipaddr != NULL) {
-    free(cmd->conn->ipaddr);
-  }
-
   if (cmd->envelope_from != NULL) {
     free(cmd->envelope_from);
   }
 
   /* connecntion_rec free */
+  if (cmd->conn->ipaddr != NULL) {
+    free(cmd->conn->ipaddr);
+  }
   free(cmd->conn);
 
   free(cmd);
@@ -763,12 +762,18 @@ char **argv;
     close(fd);
   }
 
+  fprintf(stdout, "pmilter configuration\n=====\n");
   toml_dump(toml_root, stdout);
-  toml_tojson(toml_root, stdout);
+  fprintf(stdout, "=====\n");
 
+  //toml_tojson(toml_root, stdout);
+
+  /* pmilter config setup */
   pmilter_config = pmilter_config_init();
   node = toml_get(toml_root, "handler.mruby_connect_handler");
   pmilter_config->mruby_connect_handler_path = node->value.string;
+
+  fprintf(stdout, "pmilter run\n=====\n");
 
   return smfi_main(pmilter_config);
 
