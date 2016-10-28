@@ -41,6 +41,17 @@ typedef struct command_rec_t {
 typedef struct pmilter_config_t {
 
   const char *mruby_connect_handler_path;
+  const char *mruby_helo_handler_path;
+  const char *mruby_envfrom_handler_path;
+  const char *mruby_envrcpt_handler_path;
+  const char *mruby_header_handler_path;
+  const char *mruby_eoh_handler_path;
+  const char *mruby_body_handler_path;
+  const char *mruby_eom_handler_path;
+  const char *mruby_abort_handler_path;
+  const char *mruby_close_handler_path;
+  const char *mruby_unknown_handler_path;
+  const char *mruby_data_handler_path;
 
 } pmilter_config;
 
