@@ -1,6 +1,10 @@
+CC=gcc
 PMILTER_ROOT=$(shell pwd)
 PMILTER_BUILD_DIR=$(PMILTER_ROOT)/build
+PMILTER_INCLUDE_DIR=$(PMILTER_BUILD_DIR)/include
+PMILTER_LIB_DIR=$(PMILTER_BUILD_DIR)/lib
 PMILTER_LIBS=-lmilter -lmruby -lpthread -ltoml -licuuc -licudata -lm
+PMILTER_CFLAGS=-g -O0
 PMILTER_BIN=pmilter
 PMILTER_SRC=src/pmilter.c \
 src/pmilter_init.c \
@@ -12,7 +16,7 @@ all: pmilter-all
 
 #   compile binary
 pmilter-all: libmilter libtoml mruby
-	gcc -g -O0 -I$(PMILTER_BUILD_DIR)/include -L$(PMILTER_BUILD_DIR)/lib $(PMILTER_SRC) -o $(PMILTER_BIN) $(PMILTER_LIBS)
+	$(CC) $(PMILTER_CFLAGS) -I$(PMILTER_INCLUDE_DIR) -L$(PMILTER_LIB_DIR) $(PMILTER_SRC) -o $(PMILTER_BIN) $(PMILTER_LIBS)
 
 #    compile libmilter
 libmilter:
