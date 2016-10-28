@@ -298,6 +298,8 @@ static int pmilter_connect_handler(pmilter_mrb_shared_state *pmilter)
   /* defualt status */
   pmilter->status = SMFIS_CONTINUE;
 
+  /* pmilter object pass to mruby world */
+  mrb->ud = pmilter;
   mrb_run(mrb, pmilter->mruby_connect_handler->proc, mrb_top_self(mrb));
 
   if (mrb->exc) {
