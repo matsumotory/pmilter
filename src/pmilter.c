@@ -23,20 +23,7 @@
 #include "mruby/compile.h"
 #include "mruby/string.h"
 
-#define PMILTER_NAME "pmilter"
-#define PMILTER_VERSION_STR "0.0.1"
-#define PMILTER_VERSION 0000001
-
-#ifndef bool
-#define bool int
-#define TRUE 1
-#define FALSE 0
-#endif /* ! bool */
-
-#define PMILTER_CONF_UNSET NULL
-#define PMILTER_UNDEFINED -2
-#define PMILTER_ERROR -1
-#define PMILTER_OK 0
+#include "pmilter.h"
 
 #define PMILTER_CODE_MRBC_CONTEXT_FREE(mrb, code)                                                                      \
   if (code != PMILTER_CONF_UNSET && mrb && (code)->ctx) {                                                              \
@@ -285,6 +272,8 @@ static pmilter_mrb_shared_state *pmilter_mrb_create_conf(pmilter_config *config)
   if (pmilter->mrb == NULL) {
     return NULL;
   }
+
+  pmilter_mrb_class_init(pmilter->mrb);
 
   return pmilter;
 }
