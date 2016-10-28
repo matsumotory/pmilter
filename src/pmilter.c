@@ -226,6 +226,36 @@ static pmilter_config *pmilter_config_init()
   return config;
 }
 
+static void command_rec_free(command_rec *cmd)
+{
+  if (cmd->conn->ipaddr != NULL) {
+    free(cmd->conn->ipaddr);
+  }
+
+  if (cmd->envelope_from != NULL) {
+    free(cmd->envelope_from);
+  }
+
+  /* connecntion_rec free */
+  free(cmd->conn);
+
+  free(cmd);
+}
+
+static void pmilter_mrb_delete_conf(pmilter_mrb_shared_state *pmilter)
+{
+
+  command_rec_free(pmilter->cmd);
+
+  if (pmilter->mruby_connect_handler != PMILTER_CONF_UNSET) {
+    free(pmilter->mruby_connect_handler);
+  }
+
+  mrb_close(pmilter->mrb);
+
+  free(pmilter);
+}
+
 static pmilter_mrb_shared_state *pmilter_mrb_create_conf(pmilter_config *config)
 {
   pmilter_mrb_shared_state *pmilter;
@@ -510,32 +540,16 @@ bool ok;
 /* connection cleanup */
 sfsistat mrb_xxfi_close(ctx) SMFICTX *ctx;
 {
-  command_rec *cmd = COMMAND_REC_CTX;
+  pmilter_mrb_shared_state *pmilter = smfi_getpriv(ctx);
 
   DEBUG_SMFI_HOOK(mrb_xxfi_close);
 
-  if (cmd == NULL) {
+  if (pmilter == NULL) {
+    smfi_setpriv(ctx, NULL);
     return SMFIS_CONTINUE;
   }
 
-  if (cmd->conn->ipaddr != NULL) {
-    free(cmd->conn->ipaddr);
-  }
-
-  if (cmd->envelope_from != NULL) {
-    free(cmd->envelope_from);
-  }
-
-  if (cmd->envelope_to != NULL) {
-    cmd->envelope_to = NULL;
-  }
-
-  if (cmd->receive_time != 0) {
-    cmd->receive_time = 0;
-  }
-
-  free(cmd->conn);
-  free(cmd);
+  pmilter_mrb_delete_conf(pmilter);
   smfi_setpriv(ctx, NULL);
 
   fprintf(stderr, "------------\n");
@@ -591,7 +605,7 @@ struct smfiDesc smfilter = {
     NULL,                 /* body block filter */
     NULL,                  /* end of message */
     NULL,                /* message aborted */
-    NULL,                /* connection cleanup */
+    mrb_xxfi_close,                /* connection cleanup */
     NULL,              /* unknown SMTP commands */
     NULL,                 /* DATA command */
     NULL /* Once, at the start of each SMTP connection */
