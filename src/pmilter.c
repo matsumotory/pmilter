@@ -306,6 +306,31 @@ static pmilter_mrb_shared_state *pmilter_mrb_create_conf(pmilter_config *config)
 /* pmilter_connect_handler */
 PMILTER_ADD_MRUBY_HADNLER(connect)
 
+/* other handlers
+mruby_helo_handler
+PMILTER_ADD_MRUBY_HADNLER(helo)
+mruby_envfrom_handler
+PMILTER_ADD_MRUBY_HADNLER(envfrom)
+mruby_envrcpt_handler
+PMILTER_ADD_MRUBY_HADNLER(envrcpt)
+mruby_header_handler
+PMILTER_ADD_MRUBY_HADNLER(header)
+mruby_eoh_handler
+PMILTER_ADD_MRUBY_HADNLER(eoh)
+mruby_body_handler
+PMILTER_ADD_MRUBY_HADNLER(body)
+mruby_eom_handler
+PMILTER_ADD_MRUBY_HADNLER(eom)
+mruby_abort_handler
+PMILTER_ADD_MRUBY_HADNLER(abort)
+mruby_close_handler
+PMILTER_ADD_MRUBY_HADNLER(close)
+mruby_unknown_handler
+PMILTER_ADD_MRUBY_HADNLER(unknown)
+mruby_data_handler
+PMILTER_ADD_MRUBY_HADNLER(data)
+*/
+
 /* other utils */
 static char *ipaddrdup(const char *hostname, const _SOCK_ADDR *hostaddr)
 {
