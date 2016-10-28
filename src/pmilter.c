@@ -20,17 +20,17 @@
 #include "toml_private.h"
 
 #include "mruby.h"
-#include "mruby/string.h"
 #include "mruby/compile.h"
+#include "mruby/string.h"
 
 #define PMILTER_NAME "pmilter"
 #define PMILTER_VERSION_STR "0.0.1"
 #define PMILTER_VERSION 0000001
 
 #ifndef bool
-  #define bool int
-  #define TRUE 1
-  #define FALSE 0
+#define bool int
+#define TRUE 1
+#define FALSE 0
 #endif /* ! bool */
 
 #define PMILTER_CONF_UNSET NULL
@@ -38,7 +38,7 @@
 #define PMILTER_ERROR -1
 #define PMILTER_OK 0
 
-#define PMILTER_CODE_MRBC_CONTEXT_FREE(mrb, code)                                                                    \
+#define PMILTER_CODE_MRBC_CONTEXT_FREE(mrb, code)                                                                      \
   if (code != PMILTER_CONF_UNSET && mrb && (code)->ctx) {                                                              \
     mrbc_context_free(mrb, (code)->ctx);                                                                               \
     (code)->ctx = NULL;                                                                                                \
@@ -109,7 +109,6 @@ typedef struct pmilter_mrb_shared_state_t {
   pmilter_mrb_code *mruby_data_handler;
 
 } pmilter_mrb_shared_state;
-
 
 extern sfsistat mrb_xxfi_cleanup(SMFICTX *, bool);
 static pthread_mutex_t table_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -207,7 +206,9 @@ static int pmilter_mrb_shared_state_compile(pmilter_mrb_shared_state *pmilter, p
   if (code->code_type == PMILTER_MRB_CODE_TYPE_FILE) {
     fprintf(stderr, "%s:%d: compile info: code->code.file=(%s)", __func__, __LINE__, code->code.file);
   } else {
-    fprintf(stderr, "%s:%d: compile info: " "code->code.string=(%s)",  __func__, __LINE__, code->code.string);
+    fprintf(stderr, "%s:%d: compile info: "
+                    "code->code.string=(%s)",
+            __func__, __LINE__, code->code.string);
   }
 
   return PMILTER_OK;
@@ -287,7 +288,6 @@ static pmilter_mrb_shared_state *pmilter_mrb_create_conf(pmilter_config *config)
 
   return pmilter;
 }
-
 
 /* pmilter mruby handlers */
 static int pmilter_connect_handler(pmilter_mrb_shared_state *pmilter)
@@ -598,30 +598,30 @@ struct smfiDesc smfilter = {
     SMFI_VERSION,                  /* version code */
     SMFIF_ADDHDRS | SMFIF_ADDRCPT, /* flags */
     mrb_xxfi_connect,              /* connection info filter */
-    NULL,                 /* SMTP HELO command filter */
-    NULL,              /* envelope sender filter */
-    NULL,              /* envelope recipient filter */
-    NULL,               /* header filter */
-    NULL,                  /* end of header */
-    NULL,                 /* body block filter */
-    NULL,                  /* end of message */
-    NULL,                /* message aborted */
+    NULL,                          /* SMTP HELO command filter */
+    NULL,                          /* envelope sender filter */
+    NULL,                          /* envelope recipient filter */
+    NULL,                          /* header filter */
+    NULL,                          /* end of header */
+    NULL,                          /* body block filter */
+    NULL,                          /* end of message */
+    NULL,                          /* message aborted */
     mrb_xxfi_close,                /* connection cleanup */
-    NULL,              /* unknown SMTP commands */
-    NULL,                 /* DATA command */
-    NULL /* Once, at the start of each SMTP connection */
-    //mrb_xxfi_helo,                 /* SMTP HELO command filter */
-    //mrb_xxfi_envfrom,              /* envelope sender filter */
-    //mrb_xxfi_envrcpt,              /* envelope recipient filter */
-    //mrb_xxfi_header,               /* header filter */
-    //mrb_xxfi_eoh,                  /* end of header */
-    //mrb_xxfi_body,                 /* body block filter */
-    //mrb_xxfi_eom,                  /* end of message */
-    //mrb_xxfi_abort,                /* message aborted */
-    //mrb_xxfi_close,                /* connection cleanup */
-    //mrb_xxfi_unknown,              /* unknown SMTP commands */
-    //mrb_xxfi_data,                 /* DATA command */
-    //mrb_xxfi_negotiate             /* Once, at the start of each SMTP connection */
+    NULL,                          /* unknown SMTP commands */
+    NULL,                          /* DATA command */
+    NULL                           /* Once, at the start of each SMTP connection */
+                                   // mrb_xxfi_helo,                 /* SMTP HELO command filter */
+    // mrb_xxfi_envfrom,              /* envelope sender filter */
+    // mrb_xxfi_envrcpt,              /* envelope recipient filter */
+    // mrb_xxfi_header,               /* header filter */
+    // mrb_xxfi_eoh,                  /* end of header */
+    // mrb_xxfi_body,                 /* body block filter */
+    // mrb_xxfi_eom,                  /* end of message */
+    // mrb_xxfi_abort,                /* message aborted */
+    // mrb_xxfi_close,                /* connection cleanup */
+    // mrb_xxfi_unknown,              /* unknown SMTP commands */
+    // mrb_xxfi_data,                 /* DATA command */
+    // mrb_xxfi_negotiate             /* Once, at the start of each SMTP connection */
 };
 
 static void usage(prog) char *prog;
@@ -768,7 +768,7 @@ char **argv;
   toml_dump(toml_root, stdout);
   fprintf(stdout, "=====\n");
 
-  //toml_tojson(toml_root, stdout);
+  // toml_tojson(toml_root, stdout);
 
   /* pmilter config setup */
   pmilter_config = pmilter_config_init();
