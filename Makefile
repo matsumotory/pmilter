@@ -19,7 +19,7 @@ libmilter:
 #    compile libtoml
 libtoml:
 	test -f $(PMILTER_BUILD_DIR)/lib/libtoml.a || (cd src/libtoml && cmake -G "Unix Makefiles" . && make && \
-		cp libtoml.a $(PMILTER_BUILD_DIR)/lib/. && cp toml.h config.h ccan src/libtoml/toml_private.h $(PMILTER_BUILD_DIR)/include/.)
+		cp libtoml.a $(PMILTER_BUILD_DIR)/lib/. && cp -r toml.h config.h ccan toml_private.h $(PMILTER_BUILD_DIR)/include/.)
 
 #    compile mruby
 mruby:
