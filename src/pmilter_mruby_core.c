@@ -15,32 +15,70 @@ static mrb_value pmilter_mrb_get_name(mrb_state *mrb, mrb_value self)
   return mrb_str_new_lit(mrb, PMILTER_NAME);
 }
 
-#define PMILTER_DEFINE_CONST(val)  mrb_define_const(mrb, class, #val, mrb_fixnum_value(val));
+#define PMILTER_DEFINE_CONST(val) mrb_define_const(mrb, class, #val, mrb_fixnum_value(val));
 
 void pmilter_mrb_core_class_init(mrb_state *mrb, struct RClass *class)
 {
 
-  PMILTER_DEFINE_CONST(SMFIR_ADDRCPT);
-  PMILTER_DEFINE_CONST(SMFIR_DELRCPT);
-  PMILTER_DEFINE_CONST(SMFIR_ADDRCPT_PAR);
-  PMILTER_DEFINE_CONST(SMFIR_SHUTDOWN);
-  PMILTER_DEFINE_CONST(SMFIR_ACCEPT);
-  PMILTER_DEFINE_CONST(SMFIR_REPLBODY);
-  PMILTER_DEFINE_CONST(SMFIR_CONTINUE);
-  PMILTER_DEFINE_CONST(SMFIR_DISCARD);
-  PMILTER_DEFINE_CONST(SMFIR_CHGFROM);
-  PMILTER_DEFINE_CONST(SMFIR_CONN_FAIL);
-  PMILTER_DEFINE_CONST(SMFIR_ADDHEADER);
-  PMILTER_DEFINE_CONST(SMFIR_INSHEADER);
-  PMILTER_DEFINE_CONST(SMFIR_SETSYMLIST);
-  PMILTER_DEFINE_CONST(SMFIR_CHGHEADER);
-  PMILTER_DEFINE_CONST(SMFIR_PROGRESS);
-  PMILTER_DEFINE_CONST(SMFIR_QUARANTINE);
-  PMILTER_DEFINE_CONST(SMFIR_REJECT);
-  PMILTER_DEFINE_CONST(SMFIR_SKIP);
-  PMILTER_DEFINE_CONST(SMFIR_TEMPFAIL);
-  PMILTER_DEFINE_CONST(SMFIR_REPLYCODE);
+  /*
+**  Continue processing message/connection.
+*/
 
+  PMILTER_DEFINE_CONST(SMFIS_CONTINUE);
+
+  /*
+  **  Reject the message/connection.
+  **  No further routines will be called for this message
+  **  (or connection, if returned from a connection-oriented routine).
+  */
+
+  PMILTER_DEFINE_CONST(SMFIS_REJECT);
+
+  /*
+  **  Accept the message,
+  **  but silently discard the message.
+  **  No further routines will be called for this message.
+  **  This is only meaningful from message-oriented routines.
+  */
+
+  PMILTER_DEFINE_CONST(SMFIS_DISCARD);
+
+  /*
+  **  Accept the message/connection.
+  **  No further routines will be called for this message
+  **  (or connection, if returned from a connection-oriented routine;
+  **  in this case, it causes all messages on this connection
+  **  to be accepted without filtering).
+  */
+
+  PMILTER_DEFINE_CONST(SMFIS_ACCEPT);
+
+  /*
+  **  Return a temporary failure, i.e.,
+  **  the corresponding SMTP command will return a 4xx status code.
+  **  In some cases this may prevent further routines from
+  **  being called on this message or connection,
+  **  although in other cases (e.g., when processing an envelope
+  **  recipient) processing of the message will continue.
+  */
+
+  PMILTER_DEFINE_CONST(SMFIS_TEMPFAIL);
+
+  /*
+  **  Do not send a reply to the MTA
+  */
+
+  PMILTER_DEFINE_CONST(SMFIS_NOREPLY);
+
+  /*
+  **  Skip over rest of same callbacks, e.g., body.
+  */
+
+  PMILTER_DEFINE_CONST(SMFIS_SKIP);
+
+  /* xxfi_negotiate: use all existing protocol options/actions */
+
+  PMILTER_DEFINE_CONST(SMFIS_ALL_OPTS);
 
   mrb_define_class_method(mrb, class, "name", pmilter_mrb_get_name, MRB_ARGS_NONE());
 }
