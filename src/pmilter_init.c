@@ -6,6 +6,7 @@
 #define GC_ARENA_RESTORE mrb_gc_arena_restore(mrb, 0);
 
 extern void pmilter_mrb_core_class_init(mrb_state *mrb, struct RClass *calss);
+extern void pmilter_mrb_session_class_init(mrb_state *mrb, struct RClass *calss);
 
 void pmilter_mrb_class_init(mrb_state *mrb)
 {
@@ -14,5 +15,6 @@ void pmilter_mrb_class_init(mrb_state *mrb)
   class = mrb_define_class(mrb, "Pmilter", mrb->object_class);
 
   pmilter_mrb_core_class_init(mrb, class); GC_ARENA_RESTORE;
+  pmilter_mrb_session_class_init(mrb, class); GC_ARENA_RESTORE;
 
 }

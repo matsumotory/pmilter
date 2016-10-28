@@ -38,65 +38,6 @@
 #define DEBUG_SMFI_INT(val) fprintf(stderr, "    " #val ": %d\n", val)
 #define DEBUG_SMFI_HOOK(val) fprintf(stderr, #val "\n")
 
-typedef struct connection_rec_t {
-
-  char *ipaddr;
-  const _SOCK_ADDR *hostaddr;
-
-} connection_rec;
-
-typedef struct command_rec_t {
-
-  connection_rec *conn;
-  char *connect_daemon;
-  char *envelope_from;
-  char *envelope_to;
-  int receive_time;
-
-} command_rec;
-
-typedef struct pmilter_config_t {
-
-  const char *mruby_connect_handler_path;
-
-} pmilter_config;
-
-typedef enum code_type_t { PMILTER_MRB_CODE_TYPE_FILE, PMILTER_MRB_CODE_TYPE_STRING } code_type;
-
-typedef struct pmilter_mrb_code_t {
-
-  union code {
-    const char *file;
-    const char *string;
-  } code;
-  code_type code_type;
-  struct RProc *proc;
-  mrbc_context *ctx;
-
-} pmilter_mrb_code;
-
-typedef struct pmilter_mrb_shared_state_t {
-
-  mrb_state *mrb;
-  command_rec *cmd;
-  pmilter_config *config;
-  int status;
-
-  pmilter_mrb_code *mruby_connect_handler;
-  pmilter_mrb_code *mruby_helo_handler;
-  pmilter_mrb_code *mruby_envfrom_handler;
-  pmilter_mrb_code *mruby_envrcpt_handler;
-  pmilter_mrb_code *mruby_header_handler;
-  pmilter_mrb_code *mruby_eoh_handler;
-  pmilter_mrb_code *mruby_body_handler;
-  pmilter_mrb_code *mruby_eom_handler;
-  pmilter_mrb_code *mruby_abort_handler;
-  pmilter_mrb_code *mruby_close_handler;
-  pmilter_mrb_code *mruby_unknown_handler;
-  pmilter_mrb_code *mruby_data_handler;
-
-} pmilter_mrb_shared_state;
-
 extern sfsistat mrb_xxfi_cleanup(SMFICTX *, bool);
 static pthread_mutex_t table_mutex = PTHREAD_MUTEX_INITIALIZER;
 
@@ -375,6 +316,7 @@ _SOCK_ADDR *hostaddr;
   pmilter = pmilter_mrb_create_conf(config);
   pmilter->mruby_connect_handler = pmilter_mrb_code_from_file(pmilter->config->mruby_connect_handler_path);
   ret = pmilter_mrb_shared_state_compile(pmilter, pmilter->mruby_connect_handler);
+  pmilter->ctx = ctx;
 
   if (ret == PMILTER_ERROR) {
     return SMFIS_TEMPFAIL;

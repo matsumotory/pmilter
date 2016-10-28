@@ -7,7 +7,7 @@ all: pmilter-all
 
 #   compile binary
 pmilter-all: libmilter libtoml mruby
-	gcc -g -O0 -I$(PMILTER_BUILD_DIR)/include -L$(PMILTER_BUILD_DIR)/lib src/pmilter.c src/pmilter_init.c src/pmilter_mruby_core.c -o pmilter $(PMILTER_LIBS)
+	gcc -g -O0 -I$(PMILTER_BUILD_DIR)/include -L$(PMILTER_BUILD_DIR)/lib src/pmilter.c src/pmilter_init.c src/pmilter_mruby_core.c src/pmilter_mruby_session.c -o pmilter $(PMILTER_LIBS)
 
 #    compile libmilter
 libmilter:
