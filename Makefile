@@ -1,13 +1,18 @@
 PMILTER_ROOT=$(shell pwd)
 PMILTER_BUILD_DIR=$(PMILTER_ROOT)/build
 PMILTER_LIBS=-lmilter -lmruby -lpthread -ltoml -licuuc -licudata -lm
+PMILTER_BIN=pmilter
+PMILTER_SRC=src/pmilter.c \
+src/pmilter_init.c \
+src/pmilter_mruby_core.c \
+src/pmilter_mruby_session.c
 
 #   the default target
 all: pmilter-all
 
 #   compile binary
 pmilter-all: libmilter libtoml mruby
-	gcc -g -O0 -I$(PMILTER_BUILD_DIR)/include -L$(PMILTER_BUILD_DIR)/lib src/pmilter.c src/pmilter_init.c src/pmilter_mruby_core.c src/pmilter_mruby_session.c -o pmilter $(PMILTER_LIBS)
+	gcc -g -O0 -I$(PMILTER_BUILD_DIR)/include -L$(PMILTER_BUILD_DIR)/lib $(PMILTER_SRC) -o $(PMILTER_BIN) $(PMILTER_LIBS)
 
 #    compile libmilter
 libmilter:
