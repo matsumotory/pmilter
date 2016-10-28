@@ -1,12 +1,13 @@
 PMILTER_ROOT=$(shell pwd)
 PMILTER_BUILD_DIR=$(PMILTER_ROOT)/build
+PMILTER_LIBS=-lmilter -lmruby -lpthread -ltoml -licuuc -licudata -lm
 
 #   the default target
 all: pmilter-all
 
 #   compile binary
 pmilter-all: libmilter libtoml mruby
-	gcc -g -O0 -I$(PMILTER_BUILD_DIR)/include -L$(PMILTER_BUILD_DIR)/lib src/pmilter.c -o pmilter -lmilter -lmruby -lpthread -ltoml -licuuc -licudata
+	gcc -g -O0 -I$(PMILTER_BUILD_DIR)/include -L$(PMILTER_BUILD_DIR)/lib src/pmilter.c -o pmilter $(PMILTER_LIBS)
 
 #    compile libmilter
 libmilter:
@@ -18,7 +19,7 @@ libmilter:
 #    compile libtoml
 libtoml:
 	test -f $(PMILTER_BUILD_DIR)/lib/libtoml.a || (cd src/libtoml && cmake -G "Unix Makefiles" . && make && \
-		cp libtoml.a $(PMILTER_BUILD_DIR)/lib/. && cp toml.h $(PMILTER_BUILD_DIR)/include/.)
+		cp libtoml.a $(PMILTER_BUILD_DIR)/lib/. && cp toml.h config.h ccan src/libtoml/toml_private.h $(PMILTER_BUILD_DIR)/include/.)
 
 #    compile mruby
 mruby:

@@ -17,12 +17,39 @@
 #include "libmilter/mfdef.h"
 
 #include "toml.h"
+#include "toml_private.h"
+
+#include "mruby.h"
+#include "mruby/string.h"
+#include "mruby/compile.h"
+
+#define PMILTER_NAME "pmilter"
+#define PMILTER_VERSION_STR "0.0.1"
+#define PMILTER_VERSION 0000001
 
 #ifndef bool
-#define bool int
-#define TRUE 1
-#define FALSE 0
+  #define bool int
+  #define TRUE 1
+  #define FALSE 0
 #endif /* ! bool */
+
+#define PMILTER_CONF_UNSET NULL
+#define PMILTER_UNDEFINED -2
+#define PMILTER_ERROR -1
+#define PMILTER_OK 0
+
+#define PMILTER_CODE_MRBC_CONTEXT_FREE(mrb, code)                                                                    \
+  if (code != PMILTER_CONF_UNSET && mrb && (code)->ctx) {                                                              \
+    mrbc_context_free(mrb, (code)->ctx);                                                                               \
+    (code)->ctx = NULL;                                                                                                \
+  }
+
+#define COMMAND_REC_CTX ((command_rec *)smfi_getpriv(ctx))
+#define DEBUG_SMFI_SYMVAL(macro_name)                                                                                  \
+  fprintf(stderr, "    " #macro_name ": %s\n", smfi_getsymval(ctx, "{" #macro_name "}"))
+#define DEBUG_SMFI_CHAR(val) fprintf(stderr, "    " #val ": %s\n", val)
+#define DEBUG_SMFI_INT(val) fprintf(stderr, "    " #val ": %d\n", val)
+#define DEBUG_SMFI_HOOK(val) fprintf(stderr, #val "\n")
 
 typedef struct connection_rec_t {
 
@@ -41,17 +68,224 @@ typedef struct command_rec_t {
 
 } command_rec;
 
-#define COMMAND_REC_CTX ((command_rec *)smfi_getpriv(ctx))
-#define DEBUG_SMFI_SYMVAL(macro_name)                                                                                  \
-  fprintf(stderr, "    " #macro_name ": %s\n", smfi_getsymval(ctx, "{" #macro_name "}"))
-#define DEBUG_SMFI_CHAR(val) fprintf(stderr, "    " #val ": %s\n", val)
-#define DEBUG_SMFI_INT(val) fprintf(stderr, "    " #val ": %d\n", val)
-#define DEBUG_SMFI_HOOK(val) fprintf(stderr, #val "\n")
+typedef struct pmilter_config_t {
+
+  const char *mruby_connect_handler_path;
+
+} pmilter_config;
+
+typedef enum code_type_t { PMILTER_MRB_CODE_TYPE_FILE, PMILTER_MRB_CODE_TYPE_STRING } code_type;
+
+typedef struct pmilter_mrb_code_t {
+
+  union code {
+    const char *file;
+    const char *string;
+  } code;
+  code_type code_type;
+  struct RProc *proc;
+  mrbc_context *ctx;
+
+} pmilter_mrb_code;
+
+typedef struct pmilter_mrb_shared_state_t {
+
+  mrb_state *mrb;
+  command_rec *cmd;
+  pmilter_config *config;
+  int status;
+
+  pmilter_mrb_code *mruby_connect_handler;
+  pmilter_mrb_code *mruby_helo_handler;
+  pmilter_mrb_code *mruby_envfrom_handler;
+  pmilter_mrb_code *mruby_envrcpt_handler;
+  pmilter_mrb_code *mruby_header_handler;
+  pmilter_mrb_code *mruby_eoh_handler;
+  pmilter_mrb_code *mruby_body_handler;
+  pmilter_mrb_code *mruby_eom_handler;
+  pmilter_mrb_code *mruby_abort_handler;
+  pmilter_mrb_code *mruby_close_handler;
+  pmilter_mrb_code *mruby_unknown_handler;
+  pmilter_mrb_code *mruby_data_handler;
+
+} pmilter_mrb_shared_state;
+
 
 extern sfsistat mrb_xxfi_cleanup(SMFICTX *, bool);
-
 static pthread_mutex_t table_mutex = PTHREAD_MUTEX_INITIALIZER;
 
+/* mruby functions */
+static void pmilter_mrb_raise_error(mrb_state *mrb, mrb_value obj)
+{
+  struct RString *str;
+  char *err_out;
+
+  obj = mrb_funcall(mrb, obj, "inspect", 0);
+  if (mrb_type(obj) == MRB_TT_STRING) {
+    str = mrb_str_ptr(obj);
+    err_out = str->as.heap.ptr;
+    fprintf(stderr, "mrb_run failed: error: %s", err_out);
+  }
+}
+
+static void pmilter_mruby_cleanup(pmilter_mrb_shared_state *pmilter)
+{
+  PMILTER_CODE_MRBC_CONTEXT_FREE(pmilter->mrb, pmilter->mruby_connect_handler);
+
+  mrb_close(pmilter->mrb);
+}
+
+static void pmilter_mrb_state_clean(mrb_state *mrb)
+{
+  mrb->exc = 0;
+}
+
+static pmilter_mrb_code *pmilter_mrb_code_from_file(const char *file_path)
+{
+  pmilter_mrb_code *code;
+
+  /* need free */
+  code = malloc(sizeof(pmilter_mrb_code));
+  if (code == NULL) {
+    return NULL;
+  }
+
+  code->code.file = file_path;
+  code->code_type = PMILTER_MRB_CODE_TYPE_FILE;
+
+  return code;
+}
+
+static pmilter_mrb_code *pmilter_mrb_code_from_string(const char *code_string)
+{
+  pmilter_mrb_code *code;
+
+  /* need free */
+  code = malloc(sizeof(pmilter_mrb_code));
+  if (code == NULL) {
+    return NULL;
+  }
+
+  code->code.string = code_string;
+  code->code_type = PMILTER_MRB_CODE_TYPE_STRING;
+
+  return code;
+}
+
+static int pmilter_mrb_shared_state_compile(pmilter_mrb_shared_state *pmilter, pmilter_mrb_code *code)
+{
+  FILE *mrb_file;
+  struct mrb_parser_state *p;
+  mrb_state *mrb = pmilter->mrb;
+
+  if (code->code_type == PMILTER_MRB_CODE_TYPE_FILE) {
+    if ((mrb_file = fopen(code->code.file, "r")) == NULL) {
+      fprintf(stderr, "open failed handler mruby path: %s\n", code->code.file);
+      return PMILTER_ERROR;
+    }
+
+    code->ctx = mrbc_context_new(mrb);
+    mrbc_filename(mrb, code->ctx, (char *)code->code.file);
+    p = mrb_parse_file(mrb, mrb_file, code->ctx);
+    fclose(mrb_file);
+  } else {
+    code->ctx = mrbc_context_new(mrb);
+    mrbc_filename(mrb, code->ctx, "INLINE CODE");
+    p = mrb_parse_string(mrb, (char *)code->code.string, code->ctx);
+  }
+
+  if (p == NULL || (0 < p->nerr)) {
+    return PMILTER_ERROR;
+  }
+
+  code->proc = mrb_generate_code(mrb, p);
+  mrb_pool_close(p->pool);
+  if (code->proc == NULL) {
+    return PMILTER_ERROR;
+  }
+
+  if (code->code_type == PMILTER_MRB_CODE_TYPE_FILE) {
+    fprintf(stderr, "%s:%d: compile info: code->code.file=(%s)", __func__, __LINE__, code->code.file);
+  } else {
+    fprintf(stderr, "%s:%d: compile info: " "code->code.string=(%s)",  __func__, __LINE__, code->code.string);
+  }
+
+  return PMILTER_OK;
+}
+
+static pmilter_config *pmilter_config_init()
+{
+  pmilter_config *config;
+
+  /* need free */
+  config = malloc(sizeof(pmilter_config));
+  if (config == NULL) {
+    return NULL;
+  }
+
+  return config;
+}
+
+static pmilter_mrb_shared_state *pmilter_mrb_create_conf(pmilter_config *config)
+{
+  pmilter_mrb_shared_state *pmilter;
+
+  /* need free */
+  pmilter = malloc(sizeof(pmilter_mrb_shared_state));
+  if (pmilter == NULL) {
+    return NULL;
+  }
+
+  pmilter->config = config;
+
+  pmilter->mruby_connect_handler = PMILTER_CONF_UNSET;
+  pmilter->mruby_helo_handler = PMILTER_CONF_UNSET;
+  pmilter->mruby_envfrom_handler = PMILTER_CONF_UNSET;
+  pmilter->mruby_envrcpt_handler = PMILTER_CONF_UNSET;
+  pmilter->mruby_header_handler = PMILTER_CONF_UNSET;
+  pmilter->mruby_eoh_handler = PMILTER_CONF_UNSET;
+  pmilter->mruby_body_handler = PMILTER_CONF_UNSET;
+  pmilter->mruby_eom_handler = PMILTER_CONF_UNSET;
+  pmilter->mruby_abort_handler = PMILTER_CONF_UNSET;
+  pmilter->mruby_close_handler = PMILTER_CONF_UNSET;
+  pmilter->mruby_unknown_handler = PMILTER_CONF_UNSET;
+  pmilter->mruby_data_handler = PMILTER_CONF_UNSET;
+
+  pmilter->mrb = mrb_open();
+  if (pmilter->mrb == NULL) {
+    return NULL;
+  }
+
+  return pmilter;
+}
+
+
+/* pmilter mruby handlers */
+static int pmilter_connect_handler(pmilter_mrb_shared_state *pmilter)
+{
+  mrb_state *mrb = pmilter->mrb;
+  mrb_int ai = mrb_gc_arena_save(mrb);
+
+  /* defualt status */
+  pmilter->status = SMFIS_CONTINUE;
+
+  mrb_run(mrb, pmilter->mruby_connect_handler->proc, mrb_top_self(mrb));
+
+  if (mrb->exc) {
+    pmilter_mrb_raise_error(mrb, mrb_obj_value(mrb->exc));
+    pmilter_mrb_state_clean(mrb);
+    mrb_gc_arena_restore(mrb, ai);
+    return PMILTER_ERROR;
+  }
+
+  pmilter_mrb_state_clean(mrb);
+  mrb_gc_arena_restore(mrb, ai);
+
+  /* default SMFIS_CONTINUE*/
+  return pmilter->status;
+}
+
+/* other utils */
 static char *ipaddrdup(const char *hostname, const _SOCK_ADDR *hostaddr)
 {
   char addr_buf[INET6_ADDRSTRLEN];
@@ -86,13 +320,27 @@ sfsistat mrb_xxfi_connect(ctx, hostname, hostaddr) SMFICTX *ctx;
 char *hostname;
 _SOCK_ADDR *hostaddr;
 {
+  pmilter_mrb_shared_state *pmilter;
   command_rec *cmd;
   connection_rec *conn;
+  pmilter_config *config = smfi_getpriv(ctx);
+  int ret;
 
+  pmilter = pmilter_mrb_create_conf(config);
+  pmilter->mruby_connect_handler = pmilter_mrb_code_from_file(pmilter->config->mruby_connect_handler_path);
+  ret = pmilter_mrb_shared_state_compile(pmilter, pmilter->mruby_connect_handler);
+
+  if (ret == PMILTER_ERROR) {
+    return SMFIS_TEMPFAIL;
+  }
+
+  /* need free */
   cmd = (command_rec *)calloc(1, sizeof(command_rec));
   if (cmd == NULL) {
     return SMFIS_TEMPFAIL;
   }
+
+  /* need free */
   conn = (connection_rec *)calloc(1, sizeof(connection_rec));
   if (conn == NULL) {
     return SMFIS_TEMPFAIL;
@@ -110,6 +358,8 @@ _SOCK_ADDR *hostaddr;
   }
   cmd->connect_daemon = smfi_getsymval(ctx, "{daemon_name}");
 
+  pmilter->cmd = cmd;
+
   DEBUG_SMFI_CHAR(cmd->conn->ipaddr);
   DEBUG_SMFI_CHAR(cmd->connect_daemon);
 
@@ -118,7 +368,9 @@ _SOCK_ADDR *hostaddr;
   DEBUG_SMFI_SYMVAL(j);
   DEBUG_SMFI_SYMVAL(_);
 
-  smfi_setpriv(ctx, cmd);
+  pmilter_connect_handler(pmilter);
+
+  smfi_setpriv(ctx, pmilter);
 
   return SMFIS_CONTINUE;
 }
@@ -331,18 +583,30 @@ struct smfiDesc smfilter = {
     SMFI_VERSION,                  /* version code */
     SMFIF_ADDHDRS | SMFIF_ADDRCPT, /* flags */
     mrb_xxfi_connect,              /* connection info filter */
-    mrb_xxfi_helo,                 /* SMTP HELO command filter */
-    mrb_xxfi_envfrom,              /* envelope sender filter */
-    mrb_xxfi_envrcpt,              /* envelope recipient filter */
-    mrb_xxfi_header,               /* header filter */
-    mrb_xxfi_eoh,                  /* end of header */
-    mrb_xxfi_body,                 /* body block filter */
-    mrb_xxfi_eom,                  /* end of message */
-    mrb_xxfi_abort,                /* message aborted */
-    mrb_xxfi_close,                /* connection cleanup */
-    mrb_xxfi_unknown,              /* unknown SMTP commands */
-    mrb_xxfi_data,                 /* DATA command */
-    mrb_xxfi_negotiate             /* Once, at the start of each SMTP connection */
+    NULL,                 /* SMTP HELO command filter */
+    NULL,              /* envelope sender filter */
+    NULL,              /* envelope recipient filter */
+    NULL,               /* header filter */
+    NULL,                  /* end of header */
+    NULL,                 /* body block filter */
+    NULL,                  /* end of message */
+    NULL,                /* message aborted */
+    NULL,                /* connection cleanup */
+    NULL,              /* unknown SMTP commands */
+    NULL,                 /* DATA command */
+    NULL /* Once, at the start of each SMTP connection */
+    //mrb_xxfi_helo,                 /* SMTP HELO command filter */
+    //mrb_xxfi_envfrom,              /* envelope sender filter */
+    //mrb_xxfi_envrcpt,              /* envelope recipient filter */
+    //mrb_xxfi_header,               /* header filter */
+    //mrb_xxfi_eoh,                  /* end of header */
+    //mrb_xxfi_body,                 /* body block filter */
+    //mrb_xxfi_eom,                  /* end of message */
+    //mrb_xxfi_abort,                /* message aborted */
+    //mrb_xxfi_close,                /* connection cleanup */
+    //mrb_xxfi_unknown,              /* unknown SMTP commands */
+    //mrb_xxfi_data,                 /* DATA command */
+    //mrb_xxfi_negotiate             /* Once, at the start of each SMTP connection */
 };
 
 static void usage(prog) char *prog;
@@ -371,6 +635,7 @@ static void mrb_pmilter_config_free(struct toml_node *root)
 int main(argc, argv) int argc;
 char **argv;
 {
+  pmilter_config *pmilter_config;
   bool setconn = FALSE;
   int c;
   const char *args = "c:p:t:h";
@@ -395,7 +660,7 @@ char **argv;
         exit(EX_USAGE);
       }
       if (smfi_setconn(optarg) == MI_FAILURE) {
-        (void)fprintf(stderr, "smfi_setconn failed\n");
+        (void)fprintf(stderr, "smfi_setconn failed: port or socket already exists?\n");
         exit(EX_SOFTWARE);
       }
       /*
@@ -484,23 +749,14 @@ char **argv;
     close(fd);
   }
 
-  /*
-    node = toml_get(toml_root, get);
-
-    if (!node) {
-      fprintf(stderr, "no node '%s'\n", get);
-      exit_code = EXIT_FAILURE;
-      goto bail;
-    }
-
-
-    toml_dump(node, stdout);
-  */
-
   toml_dump(toml_root, stdout);
   toml_tojson(toml_root, stdout);
 
-  return smfi_main(NULL);
+  pmilter_config = pmilter_config_init();
+  node = toml_get(toml_root, "handler.mruby_connect_handler");
+  pmilter_config->mruby_connect_handler_path = node->value.string;
+
+  return smfi_main(pmilter_config);
 
 bail:
   toml_free(toml_root);

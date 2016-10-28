@@ -29,14 +29,14 @@ class TestMilterTransfer < Test::Unit::TestCase
     assert_recipients(["to@example.com"], result.envelope_recipients)
   end
 
-  def test_emergency_mail
-    result = @server.run(["--connection-spec", SPEC],
-                         ["--mail-file", fixture_path("emergency.eml")],
-                         ["--envelope-from", "from@example.com"],
-                         ["--envelope-recipient", "to@example.com"])
-    assert_equal("pass", result.status)
-    assert_recipients(["to@example.com"], result.envelope_recipients)
-  end
+  #def test_emergency_mail
+  #  result = @server.run(["--connection-spec", SPEC],
+  #                       ["--mail-file", fixture_path("emergency.eml")],
+  #                       ["--envelope-from", "from@example.com"],
+  #                       ["--envelope-recipient", "to@example.com"])
+  #  assert_equal("pass", result.status)
+  #  assert_recipients(["to@example.com"], result.envelope_recipients)
+  #end
 
   private
 
