@@ -279,31 +279,32 @@ static pmilter_mrb_shared_state *pmilter_mrb_create_conf(pmilter_config *config)
 }
 
 /* pmilter mruby handlers */
-static int pmilter_connect_handler(pmilter_mrb_shared_state *pmilter)
-{
-  mrb_state *mrb = pmilter->mrb;
-  mrb_int ai = mrb_gc_arena_save(mrb);
-
-  /* defualt status */
-  pmilter->status = SMFIS_CONTINUE;
-
-  /* pmilter object pass to mruby world */
-  mrb->ud = pmilter;
-  mrb_run(mrb, pmilter->mruby_connect_handler->proc, mrb_top_self(mrb));
-
-  if (mrb->exc) {
-    pmilter_mrb_raise_error(mrb, mrb_obj_value(mrb->exc));
-    pmilter_mrb_state_clean(mrb);
-    mrb_gc_arena_restore(mrb, ai);
-    return PMILTER_ERROR;
+#define PMILTER_ADD_MRUBY_HADNLER(phase)                                                                               \
+  static int pmilter_##phase##_handler(pmilter_mrb_shared_state *pmilter)                                              \
+  {                                                                                                                    \
+    mrb_state *mrb = pmilter->mrb;                                                                                     \
+    mrb_int ai = mrb_gc_arena_save(mrb);                                                                               \
+                                                                                                                       \
+    pmilter->status = SMFIS_CONTINUE;                                                                                  \
+                                                                                                                       \
+    mrb->ud = pmilter;                                                                                                 \
+    mrb_run(mrb, pmilter->mruby_##phase##_handler->proc, mrb_top_self(mrb));                                           \
+                                                                                                                       \
+    if (mrb->exc) {                                                                                                    \
+      pmilter_mrb_raise_error(mrb, mrb_obj_value(mrb->exc));                                                           \
+      pmilter_mrb_state_clean(mrb);                                                                                    \
+      mrb_gc_arena_restore(mrb, ai);                                                                                   \
+      return PMILTER_ERROR;                                                                                            \
+    }                                                                                                                  \
+                                                                                                                       \
+    pmilter_mrb_state_clean(mrb);                                                                                      \
+    mrb_gc_arena_restore(mrb, ai);                                                                                     \
+                                                                                                                       \
+    return pmilter->status;                                                                                            \
   }
 
-  pmilter_mrb_state_clean(mrb);
-  mrb_gc_arena_restore(mrb, ai);
-
-  /* default SMFIS_CONTINUE*/
-  return pmilter->status;
-}
+/* pmilter_connect_handler */
+PMILTER_ADD_MRUBY_HADNLER(connect)
 
 /* other utils */
 static char *ipaddrdup(const char *hostname, const _SOCK_ADDR *hostaddr)
@@ -600,17 +601,17 @@ struct smfiDesc smfilter = {
     NULL,                          /* DATA command */
     NULL                           /* Once, at the start of each SMTP connection */
                                    // mrb_xxfi_helo,                 /* SMTP HELO command filter */
-    // mrb_xxfi_envfrom,              /* envelope sender filter */
-    // mrb_xxfi_envrcpt,              /* envelope recipient filter */
-    // mrb_xxfi_header,               /* header filter */
-    // mrb_xxfi_eoh,                  /* end of header */
-    // mrb_xxfi_body,                 /* body block filter */
-    // mrb_xxfi_eom,                  /* end of message */
-    // mrb_xxfi_abort,                /* message aborted */
-    // mrb_xxfi_close,                /* connection cleanup */
-    // mrb_xxfi_unknown,              /* unknown SMTP commands */
-    // mrb_xxfi_data,                 /* DATA command */
-    // mrb_xxfi_negotiate             /* Once, at the start of each SMTP connection */
+                                   // mrb_xxfi_envfrom,              /* envelope sender filter */
+                                   // mrb_xxfi_envrcpt,              /* envelope recipient filter */
+                                   // mrb_xxfi_header,               /* header filter */
+                                   // mrb_xxfi_eoh,                  /* end of header */
+                                   // mrb_xxfi_body,                 /* body block filter */
+                                   // mrb_xxfi_eom,                  /* end of message */
+                                   // mrb_xxfi_abort,                /* message aborted */
+                                   // mrb_xxfi_close,                /* connection cleanup */
+                                   // mrb_xxfi_unknown,              /* unknown SMTP commands */
+                                   // mrb_xxfi_data,                 /* DATA command */
+                                   // mrb_xxfi_negotiate             /* Once, at the start of each SMTP connection */
 };
 
 static void usage(prog) char *prog;
