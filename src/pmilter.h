@@ -84,6 +84,11 @@ typedef struct pmilter_mrb_shared_state_t {
 
   /* libmiler context */
   SMFICTX *ctx;
+
+  /* hook phase tupe */
+
+  const char *phase;
+
   /* mruby handler code */
   pmilter_mrb_code *mruby_connect_handler;
   pmilter_mrb_code *mruby_helo_handler;

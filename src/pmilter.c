@@ -228,16 +228,17 @@ static pmilter_mrb_shared_state *pmilter_mrb_create_conf(pmilter_config *config)
 }
 
 /* pmilter mruby handlers */
-#define PMILTER_ADD_MRUBY_HADNLER(phase)                                                                               \
-  static int pmilter_##phase##_handler(pmilter_mrb_shared_state *pmilter)                                              \
+#define PMILTER_ADD_MRUBY_HADNLER(hook_phase)                                                                               \
+  static int pmilter_##hook_phase##_handler(pmilter_mrb_shared_state *pmilter)                                              \
   {                                                                                                                    \
     mrb_state *mrb = pmilter->mrb;                                                                                     \
     mrb_int ai = mrb_gc_arena_save(mrb);                                                                               \
                                                                                                                        \
     pmilter->status = SMFIS_CONTINUE;                                                                                  \
+    pmilter->phase = "mruby_" #hook_phase "_handler";                                                                                  \
                                                                                                                        \
     mrb->ud = pmilter;                                                                                                 \
-    mrb_run(mrb, pmilter->mruby_##phase##_handler->proc, mrb_top_self(mrb));                                           \
+    mrb_run(mrb, pmilter->mruby_##hook_phase##_handler->proc, mrb_top_self(mrb));                                           \
                                                                                                                        \
     if (mrb->exc) {                                                                                                    \
       pmilter_mrb_raise_error(mrb, mrb_obj_value(mrb->exc));                                                           \
