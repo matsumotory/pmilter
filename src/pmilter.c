@@ -289,41 +289,56 @@ static char *ipaddrdup(const char *hostname, const _SOCK_ADDR *hostaddr)
   return strdup(addr_buf);
 }
 
+static command_rec *pmilter_command_init()
+{
+  command_rec *cmd;
+
+  /* need free */
+  cmd = (command_rec *)calloc(1, sizeof(command_rec));
+  if (cmd == NULL) {
+    return NULL;
+  }
+
+  /* need free */
+  conn = (connection_rec *)calloc(1, sizeof(connection_rec));
+  if (conn == NULL) {
+    return NULL;
+  }
+
+  cmd->conn = conn;
+  cmd->connect_daemon = NULL;
+  cmd->envelope_from = NULL;
+  cmd->envelope_to = NULL;
+  cmd->receive_time = 0;
+
+  return cmd;
+}
+
 /* connection info filter */
 sfsistat mrb_xxfi_connect(ctx, hostname, hostaddr) SMFICTX *ctx;
 char *hostname;
 _SOCK_ADDR *hostaddr;
 {
   pmilter_mrb_shared_state *pmilter;
-  command_rec *cmd;
   connection_rec *conn;
   pmilter_config *config = smfi_getpriv(ctx);
   int ret;
 
   pmilter = pmilter_mrb_create_conf(config);
   pmilter->ctx = ctx;
-
-  /* need free */
-  cmd = (command_rec *)calloc(1, sizeof(command_rec));
-  if (cmd == NULL) {
+  pmilter->cmd = pmilter_command_init();
+  if (pmilter->cmd == NULL) {
     return SMFIS_TEMPFAIL;
   }
 
-  /* need free */
-  conn = (connection_rec *)calloc(1, sizeof(connection_rec));
-  if (conn == NULL) {
+  pmilter->cmd->conn->hostaddr = hostaddr;
+  pmilter->cmd->conn->ipaddr = ipaddrdup(hostname, hostaddr);
+
+  if (pmilter->cmd->conn->ipaddr == NULL) {
     return SMFIS_TEMPFAIL;
   }
 
-  cmd->conn = conn;
-  cmd->conn->hostaddr = hostaddr;
-  cmd->conn->ipaddr = ipaddrdup(hostname, hostaddr);
-  if (cmd->conn->ipaddr == NULL) {
-    return SMFIS_TEMPFAIL;
-  }
-  cmd->connect_daemon = smfi_getsymval(ctx, "{daemon_name}");
-
-  pmilter->cmd = cmd;
+  pmilter->cmd->connect_daemon = smfi_getsymval(ctx, "{daemon_name}");
   pmilter->mruby_connect_handler = pmilter_mrb_code_from_file(pmilter->config->mruby_connect_handler_path);
 
   if (pmilter->mruby_connect_handler != NULL) {
@@ -336,19 +351,6 @@ _SOCK_ADDR *hostaddr;
   }
 
   smfi_setpriv(ctx, pmilter);
-
-
-  DEBUG_SMFI_HOOK(mrb_xxfi_connect);
-  DEBUG_SMFI_CHAR(hostname);
-
-  DEBUG_SMFI_CHAR(cmd->conn->ipaddr);
-  DEBUG_SMFI_CHAR(cmd->connect_daemon);
-
-  DEBUG_SMFI_SYMVAL(if_name);
-  DEBUG_SMFI_SYMVAL(if_addr);
-  DEBUG_SMFI_SYMVAL(j);
-  DEBUG_SMFI_SYMVAL(_);
-
 
   return SMFIS_CONTINUE;
 }
