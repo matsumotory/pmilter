@@ -292,6 +292,7 @@ static char *ipaddrdup(const char *hostname, const _SOCK_ADDR *hostaddr)
 static command_rec *pmilter_command_init()
 {
   command_rec *cmd;
+  connection_rec *conn;
 
   /* need free */
   cmd = (command_rec *)calloc(1, sizeof(command_rec));
@@ -320,7 +321,6 @@ char *hostname;
 _SOCK_ADDR *hostaddr;
 {
   pmilter_mrb_shared_state *pmilter;
-  connection_rec *conn;
   pmilter_config *config = smfi_getpriv(ctx);
   int ret;
 
@@ -392,20 +392,8 @@ char **argv;
   pmilter_mrb_shared_state *pmilter = smfi_getpriv(ctx);
   int ret;
 
-  DEBUG_SMFI_HOOK(mrb_xxfi_envfrom);
-
+  /* need free */
   pmilter->cmd->envelope_from = strdup(argv[0]);
-  DEBUG_SMFI_CHAR(pmilter->cmd->envelope_from);
-
-  DEBUG_SMFI_SYMVAL(i);
-  DEBUG_SMFI_SYMVAL(auth_type);
-  DEBUG_SMFI_SYMVAL(auth_authen);
-  DEBUG_SMFI_SYMVAL(auth_ssf);
-  DEBUG_SMFI_SYMVAL(auth_author);
-  DEBUG_SMFI_SYMVAL(mail_mailer);
-  DEBUG_SMFI_SYMVAL(mail_host);
-  DEBUG_SMFI_SYMVAL(mail_addr);
-
   pmilter->mruby_envfrom_handler = pmilter_mrb_code_from_file(pmilter->config->mruby_envfrom_handler_path);
 
   if (pmilter->mruby_envfrom_handler != NULL) {
@@ -426,17 +414,7 @@ char **argv;
   pmilter_mrb_shared_state *pmilter = smfi_getpriv(ctx);
   int ret;
 
-  DEBUG_SMFI_HOOK(mrb_xxfi_envrcpt);
-
   pmilter->cmd->envelope_to = smfi_getsymval(ctx, "{rcpt_addr}");
-  DEBUG_SMFI_CHAR(pmilter->cmd->envelope_to);
-
-  DEBUG_SMFI_CHAR(argv[0]);
-
-  DEBUG_SMFI_SYMVAL(rcpt_mailer);
-  DEBUG_SMFI_SYMVAL(rcpt_host);
-  DEBUG_SMFI_SYMVAL(rcpt_addr);
-
   pmilter->mruby_envrcpt_handler = pmilter_mrb_code_from_file(pmilter->config->mruby_envrcpt_handler_path);
 
   if (pmilter->mruby_envrcpt_handler != NULL) {
