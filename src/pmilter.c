@@ -31,13 +31,6 @@
     (code)->ctx = NULL;                                                                                                \
   }
 
-#define COMMAND_REC_CTX ((command_rec *)smfi_getpriv(ctx))
-#define DEBUG_SMFI_SYMVAL(macro_name)                                                                                  \
-  fprintf(stderr, "    " #macro_name ": %s\n", smfi_getsymval(ctx, "{" #macro_name "}"))
-#define DEBUG_SMFI_CHAR(val) fprintf(stderr, "    " #val ": %s\n", val)
-#define DEBUG_SMFI_INT(val) fprintf(stderr, "    " #val ": %d\n", val)
-#define DEBUG_SMFI_HOOK(val) fprintf(stderr, #val "\n")
-
 extern sfsistat mrb_xxfi_cleanup(SMFICTX *, bool);
 static pthread_mutex_t table_mutex = PTHREAD_MUTEX_INITIALIZER;
 
