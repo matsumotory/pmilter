@@ -4,3 +4,8 @@ build/include
 src/libmilter/libmilter_la*.o
 src/libmilter/compile
 src/libtoml/libtoml.a
+GPATH
+GRTAGS
+GSYMS
+GTAGS
+
