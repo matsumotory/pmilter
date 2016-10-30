@@ -27,6 +27,8 @@
 #define DEBUG_SMFI_INT(val) fprintf(stderr, "    " #val ": %d\n", val)
 #define DEBUG_SMFI_HOOK(val) fprintf(stderr, #val "\n")
 
+#define PMILTER_GET_SYMVAL(ctx, macro_name) smfi_getsymval(ctx, "{" #macro_name "}")
+
 typedef struct connection_rec_t {
 
   char *ipaddr;
