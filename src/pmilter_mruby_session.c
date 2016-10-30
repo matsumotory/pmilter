@@ -2,6 +2,7 @@
 
 #include "mruby.h"
 #include "mruby/array.h"
+#include "mruby/hash.h"
 #include "mruby/compile.h"
 #include "mruby/data.h"
 #include "mruby/proc.h"
@@ -49,9 +50,20 @@ static mrb_value pmilter_mrb_session_envelope_to(mrb_state *mrb, mrb_value self)
   return mrb_str_new_cstr(mrb, pmilter->cmd->envelope_to);
 }
 
+static mrb_value pmilter_mrb_session_header(mrb_state *mrb, mrb_value self)
+{
+  pmilter_mrb_shared_state *pmilter = (pmilter_mrb_shared_state *)mrb->ud;
+  mrb_value hash = mrb_hash_new(mrb);
+
+  mrb_hash_set(mrb, hash, mrb_str_new_cstr(mrb, pmilter->cmd->header->key), mrb_str_new_cstr(mrb, pmilter->cmd->header->value));
+
+  return hash;
+}
+
 void pmilter_mrb_session_class_init(mrb_state *mrb, struct RClass *class)
 {
   struct RClass *class_session = mrb_define_class_under(mrb, class, "Session", mrb->object_class);
+  struct RClass *class_headers = mrb_define_class_under(mrb, class_session, "Headers", mrb->object_class);
 
   mrb_define_method(mrb, class_session, "client_ipaddr", pmilter_mrb_session_client_ipaddr, MRB_ARGS_NONE());
   mrb_define_method(mrb, class_session, "client_daemon", pmilter_mrb_session_client_daemon, MRB_ARGS_NONE());
@@ -60,4 +72,7 @@ void pmilter_mrb_session_class_init(mrb_state *mrb, struct RClass *class)
   mrb_define_method(mrb, class_session, "envelope_from", pmilter_mrb_session_envelope_from, MRB_ARGS_NONE());
   mrb_define_method(mrb, class_session, "envelope_to", pmilter_mrb_session_envelope_to, MRB_ARGS_NONE());
 
+  /* Pmilter::Session::Heaers */
+  mrb_define_method(mrb, class_headers, "header", pmilter_mrb_session_header, MRB_ARGS_NONE());
+  
 }

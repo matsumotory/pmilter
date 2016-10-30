@@ -167,6 +167,7 @@ static void command_rec_free(command_rec *cmd)
     free(cmd->conn->ipaddr);
   }
   free(cmd->conn);
+  free(cmd->header);
 
   free(cmd);
 }
@@ -293,6 +294,7 @@ static command_rec *pmilter_command_init()
 {
   command_rec *cmd;
   connection_rec *conn;
+  smtp_header *header;
 
   /* need free */
   cmd = (command_rec *)calloc(1, sizeof(command_rec));
@@ -306,11 +308,20 @@ static command_rec *pmilter_command_init()
     return NULL;
   }
 
+  /* need free */
+  header = (smtp_header *)calloc(1, sizeof(smtp_header));
+  if (header == NULL) {
+    return NULL;
+  }
+
   cmd->conn = conn;
   cmd->connect_daemon = NULL;
   cmd->envelope_from = NULL;
   cmd->envelope_to = NULL;
   cmd->receive_time = 0;
+  cmd->header = header;
+  cmd->header->key = NULL;
+  cmd->header->value = NULL;
 
   return cmd;
 }
@@ -436,10 +447,8 @@ unsigned char *headerv;
   pmilter_mrb_shared_state *pmilter = smfi_getpriv(ctx);
   int ret;
 
-  DEBUG_SMFI_HOOK(mrb_xxfi_header);
-  DEBUG_SMFI_CHAR(headerf);
-  DEBUG_SMFI_CHAR(headerv);
-
+  pmilter->cmd->header->key = headerf;
+  pmilter->cmd->header->value = headerv;
   pmilter->mruby_header_handler = pmilter_mrb_code_from_file(pmilter->config->mruby_header_handler_path);
 
   if (pmilter->mruby_header_handler != NULL) {

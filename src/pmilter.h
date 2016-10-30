@@ -36,6 +36,13 @@ typedef struct connection_rec_t {
 
 } connection_rec;
 
+typedef struct smtp_header_t {
+
+  char *key;
+  unsigned char *value;
+
+} smtp_header;
+
 typedef struct command_rec_t {
 
   connection_rec *conn;
@@ -43,6 +50,7 @@ typedef struct command_rec_t {
   char *envelope_from;
   char *envelope_to;
   int receive_time;
+  smtp_header *header;
 
 } command_rec;
 
