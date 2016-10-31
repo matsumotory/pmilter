@@ -142,11 +142,12 @@ static int pmilter_mrb_shared_state_compile(pmilter_mrb_shared_state *pmilter, p
   }
 
   if (code->code_type == PMILTER_MRB_CODE_TYPE_FILE) {
-    fprintf(stderr, "%s:%d: compile info: code->code.file=(%s)\n", __func__, __LINE__, code->code.file);
+    pmilter_log_error(PMILTER_LOG_DEBUG, pmilter->config, "%s:%d: compile info: code->code.file=(%s)", __func__,
+                      __LINE__, code->code.file);
   } else {
-    fprintf(stderr, "%s:%d: compile info: "
-                    "code->code.string=(%s)\n",
-            __func__, __LINE__, code->code.string);
+    pmilter_log_error(PMILTER_LOG_DEBUG, pmilter->config, "%s:%d: compile info: "
+                                                          "code->code.string=(%s)",
+                      __func__, __LINE__, code->code.string);
   }
 
   return PMILTER_OK;
