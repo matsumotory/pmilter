@@ -2,9 +2,9 @@
 
 #include "mruby.h"
 #include "mruby/array.h"
-#include "mruby/hash.h"
 #include "mruby/compile.h"
 #include "mruby/data.h"
+#include "mruby/hash.h"
 #include "mruby/proc.h"
 #include "mruby/string.h"
 #include "mruby/variable.h"
@@ -62,7 +62,8 @@ static mrb_value pmilter_mrb_session_header(mrb_state *mrb, mrb_value self)
   pmilter_mrb_shared_state *pmilter = (pmilter_mrb_shared_state *)mrb->ud;
   mrb_value hash = mrb_hash_new(mrb);
 
-  mrb_hash_set(mrb, hash, mrb_str_new_cstr(mrb, pmilter->cmd->header->key), mrb_str_new_cstr(mrb, pmilter->cmd->header->value));
+  mrb_hash_set(mrb, hash, mrb_str_new_cstr(mrb, pmilter->cmd->header->key),
+               mrb_str_new_cstr(mrb, pmilter->cmd->header->value));
 
   return hash;
 }
@@ -82,5 +83,4 @@ void pmilter_mrb_session_class_init(mrb_state *mrb, struct RClass *class)
 
   /* Pmilter::Session::Heaers */
   mrb_define_method(mrb, class_headers, "header", pmilter_mrb_session_header, MRB_ARGS_NONE());
-  
 }

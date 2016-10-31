@@ -14,7 +14,8 @@ void pmilter_mrb_class_init(mrb_state *mrb)
 
   class = mrb_define_class(mrb, "Pmilter", mrb->object_class);
 
-  pmilter_mrb_core_class_init(mrb, class); GC_ARENA_RESTORE;
-  pmilter_mrb_session_class_init(mrb, class); GC_ARENA_RESTORE;
-
+  pmilter_mrb_core_class_init(mrb, class);
+  GC_ARENA_RESTORE;
+  pmilter_mrb_session_class_init(mrb, class);
+  GC_ARENA_RESTORE;
 }
