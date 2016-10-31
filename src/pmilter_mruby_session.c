@@ -50,6 +50,13 @@ static mrb_value pmilter_mrb_session_envelope_to(mrb_state *mrb, mrb_value self)
   return mrb_str_new_cstr(mrb, pmilter->cmd->envelope_to);
 }
 
+static mrb_value pmilter_mrb_session_receive_time(mrb_state *mrb, mrb_value self)
+{
+  pmilter_mrb_shared_state *pmilter = (pmilter_mrb_shared_state *)mrb->ud;
+
+  return mrb_fixnum_value(pmilter->cmd->receive_time);
+}
+
 static mrb_value pmilter_mrb_session_header(mrb_state *mrb, mrb_value self)
 {
   pmilter_mrb_shared_state *pmilter = (pmilter_mrb_shared_state *)mrb->ud;
@@ -71,6 +78,7 @@ void pmilter_mrb_session_class_init(mrb_state *mrb, struct RClass *class)
 
   mrb_define_method(mrb, class_session, "envelope_from", pmilter_mrb_session_envelope_from, MRB_ARGS_NONE());
   mrb_define_method(mrb, class_session, "envelope_to", pmilter_mrb_session_envelope_to, MRB_ARGS_NONE());
+  mrb_define_method(mrb, class_session, "receive_time", pmilter_mrb_session_receive_time, MRB_ARGS_NONE());
 
   /* Pmilter::Session::Heaers */
   mrb_define_method(mrb, class_headers, "header", pmilter_mrb_session_header, MRB_ARGS_NONE());
