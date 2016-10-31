@@ -24,6 +24,7 @@
 #include "mruby/string.h"
 
 #include "pmilter.h"
+#include "pmilter_log.h"
 
 #define PMILTER_CODE_MRBC_CONTEXT_FREE(mrb, code)                                                                      \
   if (code != PMILTER_CONF_UNSET && mrb && (code)->ctx) {                                                              \
@@ -153,6 +154,8 @@ static pmilter_config *pmilter_config_init()
     return NULL;
   }
 
+  config->log_level = PMILTER_LOG_WARN;
+
   return config;
 }
 
@@ -222,17 +225,17 @@ static pmilter_mrb_shared_state *pmilter_mrb_create_conf(pmilter_config *config)
 }
 
 /* pmilter mruby handlers */
-#define PMILTER_ADD_MRUBY_HADNLER(hook_phase)                                                                               \
-  static int pmilter_##hook_phase##_handler(pmilter_mrb_shared_state *pmilter)                                              \
+#define PMILTER_ADD_MRUBY_HADNLER(hook_phase)                                                                          \
+  static int pmilter_##hook_phase##_handler(pmilter_mrb_shared_state *pmilter)                                         \
   {                                                                                                                    \
     mrb_state *mrb = pmilter->mrb;                                                                                     \
     mrb_int ai = mrb_gc_arena_save(mrb);                                                                               \
                                                                                                                        \
     pmilter->status = SMFIS_CONTINUE;                                                                                  \
-    pmilter->phase = "mruby_" #hook_phase "_handler";                                                                                  \
+    pmilter->phase = "mruby_" #hook_phase "_handler";                                                                  \
                                                                                                                        \
     mrb->ud = pmilter;                                                                                                 \
-    mrb_run(mrb, pmilter->mruby_##hook_phase##_handler->proc, mrb_top_self(mrb));                                           \
+    mrb_run(mrb, pmilter->mruby_##hook_phase##_handler->proc, mrb_top_self(mrb));                                      \
                                                                                                                        \
     if (mrb->exc) {                                                                                                    \
       pmilter_mrb_raise_error(mrb, mrb_obj_value(mrb->exc));                                                           \
@@ -711,6 +714,23 @@ static void mrb_pmilter_config_free(struct toml_node *root)
   toml_free(root);
 }
 
+static int pmilter_config_get_log_level(struct toml_node *root)
+{
+  int i;
+  int log_level = PMILTER_LOG_WARN;
+  struct toml_node *node = toml_get(root, "server.log_level");
+
+  if (node != NULL) {
+    for (i = 0; i < sizeof(err_levels) / sizeof(const char *); i++) {
+      if (strcmp(node->value.string, err_levels[i]) == 0) {
+        log_level = i;
+      }
+    }
+  }
+
+  return log_level;
+}
+
 int main(argc, argv) int argc;
 char **argv;
 {
@@ -725,6 +745,7 @@ char **argv;
   int fd, ret, toml_content_size = 0;
   struct stat st;
   int exit_code = EXIT_SUCCESS;
+  int i;
 
   /* Process command line options */
   while ((c = getopt(argc, argv, args)) != -1) {
@@ -828,23 +849,17 @@ char **argv;
     close(fd);
   }
 
-  fprintf(stdout, "pmilter configuration\n=====\n");
-  toml_dump(toml_root, stdout);
-  fprintf(stdout, "=====\n");
-
-  // toml_tojson(toml_root, stdout);
-
-#define PMILTER_GET_HANDLER_CONFIG_VALUE(root, node, config, phase) node = toml_get(root, "handler.mruby_" #phase "_handler"); \
-  if (node != NULL) { \
-    config->mruby_##phase##_handler_path = node->value.string; \
-  } else { \
-    config->mruby_##phase##_handler_path = NULL; \
+#define PMILTER_GET_HANDLER_CONFIG_VALUE(root, node, config, phase)                                                    \
+  node = toml_get(root, "handler.mruby_" #phase "_handler");                                                           \
+  if (node != NULL) {                                                                                                  \
+    config->mruby_##phase##_handler_path = node->value.string;                                                         \
+  } else {                                                                                                             \
+    config->mruby_##phase##_handler_path = NULL;                                                                       \
   }
-  
-
 
   /* pmilter config setup */
   pmilter_config = pmilter_config_init();
+  pmilter_config->log_level = pmilter_config_get_log_level(toml_root);
 
   PMILTER_GET_HANDLER_CONFIG_VALUE(toml_root, node, pmilter_config, connect);
   PMILTER_GET_HANDLER_CONFIG_VALUE(toml_root, node, pmilter_config, helo);
@@ -859,7 +874,11 @@ char **argv;
   PMILTER_GET_HANDLER_CONFIG_VALUE(toml_root, node, pmilter_config, unknown);
   PMILTER_GET_HANDLER_CONFIG_VALUE(toml_root, node, pmilter_config, data);
 
-  fprintf(stdout, "pmilter run\n=====\n");
+  pmilter_log_error(PMILTER_LOG_INFO, pmilter_config, "pmilter configuration\n=====");
+  toml_dump(toml_root, stdout);
+  pmilter_log_error(PMILTER_LOG_INFO, pmilter_config, "=====");
+
+  pmilter_log_error(PMILTER_LOG_INFO, pmilter_config, "pmilter %s", "starting");
 
   return smfi_main(pmilter_config);
 

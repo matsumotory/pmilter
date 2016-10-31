@@ -56,6 +56,8 @@ typedef struct command_rec_t {
 
 typedef struct pmilter_config_t {
 
+  int log_level;
+
   const char *mruby_connect_handler_path;
   const char *mruby_helo_handler_path;
   const char *mruby_envfrom_handler_path;
