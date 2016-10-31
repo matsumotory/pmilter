@@ -1,0 +1,9 @@
+#!/bin/bash
+
+set -e
+
+for f in `ls src/*.{c,h}`
+do
+  clang-format -i $f
+done
+
