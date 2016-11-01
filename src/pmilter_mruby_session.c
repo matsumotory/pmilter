@@ -68,6 +68,19 @@ static mrb_value pmilter_mrb_session_header(mrb_state *mrb, mrb_value self)
   return hash;
 }
 
+static mrb_value pmilter_mrb_session_add_header(mrb_state *mrb, mrb_value self)
+{
+  pmilter_mrb_shared_state *pmilter = (pmilter_mrb_shared_state *)mrb->ud;
+  mrb_value key, val;
+  int ret;
+
+  mrb_get_args(mrb, "oo", &key, &val);
+
+  ret = smfi_addheader(pmilter->ctx, mrb_str_to_cstr(mrb, key), mrb_str_to_cstr(mrb, val));
+
+  return mrb_fixnum_value(ret);
+}
+
 void pmilter_mrb_session_class_init(mrb_state *mrb, struct RClass *class)
 {
   struct RClass *class_session = mrb_define_class_under(mrb, class, "Session", mrb->object_class);
@@ -83,4 +96,14 @@ void pmilter_mrb_session_class_init(mrb_state *mrb, struct RClass *class)
 
   /* Pmilter::Session::Heaers */
   mrb_define_method(mrb, class_headers, "header", pmilter_mrb_session_header, MRB_ARGS_NONE());
+
+  /*
+  **  The xxfi_eom routine is called at the end of a message (essentially,
+  **  after the final DATA dot). This routine can call some special routines
+  **  to modify the envelope, header, or body of the message before the
+  **  message is enqueued. These routines must not be called from any vendor
+  **  routine other than xxfi_eom.
+  */
+
+  mrb_define_method(mrb, class_headers, "[]=", pmilter_mrb_session_add_header, MRB_ARGS_NONE());
 }
