@@ -275,7 +275,7 @@ _SOCK_ADDR *hostaddr;
 
   pmilter->mruby_connect_handler = pmilter_mrb_code_from_file(pmilter->config->mruby_connect_handler_path);
 
-  if (pmilter->mruby_connect_handler != NULL && pmilter->mrb != NULL) {
+  if (pmilter->mrb != NULL) {
     pmilter->cmd->connect_daemon = smfi_getsymval(ctx, "{daemon_name}");
     pmilter->cmd->conn->hostaddr = hostaddr;
     pmilter->cmd->conn->hostname = strdup(hostname);
@@ -283,7 +283,9 @@ _SOCK_ADDR *hostaddr;
     if (pmilter->cmd->conn->ipaddr == NULL) {
       return SMFIS_TEMPFAIL;
     }
+  }
 
+  if (pmilter->mruby_connect_handler != NULL && pmilter->mrb != NULL) {
     ret = pmilter_state_compile(pmilter, pmilter->mruby_connect_handler);
     if (ret == PMILTER_ERROR) {
       return SMFIS_TEMPFAIL;
@@ -309,8 +311,11 @@ char *helohost;
 
   pmilter->mruby_helo_handler = pmilter_mrb_code_from_file(pmilter->config->mruby_helo_handler_path);
 
-  if (pmilter->mruby_helo_handler != NULL && pmilter->mrb != NULL) {
+  if (pmilter->mrb != NULL) {
     pmilter->cmd->helohost = strdup(helohost);
+  }
+
+  if (pmilter->mruby_helo_handler != NULL && pmilter->mrb != NULL) {
     ret = pmilter_state_compile(pmilter, pmilter->mruby_helo_handler);
     if (ret == PMILTER_ERROR) {
       return SMFIS_TEMPFAIL;
@@ -333,9 +338,12 @@ char **argv;
 
   pmilter->mruby_envfrom_handler = pmilter_mrb_code_from_file(pmilter->config->mruby_envfrom_handler_path);
 
-  if (pmilter->mruby_envfrom_handler != NULL && pmilter->mrb != NULL) {
+  if (pmilter->mrb != NULL) {
     /* need free */
     pmilter->cmd->envelope_from = strdup(argv[0]);
+  }
+
+  if (pmilter->mruby_envfrom_handler != NULL && pmilter->mrb != NULL) {
     ret = pmilter_state_compile(pmilter, pmilter->mruby_envfrom_handler);
     if (ret == PMILTER_ERROR) {
       return SMFIS_TEMPFAIL;
@@ -357,8 +365,11 @@ char **argv;
 
   pmilter->mruby_envrcpt_handler = pmilter_mrb_code_from_file(pmilter->config->mruby_envrcpt_handler_path);
 
-  if (pmilter->mruby_envrcpt_handler != NULL && pmilter->mrb != NULL) {
+  if (pmilter->mrb != NULL) {
     pmilter->cmd->envelope_to = smfi_getsymval(ctx, "{rcpt_addr}");
+  }
+
+  if (pmilter->mruby_envrcpt_handler != NULL && pmilter->mrb != NULL) {
     ret = pmilter_state_compile(pmilter, pmilter->mruby_envrcpt_handler);
     if (ret == PMILTER_ERROR) {
       return SMFIS_TEMPFAIL;
@@ -381,9 +392,12 @@ unsigned char *headerv;
 
   pmilter->mruby_header_handler = pmilter_mrb_code_from_file(pmilter->config->mruby_header_handler_path);
 
-  if (pmilter->mruby_header_handler != NULL && pmilter->mrb != NULL) {
+  if (pmilter->mrb != NULL) {
     pmilter->cmd->header->key = headerf;
     pmilter->cmd->header->value = headerv;
+  }
+
+  if (pmilter->mruby_header_handler != NULL && pmilter->mrb != NULL) {
     ret = pmilter_state_compile(pmilter, pmilter->mruby_header_handler);
     if (ret == PMILTER_ERROR) {
       return SMFIS_TEMPFAIL;
@@ -467,9 +481,12 @@ sfsistat mrb_xxfi_eom(ctx) SMFICTX *ctx;
 
   pmilter->mruby_eom_handler = pmilter_mrb_code_from_file(pmilter->config->mruby_eom_handler_path);
 
-  if (pmilter->mruby_eom_handler != NULL && pmilter->mrb != NULL) {
+  if (pmilter->mrb != NULL) {
     time(&accept_time);
     pmilter->cmd->receive_time = accept_time;
+  }
+
+  if (pmilter->mruby_eom_handler != NULL && pmilter->mrb != NULL) {
     ret = pmilter_state_compile(pmilter, pmilter->mruby_eom_handler);
     if (ret == PMILTER_ERROR) {
       return SMFIS_TEMPFAIL;
