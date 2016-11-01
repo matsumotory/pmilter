@@ -42,7 +42,7 @@ mruby:
 
 #   run
 run:
-	./pmilter -p hoge.sock -c pmilter.conf
+	./pmilter -c pmilter.conf
 
 #   test
 test:

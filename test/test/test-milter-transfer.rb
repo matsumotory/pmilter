@@ -8,7 +8,7 @@ require "milter-transfer"
 
 class TestMilterTransfer < Test::Unit::TestCase
 
-  SPEC = "unix:../hoge.sock"
+  SPEC = "unix:../pmilter.sock"
 
   def setup
     @server = ::Milter::TestServer.new
