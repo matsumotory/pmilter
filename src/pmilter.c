@@ -640,11 +640,6 @@ char **argv;
   pmilter_config = pmilter_config_init();
   pmilter_config_parse(pmilter_config, toml_root);
 
-  pmilter_log_error(PMILTER_LOG_INFO, pmilter_config, "pmilter configuration\n=====");
-  toml_dump(toml_root, stdout);
-  pmilter_log_error(PMILTER_LOG_INFO, pmilter_config, "=====");
-  pmilter_log_error(PMILTER_LOG_INFO, pmilter_config, "pmilter %s", "starting");
-
   if (smfi_setconn(pmilter_config->listen) == MI_FAILURE) {
     pmilter_log_error(PMILTER_LOG_ERR, pmilter_config, "smfi_setconn failed: port or socket already exists?");
     exit(EX_SOFTWARE);
@@ -665,6 +660,8 @@ char **argv;
     pmilter_log_error(PMILTER_LOG_ERR, pmilter_config, "smfi_register failed\n");
     exit(EX_UNAVAILABLE);
   }
+
+  pmilter_log_error(PMILTER_LOG_NOTICE, pmilter_config, "pmilter %s", "starting");
 
   return smfi_main(pmilter_config);
 }

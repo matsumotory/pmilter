@@ -3,6 +3,56 @@
 #include "pmilter_log.h"
 #include <arpa/inet.h>
 #include <string.h>
+#include <time.h>
+
+static const char *MONTH[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
+
+static const char *DAY_OF_WEEK[] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
+
+static char *dig_memcpy(char *buf, int n, size_t len)
+{
+  char *p;
+
+  p = buf + len - 1;
+  do {
+    // dig to str
+    *p-- = (n % 10) + '0';
+    n /= 10;
+  } while (p >= buf);
+
+  return buf + len;
+}
+
+// Sat, 27 Dec 2014 08:30:29 GMT
+void pmilter_http_date_str(time_t *time, char *date)
+{
+  struct tm t;
+  char *p = date;
+
+  if (gmtime_r(time, &t) == NULL) {
+    return;
+  }
+
+  memcpy(p, DAY_OF_WEEK[t.tm_wday], 3);
+  p += 3;
+  *p++ = ',';
+  *p++ = ' ';
+  p = dig_memcpy(p, t.tm_mday, 2);
+  *p++ = ' ';
+  memcpy(p, MONTH[t.tm_mon], 3);
+  p += 3;
+  *p++ = ' ';
+  p = dig_memcpy(p, t.tm_year + 1900, 4);
+  *p++ = ' ';
+  p = dig_memcpy(p, t.tm_hour, 2);
+  *p++ = ':';
+  p = dig_memcpy(p, t.tm_min, 2);
+  *p++ = ':';
+  p = dig_memcpy(p, t.tm_sec, 2);
+  memcpy(p, " GMT", 4);
+  p += 4;
+  *p = '\0';
+}
 
 char *pmilter_ipaddrdup(pmilter_state *pmilter, const char *hostname, const _SOCK_ADDR *hostaddr)
 {
