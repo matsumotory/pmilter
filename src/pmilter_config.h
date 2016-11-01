@@ -23,4 +23,8 @@ int pmilter_config_get_log_level(struct toml_node *root);
 
 void pmilter_config_parse(pmilter_config *config, struct toml_node *root);
 
+void usage(char *prog);
+
+struct toml_node *pmilter_config_load(char *file, char **argv);
+
 #endif // _PMILTER_CONFIG_H_

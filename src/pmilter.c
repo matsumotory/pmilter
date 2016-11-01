@@ -612,26 +612,18 @@ struct smfiDesc smfilter = {
     mrb_xxfi_negotiate             /* Once, at the start of each SMTP connection */
 };
 
-static void usage(prog) char *prog;
-{
-  fprintf(stderr, "Usage: %s -p socket-addr -c config.toml [-t timeout]\n", prog);
-}
-
 int main(argc, argv) int argc;
 char **argv;
 {
   pmilter_config *pmilter_config;
   bool setconn = FALSE;
-  int c;
+  int c, i;
   const char *args = "c:p:t:h";
   extern char *optarg;
   struct toml_node *toml_root;
   char *file = NULL;
-  void *toml_content = NULL;
-  int fd, ret, toml_content_size = 0;
   struct stat st;
   int exit_code = EXIT_SUCCESS;
-  int i;
 
   /* Process command line options */
   while ((c = getopt(argc, argv, args)) != -1) {
@@ -686,52 +678,7 @@ char **argv;
     exit(EX_UNAVAILABLE);
   }
 
-  if (!file) {
-    fprintf(stderr, "%s: Missing required -c argument\n", argv[0]);
-    usage(argv[0]);
-    exit(EX_USAGE);
-  }
-
-  fd = open(file, O_RDONLY);
-  if (fd == -1) {
-    fprintf(stderr, "open: %s\n", strerror(errno));
-    exit(1);
-  }
-
-  ret = fstat(fd, &st);
-  if (ret == -1) {
-    fprintf(stderr, "stat: %s\n", strerror(errno));
-    exit(EXIT_FAILURE);
-  }
-
-  toml_content = mmap(NULL, st.st_size, PROT_READ, MAP_FILE | MAP_PRIVATE, fd, 0);
-  if (!toml_content) {
-    fprintf(stderr, "mmap: %s\n", strerror(errno));
-    exit(EXIT_FAILURE);
-  }
-
-  toml_content_size = st.st_size;
-
-  ret = toml_init(&toml_root);
-  if (ret == -1) {
-    fprintf(stderr, "toml_init: %s\n", strerror(errno));
-    exit(EXIT_FAILURE);
-  }
-
-  ret = toml_parse(toml_root, toml_content, toml_content_size);
-  if (ret) {
-    exit_code = EXIT_FAILURE;
-    goto bail;
-  }
-
-  ret = munmap(toml_content, toml_content_size);
-  if (ret) {
-    fprintf(stderr, "munmap: %s\n", strerror(errno));
-    exit_code = EXIT_FAILURE;
-    goto bail;
-  }
-
-  close(fd);
+  toml_root = pmilter_config_load(file, argv);
 
   /* pmilter config setup */
   pmilter_config = pmilter_config_init();

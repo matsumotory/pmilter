@@ -6,6 +6,7 @@
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <sysexits.h>
 #include <unistd.h>
 
 #include "libmilter/mfapi.h"
@@ -199,3 +200,65 @@ void pmilter_config_parse(pmilter_config *config, struct toml_node *root)
   PMILTER_GET_HANDLER_CONFIG_VALUE(root, node, config, unknown);
   PMILTER_GET_HANDLER_CONFIG_VALUE(root, node, config, data);
 }
+
+void usage(char *prog)
+{
+  fprintf(stderr, "Usage: %s -p socket-addr -c config.toml [-t timeout]\n", prog);
+}
+
+struct toml_node *pmilter_config_load(char *file, char **argv)
+{
+  struct stat st;
+  struct toml_node *toml_root;
+  void *toml_content = NULL;
+  int fd, ret, toml_content_size = 0;
+
+  if (!file) {
+    fprintf(stderr, "%s: Missing required -c argument\n", argv[0]);
+    usage(argv[0]);
+    exit(EX_USAGE);
+  }
+
+  fd = open(file, O_RDONLY);
+  if (fd == -1) {
+    fprintf(stderr, "open: %s\n", strerror(errno));
+    exit(1);
+  }
+
+  ret = fstat(fd, &st);
+  if (ret == -1) {
+    fprintf(stderr, "stat: %s\n", strerror(errno));
+    exit(EXIT_FAILURE);
+  }
+
+  toml_content = mmap(NULL, st.st_size, PROT_READ, MAP_FILE | MAP_PRIVATE, fd, 0);
+  if (!toml_content) {
+    fprintf(stderr, "mmap: %s\n", strerror(errno));
+    exit(EXIT_FAILURE);
+  }
+
+  toml_content_size = st.st_size;
+
+  ret = toml_init(&toml_root);
+  if (ret == -1) {
+    fprintf(stderr, "toml_init: %s\n", strerror(errno));
+    exit(EXIT_FAILURE);
+  }
+
+  ret = toml_parse(toml_root, toml_content, toml_content_size);
+  if (ret) {
+    fprintf(stderr, "toml parse failed: %s\n", strerror(errno));
+    exit(EXIT_FAILURE);
+  }
+
+  ret = munmap(toml_content, toml_content_size);
+  if (ret) {
+    fprintf(stderr, "munmap: %s\n", strerror(errno));
+    exit(EXIT_FAILURE);
+  }
+
+  close(fd);
+
+  return toml_root;
+}
+
