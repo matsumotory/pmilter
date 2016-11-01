@@ -164,6 +164,7 @@ static pmilter_config *pmilter_config_init()
   }
 
   config->log_level = PMILTER_LOG_WARN;
+  config->enable_mruby_handler = 0;
 
   return config;
 }
@@ -223,12 +224,16 @@ static pmilter_mrb_shared_state *pmilter_mrb_create_conf(pmilter_config *config)
   pmilter->mruby_unknown_handler = PMILTER_CONF_UNSET;
   pmilter->mruby_data_handler = PMILTER_CONF_UNSET;
 
-  pmilter->mrb = mrb_open();
-  if (pmilter->mrb == NULL) {
-    return NULL;
-  }
+  if (config->enable_mruby_handler) {
+    pmilter->mrb = mrb_open();
+    if (pmilter->mrb == NULL) {
+      return NULL;
+    }
 
-  pmilter_mrb_class_init(pmilter->mrb);
+    pmilter_mrb_class_init(pmilter->mrb);
+  } else {
+    pmilter->mrb = NULL;
+  }
 
   return pmilter;
 }
@@ -364,7 +369,7 @@ _SOCK_ADDR *hostaddr;
   pmilter->cmd->connect_daemon = smfi_getsymval(ctx, "{daemon_name}");
   pmilter->mruby_connect_handler = pmilter_mrb_code_from_file(pmilter->config->mruby_connect_handler_path);
 
-  if (pmilter->mruby_connect_handler != NULL) {
+  if (pmilter->mruby_connect_handler != NULL && pmilter->mrb != NULL) {
     ret = pmilter_mrb_shared_state_compile(pmilter, pmilter->mruby_connect_handler);
     if (ret == PMILTER_ERROR) {
       return SMFIS_TEMPFAIL;
@@ -397,7 +402,7 @@ char *helohost;
 
   pmilter->mruby_helo_handler = pmilter_mrb_code_from_file(pmilter->config->mruby_helo_handler_path);
 
-  if (pmilter->mruby_helo_handler != NULL) {
+  if (pmilter->mruby_helo_handler != NULL && pmilter->mrb != NULL) {
     ret = pmilter_mrb_shared_state_compile(pmilter, pmilter->mruby_helo_handler);
     if (ret == PMILTER_ERROR) {
       return SMFIS_TEMPFAIL;
@@ -419,7 +424,7 @@ char **argv;
   pmilter->cmd->envelope_from = strdup(argv[0]);
   pmilter->mruby_envfrom_handler = pmilter_mrb_code_from_file(pmilter->config->mruby_envfrom_handler_path);
 
-  if (pmilter->mruby_envfrom_handler != NULL) {
+  if (pmilter->mruby_envfrom_handler != NULL && pmilter->mrb != NULL) {
     ret = pmilter_mrb_shared_state_compile(pmilter, pmilter->mruby_envfrom_handler);
     if (ret == PMILTER_ERROR) {
       return SMFIS_TEMPFAIL;
@@ -440,7 +445,7 @@ char **argv;
   pmilter->cmd->envelope_to = smfi_getsymval(ctx, "{rcpt_addr}");
   pmilter->mruby_envrcpt_handler = pmilter_mrb_code_from_file(pmilter->config->mruby_envrcpt_handler_path);
 
-  if (pmilter->mruby_envrcpt_handler != NULL) {
+  if (pmilter->mruby_envrcpt_handler != NULL && pmilter->mrb != NULL) {
     ret = pmilter_mrb_shared_state_compile(pmilter, pmilter->mruby_envrcpt_handler);
     if (ret == PMILTER_ERROR) {
       return SMFIS_TEMPFAIL;
@@ -463,7 +468,7 @@ unsigned char *headerv;
   pmilter->cmd->header->value = headerv;
   pmilter->mruby_header_handler = pmilter_mrb_code_from_file(pmilter->config->mruby_header_handler_path);
 
-  if (pmilter->mruby_header_handler != NULL) {
+  if (pmilter->mruby_header_handler != NULL && pmilter->mrb != NULL) {
     ret = pmilter_mrb_shared_state_compile(pmilter, pmilter->mruby_header_handler);
     if (ret == PMILTER_ERROR) {
       return SMFIS_TEMPFAIL;
@@ -484,7 +489,7 @@ sfsistat mrb_xxfi_eoh(ctx) SMFICTX *ctx;
 
   pmilter->mruby_eoh_handler = pmilter_mrb_code_from_file(pmilter->config->mruby_eoh_handler_path);
 
-  if (pmilter->mruby_eoh_handler != NULL) {
+  if (pmilter->mruby_eoh_handler != NULL && pmilter->mrb != NULL) {
     ret = pmilter_mrb_shared_state_compile(pmilter, pmilter->mruby_eoh_handler);
     if (ret == PMILTER_ERROR) {
       return SMFIS_TEMPFAIL;
@@ -515,7 +520,7 @@ size_t bodylen;
 
   pmilter->mruby_body_handler = pmilter_mrb_code_from_file(pmilter->config->mruby_body_handler_path);
 
-  if (pmilter->mruby_body_handler != NULL) {
+  if (pmilter->mruby_body_handler != NULL && pmilter->mrb != NULL) {
     ret = pmilter_mrb_shared_state_compile(pmilter, pmilter->mruby_body_handler);
     if (ret == PMILTER_ERROR) {
       return SMFIS_TEMPFAIL;
@@ -545,7 +550,7 @@ sfsistat mrb_xxfi_eom(ctx) SMFICTX *ctx;
 
   pmilter->mruby_eom_handler = pmilter_mrb_code_from_file(pmilter->config->mruby_eom_handler_path);
 
-  if (pmilter->mruby_eom_handler != NULL) {
+  if (pmilter->mruby_eom_handler != NULL && pmilter->mrb != NULL) {
     ret = pmilter_mrb_shared_state_compile(pmilter, pmilter->mruby_eom_handler);
     if (ret == PMILTER_ERROR) {
       return SMFIS_TEMPFAIL;
@@ -566,7 +571,7 @@ sfsistat mrb_xxfi_abort(ctx) SMFICTX *ctx;
 
   pmilter->mruby_abort_handler = pmilter_mrb_code_from_file(pmilter->config->mruby_abort_handler_path);
 
-  if (pmilter->mruby_abort_handler != NULL) {
+  if (pmilter->mruby_abort_handler != NULL && pmilter->mrb != NULL) {
     ret = pmilter_mrb_shared_state_compile(pmilter, pmilter->mruby_abort_handler);
     if (ret == PMILTER_ERROR) {
       return SMFIS_TEMPFAIL;
@@ -598,7 +603,7 @@ sfsistat mrb_xxfi_close(ctx) SMFICTX *ctx;
 
   pmilter->mruby_close_handler = pmilter_mrb_code_from_file(pmilter->config->mruby_close_handler_path);
 
-  if (pmilter->mruby_close_handler != NULL) {
+  if (pmilter->mruby_close_handler != NULL && pmilter->mrb != NULL) {
     ret = pmilter_mrb_shared_state_compile(pmilter, pmilter->mruby_close_handler);
     if (ret == PMILTER_ERROR) {
       return SMFIS_TEMPFAIL;
@@ -631,7 +636,7 @@ char *scmd;
 
   pmilter->mruby_unknown_handler = pmilter_mrb_code_from_file(pmilter->config->mruby_unknown_handler_path);
 
-  if (pmilter->mruby_unknown_handler != NULL) {
+  if (pmilter->mruby_unknown_handler != NULL && pmilter->mrb != NULL) {
     ret = pmilter_mrb_shared_state_compile(pmilter, pmilter->mruby_unknown_handler);
     if (ret == PMILTER_ERROR) {
       return SMFIS_TEMPFAIL;
@@ -652,7 +657,7 @@ sfsistat mrb_xxfi_data(ctx) SMFICTX *ctx;
 
   pmilter->mruby_data_handler = pmilter_mrb_code_from_file(pmilter->config->mruby_data_handler_path);
 
-  if (pmilter->mruby_data_handler != NULL) {
+  if (pmilter->mruby_data_handler != NULL && pmilter->mrb != NULL) {
     ret = pmilter_mrb_shared_state_compile(pmilter, pmilter->mruby_data_handler);
     if (ret == PMILTER_ERROR) {
       return SMFIS_TEMPFAIL;
@@ -721,6 +726,22 @@ static struct toml_node *mrb_pmilter_config_init(const char *path)
 static void mrb_pmilter_config_free(struct toml_node *root)
 {
   toml_free(root);
+}
+
+static int pmilter_config_get_bool(pmilter_config *config, struct toml_node *root, char *key)
+{
+  struct toml_node *node = toml_get(root, key);
+
+  if (!toml_type(node) == TOML_BOOLEAN) {
+    pmilter_log_error(PMILTER_LOG_EMERG, config, "%s must be boolen type in config", key);
+    exit(1);
+  }
+
+  if (node->value.integer) {
+    return 1;
+  }
+
+  return 0;
 }
 
 static int pmilter_config_get_log_level(struct toml_node *root)
@@ -861,6 +882,7 @@ char **argv;
   /* pmilter config setup */
   pmilter_config = pmilter_config_init();
   pmilter_config->log_level = pmilter_config_get_log_level(toml_root);
+  pmilter_config->enable_mruby_handler = pmilter_config_get_bool(pmilter_config, toml_root, "server.mruby_handler");
 
   PMILTER_GET_HANDLER_CONFIG_VALUE(toml_root, node, pmilter_config, connect);
   PMILTER_GET_HANDLER_CONFIG_VALUE(toml_root, node, pmilter_config, helo);
