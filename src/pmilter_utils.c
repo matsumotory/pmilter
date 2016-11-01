@@ -1,3 +1,9 @@
+/*
+** pmilter - A Programmable Mail Filter
+**
+** See Copyright Notice in LICENSE
+*/
+
 #include "pmilter.h"
 #include "libmilter/mfdef.h"
 #include "pmilter_log.h"

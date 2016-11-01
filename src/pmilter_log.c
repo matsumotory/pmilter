@@ -1,3 +1,9 @@
+/*
+** pmilter - A Programmable Mail Filter
+**
+** See Copyright Notice in LICENSE
+*/
+
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>

@@ -1,3 +1,9 @@
+/*
+** pmilter - A Programmable Mail Filter
+**
+** See Copyright Notice in LICENSE
+*/
+
 #ifndef _PMILTER_LOG_H_
 #define _PMILTER_LOG_H_
 
