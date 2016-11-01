@@ -1,3 +1,9 @@
+/*
+** pmilter - A Programmable Mail Filter
+**
+** See Copyright Notice in LICENSE
+*/
+
 #include <mruby.h>
 #include <mruby/compile.h>
 
