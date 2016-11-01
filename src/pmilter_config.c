@@ -213,6 +213,8 @@ void pmilter_config_parse(pmilter_config *config, struct toml_node *root)
   config->enable_mruby_handler = pmilter_config_get_bool(config, root, "server.mruby_handler");
   config->timeout = pmilter_config_get_integer(config, root, "server.timeout");
   config->listen = pmilter_config_get_string(config, root, "server.listen");
+  config->listen_backlog = pmilter_config_get_integer(config, root, "server.listen_backlog");
+  config->debug = pmilter_config_get_integer(config, root, "server.debug");
 
   PMILTER_GET_HANDLER_CONFIG_VALUE(root, node, config, connect);
   PMILTER_GET_HANDLER_CONFIG_VALUE(root, node, config, helo);

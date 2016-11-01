@@ -653,6 +653,14 @@ char **argv;
     pmilter_log_error(PMILTER_LOG_ERR, pmilter_config, "smfi_settimeout failed");
     exit(EX_SOFTWARE);
   }
+  if (smfi_setbacklog(pmilter_config->listen_backlog) == MI_FAILURE) {
+    pmilter_log_error(PMILTER_LOG_ERR, pmilter_config, "smfi_setbacklog failed");
+    exit(EX_SOFTWARE);
+  }
+  if (smfi_setdbg(pmilter_config->debug) == MI_FAILURE) {
+    pmilter_log_error(PMILTER_LOG_ERR, pmilter_config, "smfi_setdbg failed");
+    exit(EX_SOFTWARE);
+  }
   if (smfi_register(smfilter) == MI_FAILURE) {
     pmilter_log_error(PMILTER_LOG_ERR, pmilter_config, "smfi_register failed\n");
     exit(EX_UNAVAILABLE);
