@@ -21,6 +21,14 @@
 #include "pmilter.h"
 #include "pmilter_log.h"
 
+#define PMILTER_GET_HANDLER_CONFIG_VALUE(root, node, config, phase)                                                    \
+  node = toml_get(root, "handler.mruby_" #phase "_handler");                                                           \
+  if (node != NULL) {                                                                                                  \
+    config->mruby_##phase##_handler_path = node->value.string;                                                         \
+  } else {                                                                                                             \
+    config->mruby_##phase##_handler_path = NULL;                                                                       \
+  }
+
 pmilter_config *pmilter_config_init()
 {
   pmilter_config *config;
@@ -152,3 +160,25 @@ int pmilter_config_get_log_level(struct toml_node *root)
 
   return log_level;
 }
+
+void pmilter_config_parse(pmilter_config *config, struct toml_node *root)
+{
+  struct toml_node *node;
+
+  config->log_level = pmilter_config_get_log_level(root);
+  config->enable_mruby_handler = pmilter_config_get_bool(config, root, "server.mruby_handler");
+
+  PMILTER_GET_HANDLER_CONFIG_VALUE(root, node, config, connect);
+  PMILTER_GET_HANDLER_CONFIG_VALUE(root, node, config, helo);
+  PMILTER_GET_HANDLER_CONFIG_VALUE(root, node, config, envfrom);
+  PMILTER_GET_HANDLER_CONFIG_VALUE(root, node, config, envrcpt);
+  PMILTER_GET_HANDLER_CONFIG_VALUE(root, node, config, header);
+  PMILTER_GET_HANDLER_CONFIG_VALUE(root, node, config, eoh);
+  PMILTER_GET_HANDLER_CONFIG_VALUE(root, node, config, body);
+  PMILTER_GET_HANDLER_CONFIG_VALUE(root, node, config, eom);
+  PMILTER_GET_HANDLER_CONFIG_VALUE(root, node, config, abort);
+  PMILTER_GET_HANDLER_CONFIG_VALUE(root, node, config, close);
+  PMILTER_GET_HANDLER_CONFIG_VALUE(root, node, config, unknown);
+  PMILTER_GET_HANDLER_CONFIG_VALUE(root, node, config, data);
+}
+

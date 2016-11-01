@@ -626,7 +626,7 @@ char **argv;
   int c;
   const char *args = "c:p:t:h";
   extern char *optarg;
-  struct toml_node *toml_root, *node;
+  struct toml_node *toml_root;
   char *file = NULL;
   void *toml_content = NULL;
   int fd, ret, toml_content_size = 0;
@@ -687,31 +687,31 @@ char **argv;
     exit(EX_UNAVAILABLE);
   }
 
-  if (file) {
-    fd = open(file, O_RDONLY);
-    if (fd == -1) {
-      fprintf(stderr, "open: %s\n", strerror(errno));
-      exit(1);
-    }
-
-    ret = fstat(fd, &st);
-    if (ret == -1) {
-      fprintf(stderr, "stat: %s\n", strerror(errno));
-      exit(EXIT_FAILURE);
-    }
-
-    toml_content = mmap(NULL, st.st_size, PROT_READ, MAP_FILE | MAP_PRIVATE, fd, 0);
-    if (!toml_content) {
-      fprintf(stderr, "mmap: %s\n", strerror(errno));
-      exit(EXIT_FAILURE);
-    }
-
-    toml_content_size = st.st_size;
-  } else {
+  if (!file) {
     fprintf(stderr, "%s: Missing required -c argument\n", argv[0]);
     usage(argv[0]);
     exit(EX_USAGE);
   }
+
+  fd = open(file, O_RDONLY);
+  if (fd == -1) {
+    fprintf(stderr, "open: %s\n", strerror(errno));
+    exit(1);
+  }
+
+  ret = fstat(fd, &st);
+  if (ret == -1) {
+    fprintf(stderr, "stat: %s\n", strerror(errno));
+    exit(EXIT_FAILURE);
+  }
+
+  toml_content = mmap(NULL, st.st_size, PROT_READ, MAP_FILE | MAP_PRIVATE, fd, 0);
+  if (!toml_content) {
+    fprintf(stderr, "mmap: %s\n", strerror(errno));
+    exit(EXIT_FAILURE);
+  }
+
+  toml_content_size = st.st_size;
 
   ret = toml_init(&toml_root);
   if (ret == -1) {
@@ -725,39 +725,22 @@ char **argv;
     goto bail;
   }
 
-  if (file) {
-    ret = munmap(toml_content, toml_content_size);
-    if (ret) {
-      fprintf(stderr, "munmap: %s\n", strerror(errno));
-      exit_code = EXIT_FAILURE;
-      goto bail;
-    }
-
-    close(fd);
+  ret = munmap(toml_content, toml_content_size);
+  if (ret) {
+    fprintf(stderr, "munmap: %s\n", strerror(errno));
+    exit_code = EXIT_FAILURE;
+    goto bail;
   }
+
+  close(fd);
 
   /* pmilter config setup */
   pmilter_config = pmilter_config_init();
-  pmilter_config->log_level = pmilter_config_get_log_level(toml_root);
-  pmilter_config->enable_mruby_handler = pmilter_config_get_bool(pmilter_config, toml_root, "server.mruby_handler");
-
-  PMILTER_GET_HANDLER_CONFIG_VALUE(toml_root, node, pmilter_config, connect);
-  PMILTER_GET_HANDLER_CONFIG_VALUE(toml_root, node, pmilter_config, helo);
-  PMILTER_GET_HANDLER_CONFIG_VALUE(toml_root, node, pmilter_config, envfrom);
-  PMILTER_GET_HANDLER_CONFIG_VALUE(toml_root, node, pmilter_config, envrcpt);
-  PMILTER_GET_HANDLER_CONFIG_VALUE(toml_root, node, pmilter_config, header);
-  PMILTER_GET_HANDLER_CONFIG_VALUE(toml_root, node, pmilter_config, eoh);
-  PMILTER_GET_HANDLER_CONFIG_VALUE(toml_root, node, pmilter_config, body);
-  PMILTER_GET_HANDLER_CONFIG_VALUE(toml_root, node, pmilter_config, eom);
-  PMILTER_GET_HANDLER_CONFIG_VALUE(toml_root, node, pmilter_config, abort);
-  PMILTER_GET_HANDLER_CONFIG_VALUE(toml_root, node, pmilter_config, close);
-  PMILTER_GET_HANDLER_CONFIG_VALUE(toml_root, node, pmilter_config, unknown);
-  PMILTER_GET_HANDLER_CONFIG_VALUE(toml_root, node, pmilter_config, data);
+  pmilter_config_parse(pmilter_config, toml_root);
 
   pmilter_log_error(PMILTER_LOG_INFO, pmilter_config, "pmilter configuration\n=====");
   toml_dump(toml_root, stdout);
   pmilter_log_error(PMILTER_LOG_INFO, pmilter_config, "=====");
-
   pmilter_log_error(PMILTER_LOG_INFO, pmilter_config, "pmilter %s", "starting");
 
   return smfi_main(pmilter_config);

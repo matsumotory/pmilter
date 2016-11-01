@@ -5,14 +5,6 @@
 
 #include "pmilter.h"
 
-#define PMILTER_GET_HANDLER_CONFIG_VALUE(root, node, config, phase)                                                    \
-  node = toml_get(root, "handler.mruby_" #phase "_handler");                                                           \
-  if (node != NULL) {                                                                                                  \
-    config->mruby_##phase##_handler_path = node->value.string;                                                         \
-  } else {                                                                                                             \
-    config->mruby_##phase##_handler_path = NULL;                                                                       \
-  }
-
 pmilter_config *pmilter_config_init();
 
 void command_rec_free(command_rec *cmd);
@@ -28,5 +20,7 @@ void mrb_pmilter_config_free(struct toml_node *root);
 int pmilter_config_get_bool(pmilter_config *config, struct toml_node *root, char *key);
 
 int pmilter_config_get_log_level(struct toml_node *root);
+
+void pmilter_config_parse(pmilter_config *config, struct toml_node *root);
 
 #endif // _PMILTER_CONFIG_H_
