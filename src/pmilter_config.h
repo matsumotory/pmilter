@@ -9,9 +9,9 @@ pmilter_config *pmilter_config_init();
 
 void command_rec_free(command_rec *cmd);
 
-void pmilter_mrb_delete_conf(pmilter_mrb_shared_state *pmilter);
+void pmilter_mrb_delete_conf(pmilter_state *pmilter);
 
-pmilter_mrb_shared_state *pmilter_mrb_create_conf(pmilter_config *config);
+pmilter_state *pmilter_mrb_create_conf(pmilter_config *config);
 
 struct toml_node *mrb_pmilter_config_init(const char *path);
 

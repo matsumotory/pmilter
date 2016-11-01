@@ -14,7 +14,7 @@
 /* use libmilter object via mruby user data */
 static mrb_value pmilter_mrb_session_client_ipaddr(mrb_state *mrb, mrb_value self)
 {
-  pmilter_mrb_shared_state *pmilter = (pmilter_mrb_shared_state *)mrb->ud;
+  pmilter_state *pmilter = (pmilter_state *)mrb->ud;
 
   return mrb_str_new_cstr(mrb, pmilter->cmd->conn->ipaddr);
 }
@@ -22,7 +22,7 @@ static mrb_value pmilter_mrb_session_client_ipaddr(mrb_state *mrb, mrb_value sel
 /* use smfi_getsymval and ctx */
 static mrb_value pmilter_mrb_session_client_daemon(mrb_state *mrb, mrb_value self)
 {
-  pmilter_mrb_shared_state *pmilter = (pmilter_mrb_shared_state *)mrb->ud;
+  pmilter_state *pmilter = (pmilter_state *)mrb->ud;
 
   return mrb_str_new_cstr(mrb, smfi_getsymval(pmilter->ctx, "{daemon_name}"));
 }
@@ -30,7 +30,7 @@ static mrb_value pmilter_mrb_session_client_daemon(mrb_state *mrb, mrb_value sel
 /* mruby hooked pahse name */
 static mrb_value pmilter_mrb_session_phase_name(mrb_state *mrb, mrb_value self)
 {
-  pmilter_mrb_shared_state *pmilter = (pmilter_mrb_shared_state *)mrb->ud;
+  pmilter_state *pmilter = (pmilter_state *)mrb->ud;
 
   return mrb_str_new_cstr(mrb, pmilter->phase);
 }
@@ -38,28 +38,28 @@ static mrb_value pmilter_mrb_session_phase_name(mrb_state *mrb, mrb_value self)
 /* get value from command_rec */
 static mrb_value pmilter_mrb_session_envelope_from(mrb_state *mrb, mrb_value self)
 {
-  pmilter_mrb_shared_state *pmilter = (pmilter_mrb_shared_state *)mrb->ud;
+  pmilter_state *pmilter = (pmilter_state *)mrb->ud;
 
   return mrb_str_new_cstr(mrb, pmilter->cmd->envelope_from);
 }
 
 static mrb_value pmilter_mrb_session_envelope_to(mrb_state *mrb, mrb_value self)
 {
-  pmilter_mrb_shared_state *pmilter = (pmilter_mrb_shared_state *)mrb->ud;
+  pmilter_state *pmilter = (pmilter_state *)mrb->ud;
 
   return mrb_str_new_cstr(mrb, pmilter->cmd->envelope_to);
 }
 
 static mrb_value pmilter_mrb_session_receive_time(mrb_state *mrb, mrb_value self)
 {
-  pmilter_mrb_shared_state *pmilter = (pmilter_mrb_shared_state *)mrb->ud;
+  pmilter_state *pmilter = (pmilter_state *)mrb->ud;
 
   return mrb_fixnum_value(pmilter->cmd->receive_time);
 }
 
 static mrb_value pmilter_mrb_session_header(mrb_state *mrb, mrb_value self)
 {
-  pmilter_mrb_shared_state *pmilter = (pmilter_mrb_shared_state *)mrb->ud;
+  pmilter_state *pmilter = (pmilter_state *)mrb->ud;
   mrb_value hash = mrb_hash_new(mrb);
 
   mrb_hash_set(mrb, hash, mrb_str_new_cstr(mrb, pmilter->cmd->header->key),
@@ -70,7 +70,7 @@ static mrb_value pmilter_mrb_session_header(mrb_state *mrb, mrb_value self)
 
 static mrb_value pmilter_mrb_session_add_header(mrb_state *mrb, mrb_value self)
 {
-  pmilter_mrb_shared_state *pmilter = (pmilter_mrb_shared_state *)mrb->ud;
+  pmilter_state *pmilter = (pmilter_state *)mrb->ud;
   mrb_value key, val;
   int ret;
 

@@ -61,7 +61,7 @@ void command_rec_free(command_rec *cmd)
   free(cmd);
 }
 
-void pmilter_mrb_delete_conf(pmilter_mrb_shared_state *pmilter)
+void pmilter_mrb_delete_conf(pmilter_state *pmilter)
 {
 
   command_rec_free(pmilter->cmd);
@@ -75,12 +75,12 @@ void pmilter_mrb_delete_conf(pmilter_mrb_shared_state *pmilter)
   free(pmilter);
 }
 
-pmilter_mrb_shared_state *pmilter_mrb_create_conf(pmilter_config *config)
+pmilter_state *pmilter_mrb_create_conf(pmilter_config *config)
 {
-  pmilter_mrb_shared_state *pmilter;
+  pmilter_state *pmilter;
 
   /* need free */
-  pmilter = malloc(sizeof(pmilter_mrb_shared_state));
+  pmilter = malloc(sizeof(pmilter_state));
   if (pmilter == NULL) {
     return NULL;
   }

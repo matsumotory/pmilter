@@ -90,7 +90,7 @@ typedef struct pmilter_mrb_code_t {
 
 } pmilter_mrb_code;
 
-typedef struct pmilter_mrb_shared_state_t {
+typedef struct pmilter_state_t {
 
   mrb_state *mrb;
 
@@ -124,7 +124,7 @@ typedef struct pmilter_mrb_shared_state_t {
   pmilter_mrb_code *mruby_unknown_handler;
   pmilter_mrb_code *mruby_data_handler;
 
-} pmilter_mrb_shared_state;
+} pmilter_state;
 
 void pmilter_mrb_class_init(mrb_state *mrb);
 

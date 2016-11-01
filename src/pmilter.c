@@ -50,7 +50,7 @@ static void pmilter_mrb_raise_error(mrb_state *mrb, mrb_value obj)
   }
 }
 
-static void pmilter_mruby_cleanup(pmilter_mrb_shared_state *pmilter)
+static void pmilter_mruby_cleanup(pmilter_state *pmilter)
 {
   PMILTER_CODE_MRBC_CONTEXT_FREE(pmilter->mrb, pmilter->mruby_connect_handler);
 
@@ -98,7 +98,7 @@ static pmilter_mrb_code *pmilter_mrb_code_from_string(const char *code_string)
   return code;
 }
 
-static int pmilter_mrb_shared_state_compile(pmilter_mrb_shared_state *pmilter, pmilter_mrb_code *code)
+static int pmilter_state_compile(pmilter_state *pmilter, pmilter_mrb_code *code)
 {
   FILE *mrb_file;
   struct mrb_parser_state *p;
@@ -148,7 +148,7 @@ static int pmilter_mrb_shared_state_compile(pmilter_mrb_shared_state *pmilter, p
 
 /* pmilter mruby handlers */
 #define PMILTER_ADD_MRUBY_HADNLER(hook_phase)                                                                          \
-  static int pmilter_##hook_phase##_handler(pmilter_mrb_shared_state *pmilter)                                         \
+  static int pmilter_##hook_phase##_handler(pmilter_state *pmilter)                                         \
   {                                                                                                                    \
     mrb_state *mrb = pmilter->mrb;                                                                                     \
     mrb_int ai = mrb_gc_arena_save(mrb);                                                                               \
@@ -256,7 +256,7 @@ sfsistat mrb_xxfi_connect(ctx, hostname, hostaddr) SMFICTX *ctx;
 char *hostname;
 _SOCK_ADDR *hostaddr;
 {
-  pmilter_mrb_shared_state *pmilter;
+  pmilter_state *pmilter;
   pmilter_config *config = smfi_getpriv(ctx);
   int ret;
 
@@ -278,7 +278,7 @@ _SOCK_ADDR *hostaddr;
   pmilter->mruby_connect_handler = pmilter_mrb_code_from_file(pmilter->config->mruby_connect_handler_path);
 
   if (pmilter->mruby_connect_handler != NULL && pmilter->mrb != NULL) {
-    ret = pmilter_mrb_shared_state_compile(pmilter, pmilter->mruby_connect_handler);
+    ret = pmilter_state_compile(pmilter, pmilter->mruby_connect_handler);
     if (ret == PMILTER_ERROR) {
       return SMFIS_TEMPFAIL;
     }
@@ -295,7 +295,7 @@ _SOCK_ADDR *hostaddr;
 sfsistat mrb_xxfi_helo(ctx, helohost) SMFICTX *ctx;
 char *helohost;
 {
-  pmilter_mrb_shared_state *pmilter = smfi_getpriv(ctx);
+  pmilter_state *pmilter = smfi_getpriv(ctx);
   int ret;
 
   DEBUG_SMFI_HOOK(mrb_xxfi_helo);
@@ -311,7 +311,7 @@ char *helohost;
   pmilter->mruby_helo_handler = pmilter_mrb_code_from_file(pmilter->config->mruby_helo_handler_path);
 
   if (pmilter->mruby_helo_handler != NULL && pmilter->mrb != NULL) {
-    ret = pmilter_mrb_shared_state_compile(pmilter, pmilter->mruby_helo_handler);
+    ret = pmilter_state_compile(pmilter, pmilter->mruby_helo_handler);
     if (ret == PMILTER_ERROR) {
       return SMFIS_TEMPFAIL;
     }
@@ -325,7 +325,7 @@ char *helohost;
 sfsistat mrb_xxfi_envfrom(ctx, argv) SMFICTX *ctx;
 char **argv;
 {
-  pmilter_mrb_shared_state *pmilter = smfi_getpriv(ctx);
+  pmilter_state *pmilter = smfi_getpriv(ctx);
   int ret;
 
   /* need free */
@@ -333,7 +333,7 @@ char **argv;
   pmilter->mruby_envfrom_handler = pmilter_mrb_code_from_file(pmilter->config->mruby_envfrom_handler_path);
 
   if (pmilter->mruby_envfrom_handler != NULL && pmilter->mrb != NULL) {
-    ret = pmilter_mrb_shared_state_compile(pmilter, pmilter->mruby_envfrom_handler);
+    ret = pmilter_state_compile(pmilter, pmilter->mruby_envfrom_handler);
     if (ret == PMILTER_ERROR) {
       return SMFIS_TEMPFAIL;
     }
@@ -347,14 +347,14 @@ char **argv;
 sfsistat mrb_xxfi_envrcpt(ctx, argv) SMFICTX *ctx;
 char **argv;
 {
-  pmilter_mrb_shared_state *pmilter = smfi_getpriv(ctx);
+  pmilter_state *pmilter = smfi_getpriv(ctx);
   int ret;
 
   pmilter->cmd->envelope_to = smfi_getsymval(ctx, "{rcpt_addr}");
   pmilter->mruby_envrcpt_handler = pmilter_mrb_code_from_file(pmilter->config->mruby_envrcpt_handler_path);
 
   if (pmilter->mruby_envrcpt_handler != NULL && pmilter->mrb != NULL) {
-    ret = pmilter_mrb_shared_state_compile(pmilter, pmilter->mruby_envrcpt_handler);
+    ret = pmilter_state_compile(pmilter, pmilter->mruby_envrcpt_handler);
     if (ret == PMILTER_ERROR) {
       return SMFIS_TEMPFAIL;
     }
@@ -369,7 +369,7 @@ sfsistat mrb_xxfi_header(ctx, headerf, headerv) SMFICTX *ctx;
 char *headerf;
 unsigned char *headerv;
 {
-  pmilter_mrb_shared_state *pmilter = smfi_getpriv(ctx);
+  pmilter_state *pmilter = smfi_getpriv(ctx);
   int ret;
 
   pmilter->cmd->header->key = headerf;
@@ -377,7 +377,7 @@ unsigned char *headerv;
   pmilter->mruby_header_handler = pmilter_mrb_code_from_file(pmilter->config->mruby_header_handler_path);
 
   if (pmilter->mruby_header_handler != NULL && pmilter->mrb != NULL) {
-    ret = pmilter_mrb_shared_state_compile(pmilter, pmilter->mruby_header_handler);
+    ret = pmilter_state_compile(pmilter, pmilter->mruby_header_handler);
     if (ret == PMILTER_ERROR) {
       return SMFIS_TEMPFAIL;
     }
@@ -390,7 +390,7 @@ unsigned char *headerv;
 /* end of header */
 sfsistat mrb_xxfi_eoh(ctx) SMFICTX *ctx;
 {
-  pmilter_mrb_shared_state *pmilter = smfi_getpriv(ctx);
+  pmilter_state *pmilter = smfi_getpriv(ctx);
   int ret;
 
   DEBUG_SMFI_HOOK(mrb_xxfi_eoh);
@@ -398,7 +398,7 @@ sfsistat mrb_xxfi_eoh(ctx) SMFICTX *ctx;
   pmilter->mruby_eoh_handler = pmilter_mrb_code_from_file(pmilter->config->mruby_eoh_handler_path);
 
   if (pmilter->mruby_eoh_handler != NULL && pmilter->mrb != NULL) {
-    ret = pmilter_mrb_shared_state_compile(pmilter, pmilter->mruby_eoh_handler);
+    ret = pmilter_state_compile(pmilter, pmilter->mruby_eoh_handler);
     if (ret == PMILTER_ERROR) {
       return SMFIS_TEMPFAIL;
     }
@@ -413,7 +413,7 @@ sfsistat mrb_xxfi_body(ctx, bodyp, bodylen) SMFICTX *ctx;
 unsigned char *bodyp;
 size_t bodylen;
 {
-  pmilter_mrb_shared_state *pmilter = smfi_getpriv(ctx);
+  pmilter_state *pmilter = smfi_getpriv(ctx);
   int ret;
   char *body = malloc(bodylen);
 
@@ -429,7 +429,7 @@ size_t bodylen;
   pmilter->mruby_body_handler = pmilter_mrb_code_from_file(pmilter->config->mruby_body_handler_path);
 
   if (pmilter->mruby_body_handler != NULL && pmilter->mrb != NULL) {
-    ret = pmilter_mrb_shared_state_compile(pmilter, pmilter->mruby_body_handler);
+    ret = pmilter_state_compile(pmilter, pmilter->mruby_body_handler);
     if (ret == PMILTER_ERROR) {
       return SMFIS_TEMPFAIL;
     }
@@ -442,7 +442,7 @@ size_t bodylen;
 /* end of message */
 sfsistat mrb_xxfi_eom(ctx) SMFICTX *ctx;
 {
-  pmilter_mrb_shared_state *pmilter = smfi_getpriv(ctx);
+  pmilter_state *pmilter = smfi_getpriv(ctx);
   int ret;
   time_t accept_time;
   bool ok = TRUE;
@@ -459,7 +459,7 @@ sfsistat mrb_xxfi_eom(ctx) SMFICTX *ctx;
   pmilter->mruby_eom_handler = pmilter_mrb_code_from_file(pmilter->config->mruby_eom_handler_path);
 
   if (pmilter->mruby_eom_handler != NULL && pmilter->mrb != NULL) {
-    ret = pmilter_mrb_shared_state_compile(pmilter, pmilter->mruby_eom_handler);
+    ret = pmilter_state_compile(pmilter, pmilter->mruby_eom_handler);
     if (ret == PMILTER_ERROR) {
       return SMFIS_TEMPFAIL;
     }
@@ -472,7 +472,7 @@ sfsistat mrb_xxfi_eom(ctx) SMFICTX *ctx;
 /* message aborted */
 sfsistat mrb_xxfi_abort(ctx) SMFICTX *ctx;
 {
-  pmilter_mrb_shared_state *pmilter = smfi_getpriv(ctx);
+  pmilter_state *pmilter = smfi_getpriv(ctx);
   int ret;
 
   DEBUG_SMFI_HOOK(mrb_xxfi_abort);
@@ -480,7 +480,7 @@ sfsistat mrb_xxfi_abort(ctx) SMFICTX *ctx;
   pmilter->mruby_abort_handler = pmilter_mrb_code_from_file(pmilter->config->mruby_abort_handler_path);
 
   if (pmilter->mruby_abort_handler != NULL && pmilter->mrb != NULL) {
-    ret = pmilter_mrb_shared_state_compile(pmilter, pmilter->mruby_abort_handler);
+    ret = pmilter_state_compile(pmilter, pmilter->mruby_abort_handler);
     if (ret == PMILTER_ERROR) {
       return SMFIS_TEMPFAIL;
     }
@@ -494,7 +494,7 @@ sfsistat mrb_xxfi_abort(ctx) SMFICTX *ctx;
 sfsistat mrb_xxfi_cleanup(ctx, ok) SMFICTX *ctx;
 bool ok;
 {
-  pmilter_mrb_shared_state *pmilter = smfi_getpriv(ctx);
+  pmilter_state *pmilter = smfi_getpriv(ctx);
 
   DEBUG_SMFI_HOOK(mrb_xxfi_cleanup);
 
@@ -504,7 +504,7 @@ bool ok;
 /* connection cleanup */
 sfsistat mrb_xxfi_close(ctx) SMFICTX *ctx;
 {
-  pmilter_mrb_shared_state *pmilter = smfi_getpriv(ctx);
+  pmilter_state *pmilter = smfi_getpriv(ctx);
   int ret;
 
   DEBUG_SMFI_HOOK(mrb_xxfi_close);
@@ -512,7 +512,7 @@ sfsistat mrb_xxfi_close(ctx) SMFICTX *ctx;
   pmilter->mruby_close_handler = pmilter_mrb_code_from_file(pmilter->config->mruby_close_handler_path);
 
   if (pmilter->mruby_close_handler != NULL && pmilter->mrb != NULL) {
-    ret = pmilter_mrb_shared_state_compile(pmilter, pmilter->mruby_close_handler);
+    ret = pmilter_state_compile(pmilter, pmilter->mruby_close_handler);
     if (ret == PMILTER_ERROR) {
       return SMFIS_TEMPFAIL;
     }
@@ -536,7 +536,7 @@ sfsistat mrb_xxfi_close(ctx) SMFICTX *ctx;
 sfsistat mrb_xxfi_unknown(ctx, scmd) SMFICTX *ctx;
 char *scmd;
 {
-  pmilter_mrb_shared_state *pmilter = smfi_getpriv(ctx);
+  pmilter_state *pmilter = smfi_getpriv(ctx);
   int ret;
 
   DEBUG_SMFI_HOOK(mrb_xxfi_unknown);
@@ -545,7 +545,7 @@ char *scmd;
   pmilter->mruby_unknown_handler = pmilter_mrb_code_from_file(pmilter->config->mruby_unknown_handler_path);
 
   if (pmilter->mruby_unknown_handler != NULL && pmilter->mrb != NULL) {
-    ret = pmilter_mrb_shared_state_compile(pmilter, pmilter->mruby_unknown_handler);
+    ret = pmilter_state_compile(pmilter, pmilter->mruby_unknown_handler);
     if (ret == PMILTER_ERROR) {
       return SMFIS_TEMPFAIL;
     }
@@ -558,7 +558,7 @@ char *scmd;
 /* DATA command */
 sfsistat mrb_xxfi_data(ctx) SMFICTX *ctx;
 {
-  pmilter_mrb_shared_state *pmilter = smfi_getpriv(ctx);
+  pmilter_state *pmilter = smfi_getpriv(ctx);
   int ret;
 
   DEBUG_SMFI_HOOK(mrb_xxfi_data);
@@ -566,7 +566,7 @@ sfsistat mrb_xxfi_data(ctx) SMFICTX *ctx;
   pmilter->mruby_data_handler = pmilter_mrb_code_from_file(pmilter->config->mruby_data_handler_path);
 
   if (pmilter->mruby_data_handler != NULL && pmilter->mrb != NULL) {
-    ret = pmilter_mrb_shared_state_compile(pmilter, pmilter->mruby_data_handler);
+    ret = pmilter_state_compile(pmilter, pmilter->mruby_data_handler);
     if (ret == PMILTER_ERROR) {
       return SMFIS_TEMPFAIL;
     }
@@ -587,7 +587,7 @@ unsigned long *pf1;
 unsigned long *pf2;
 unsigned long *pf3;
 {
-  pmilter_mrb_shared_state *pmilter = smfi_getpriv(ctx);
+  pmilter_state *pmilter = smfi_getpriv(ctx);
 
   DEBUG_SMFI_HOOK(mrb_xxfi_negotiate);
 
