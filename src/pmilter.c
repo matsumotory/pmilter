@@ -148,7 +148,7 @@ static int pmilter_state_compile(pmilter_state *pmilter, pmilter_mrb_code *code)
 
 /* pmilter mruby handlers */
 #define PMILTER_ADD_MRUBY_HADNLER(hook_phase)                                                                          \
-  static int pmilter_##hook_phase##_handler(pmilter_state *pmilter)                                         \
+  static int pmilter_##hook_phase##_handler(pmilter_state *pmilter)                                                    \
   {                                                                                                                    \
     mrb_state *mrb = pmilter->mrb;                                                                                     \
     mrb_int ai = mrb_gc_arena_save(mrb);                                                                               \

@@ -181,4 +181,3 @@ void pmilter_config_parse(pmilter_config *config, struct toml_node *root)
   PMILTER_GET_HANDLER_CONFIG_VALUE(root, node, config, unknown);
   PMILTER_GET_HANDLER_CONFIG_VALUE(root, node, config, data);
 }
-
