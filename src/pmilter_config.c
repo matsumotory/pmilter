@@ -50,12 +50,14 @@ void command_rec_free(command_rec *cmd)
   if (cmd->envelope_from != NULL) {
     free(cmd->envelope_from);
   }
+  if (cmd->helohost != NULL) {
+    free(cmd->helohost);
+  }
 
   /* connecntion_rec free */
   if (cmd->conn->ipaddr != NULL) {
     free(cmd->conn->ipaddr);
   }
-  /* connecntion_rec free */
   if (cmd->conn->hostname != NULL) {
     free(cmd->conn->hostname);
   }

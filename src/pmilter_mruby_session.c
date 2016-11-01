@@ -43,6 +43,13 @@ static mrb_value pmilter_mrb_session_phase_name(mrb_state *mrb, mrb_value self)
 }
 
 /* get value from command_rec */
+static mrb_value pmilter_mrb_session_helo_hostname(mrb_state *mrb, mrb_value self)
+{
+  pmilter_state *pmilter = (pmilter_state *)mrb->ud;
+
+  return mrb_str_new_cstr(mrb, pmilter->cmd->helohost);
+}
+
 static mrb_value pmilter_mrb_session_envelope_from(mrb_state *mrb, mrb_value self)
 {
   pmilter_state *pmilter = (pmilter_state *)mrb->ud;
@@ -93,10 +100,14 @@ void pmilter_mrb_session_class_init(mrb_state *mrb, struct RClass *class)
   struct RClass *class_session = mrb_define_class_under(mrb, class, "Session", mrb->object_class);
   struct RClass *class_headers = mrb_define_class_under(mrb, class_session, "Headers", mrb->object_class);
 
+  /* connect phase */
   mrb_define_method(mrb, class_session, "client_ipaddr", pmilter_mrb_session_client_ipaddr, MRB_ARGS_NONE());
   mrb_define_method(mrb, class_session, "client_hostname", pmilter_mrb_session_client_hostname, MRB_ARGS_NONE());
   mrb_define_method(mrb, class_session, "client_daemon", pmilter_mrb_session_client_daemon, MRB_ARGS_NONE());
   mrb_define_method(mrb, class_session, "handler_phase_name", pmilter_mrb_session_phase_name, MRB_ARGS_NONE());
+
+  /* helo phase */
+  mrb_define_method(mrb, class_session, "helo_hostname", pmilter_mrb_session_helo_hostname, MRB_ARGS_NONE());
 
   mrb_define_method(mrb, class_session, "envelope_from", pmilter_mrb_session_envelope_from, MRB_ARGS_NONE());
   mrb_define_method(mrb, class_session, "envelope_to", pmilter_mrb_session_envelope_to, MRB_ARGS_NONE());

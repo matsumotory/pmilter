@@ -50,6 +50,7 @@ typedef struct command_rec_t {
   char *connect_daemon;
   char *envelope_from;
   char *envelope_to;
+  char *helohost;
   int receive_time;
   smtp_header *header;
 

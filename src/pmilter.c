@@ -243,6 +243,7 @@ static command_rec *pmilter_command_init()
   cmd->conn->ipaddr = NULL;
   cmd->conn->hostname = NULL;
   cmd->connect_daemon = NULL;
+  cmd->helohost= NULL;
   cmd->envelope_from = NULL;
   cmd->envelope_to = NULL;
   cmd->receive_time = 0;
@@ -301,19 +302,10 @@ char *helohost;
   pmilter_state *pmilter = smfi_getpriv(ctx);
   int ret;
 
-  DEBUG_SMFI_HOOK(mrb_xxfi_helo);
-
-  DEBUG_SMFI_CHAR(helohost);
-
-  DEBUG_SMFI_SYMVAL(tls_version);
-  DEBUG_SMFI_SYMVAL(cipher);
-  DEBUG_SMFI_SYMVAL(cipher_bits);
-  DEBUG_SMFI_SYMVAL(cert_subject);
-  DEBUG_SMFI_SYMVAL(cert_issuer);
-
   pmilter->mruby_helo_handler = pmilter_mrb_code_from_file(pmilter->config->mruby_helo_handler_path);
 
   if (pmilter->mruby_helo_handler != NULL && pmilter->mrb != NULL) {
+    pmilter->cmd->helohost = strdup(helohost);
     ret = pmilter_state_compile(pmilter, pmilter->mruby_helo_handler);
     if (ret == PMILTER_ERROR) {
       return SMFIS_TEMPFAIL;
