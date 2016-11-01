@@ -1,12 +1,12 @@
-#include <stdio.h>
-#include <stdarg.h>
-#include <string.h>
 #include "pmilter_log.h"
+#include <stdarg.h>
+#include <stdio.h>
+#include <string.h>
 
 static const char *err_levels[] = {"emerg", "alert", "crit", "error", "warn", "notice", "info", "debug"};
 
 int pmilter_get_log_level(char *level_str)
-{ 
+{
   int i;
   int level = PMILTER_LOG_WARN;
 
@@ -14,7 +14,7 @@ int pmilter_get_log_level(char *level_str)
     if (strcmp(level_str, err_levels[i]) == 0) {
       level = i;
     }
-  } 
+  }
   return level;
 }
 
@@ -29,4 +29,3 @@ void pmilter_log_core_error(int level, const char *fmt, ...)
   fprintf(stderr, "\n");
   va_end(args);
 }
-

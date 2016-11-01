@@ -13,7 +13,6 @@
     config->mruby_##phase##_handler_path = NULL;                                                                       \
   }
 
-
 pmilter_config *pmilter_config_init();
 
 void command_rec_free(command_rec *cmd);

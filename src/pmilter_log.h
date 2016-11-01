@@ -12,7 +12,7 @@
 
 #define pmilter_log_error(level, config, fmt, ...)                                                                     \
   if ((config)->log_level >= level)                                                                                    \
-  pmilter_log_core_error(level, fmt, ##__VA_ARGS__)  
+  pmilter_log_core_error(level, fmt, ##__VA_ARGS__)
 
 int pmilter_get_log_level(char *level_str);
 void pmilter_log_core_error(int level, const char *fmt, ...);

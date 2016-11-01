@@ -59,7 +59,7 @@ typedef struct pmilter_config_t {
   int log_level;
 
   /* enable mruby handler functions */
-  int enable_mruby_handler:1;
+  int enable_mruby_handler : 1;
 
   const char *mruby_connect_handler_path;
   const char *mruby_helo_handler_path;
