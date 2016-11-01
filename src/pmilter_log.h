@@ -10,10 +10,11 @@
 #define PMILTER_LOG_INFO 6
 #define PMILTER_LOG_DEBUG 7
 
-const char *err_levels[] = {"emerg", "alert", "crit", "error", "warn", "notice", "info", "debug"};
-
 #define pmilter_log_error(level, config, fmt, ...)                                                                     \
   if ((config)->log_level >= level)                                                                                    \
-  fprintf(stderr, "[%s] " fmt "\n", err_levels[level], ##__VA_ARGS__)
+  pmilter_log_core_error(level, fmt, ##__VA_ARGS__)  
+
+int pmilter_get_log_level(char *level_str);
+void pmilter_log_core_error(int level, const char *fmt, ...);
 
 #endif /* _PMILTER_LOG_H_ */

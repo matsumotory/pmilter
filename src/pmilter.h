@@ -1,5 +1,5 @@
-#ifndef PMILTER_H
-#define PMILTER_H
+#ifndef _PMILTER_H_
+#define _PMILTER_H_
 
 #include "mruby.h"
 
@@ -128,4 +128,4 @@ typedef struct pmilter_mrb_shared_state_t {
 
 void pmilter_mrb_class_init(mrb_state *mrb);
 
-#endif // NGX_STREAM_MRUBY_INIT_H
+#endif // PMILTER_H

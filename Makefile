@@ -6,8 +6,11 @@ PMILTER_LIB_DIR=$(PMILTER_BUILD_DIR)/lib
 PMILTER_LIBS=-lmilter -lmruby -lpthread -ltoml -licuuc -licudata -lm
 PMILTER_CFLAGS=-g -O0
 PMILTER_BIN=pmilter
-PMILTER_SRC=src/pmilter.c \
+PMILTER_SRC=\
+src/pmilter.c \
 src/pmilter_init.c \
+src/pmilter_config.c \
+src/pmilter_log.c \
 src/pmilter_mruby_core.c \
 src/pmilter_mruby_session.c
 

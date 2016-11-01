@@ -24,6 +24,7 @@
 #include "mruby/string.h"
 
 #include "pmilter.h"
+#include "pmilter_config.h"
 #include "pmilter_log.h"
 
 #define PMILTER_CODE_MRBC_CONTEXT_FREE(mrb, code)                                                                      \
@@ -151,91 +152,6 @@ static int pmilter_mrb_shared_state_compile(pmilter_mrb_shared_state *pmilter, p
   }
 
   return PMILTER_OK;
-}
-
-static pmilter_config *pmilter_config_init()
-{
-  pmilter_config *config;
-
-  /* need free */
-  config = malloc(sizeof(pmilter_config));
-  if (config == NULL) {
-    return NULL;
-  }
-
-  config->log_level = PMILTER_LOG_WARN;
-  config->enable_mruby_handler = 0;
-
-  return config;
-}
-
-static void command_rec_free(command_rec *cmd)
-{
-  if (cmd->envelope_from != NULL) {
-    free(cmd->envelope_from);
-  }
-
-  /* connecntion_rec free */
-  if (cmd->conn->ipaddr != NULL) {
-    free(cmd->conn->ipaddr);
-  }
-  free(cmd->conn);
-  free(cmd->header);
-
-  free(cmd);
-}
-
-static void pmilter_mrb_delete_conf(pmilter_mrb_shared_state *pmilter)
-{
-
-  command_rec_free(pmilter->cmd);
-
-  if (pmilter->mruby_connect_handler != PMILTER_CONF_UNSET) {
-    free(pmilter->mruby_connect_handler);
-  }
-
-  mrb_close(pmilter->mrb);
-
-  free(pmilter);
-}
-
-static pmilter_mrb_shared_state *pmilter_mrb_create_conf(pmilter_config *config)
-{
-  pmilter_mrb_shared_state *pmilter;
-
-  /* need free */
-  pmilter = malloc(sizeof(pmilter_mrb_shared_state));
-  if (pmilter == NULL) {
-    return NULL;
-  }
-
-  pmilter->config = config;
-
-  pmilter->mruby_connect_handler = PMILTER_CONF_UNSET;
-  pmilter->mruby_helo_handler = PMILTER_CONF_UNSET;
-  pmilter->mruby_envfrom_handler = PMILTER_CONF_UNSET;
-  pmilter->mruby_envrcpt_handler = PMILTER_CONF_UNSET;
-  pmilter->mruby_header_handler = PMILTER_CONF_UNSET;
-  pmilter->mruby_eoh_handler = PMILTER_CONF_UNSET;
-  pmilter->mruby_body_handler = PMILTER_CONF_UNSET;
-  pmilter->mruby_eom_handler = PMILTER_CONF_UNSET;
-  pmilter->mruby_abort_handler = PMILTER_CONF_UNSET;
-  pmilter->mruby_close_handler = PMILTER_CONF_UNSET;
-  pmilter->mruby_unknown_handler = PMILTER_CONF_UNSET;
-  pmilter->mruby_data_handler = PMILTER_CONF_UNSET;
-
-  if (config->enable_mruby_handler) {
-    pmilter->mrb = mrb_open();
-    if (pmilter->mrb == NULL) {
-      return NULL;
-    }
-
-    pmilter_mrb_class_init(pmilter->mrb);
-  } else {
-    pmilter->mrb = NULL;
-  }
-
-  return pmilter;
 }
 
 /* pmilter mruby handlers */
@@ -708,57 +624,6 @@ struct smfiDesc smfilter = {
 static void usage(prog) char *prog;
 {
   fprintf(stderr, "Usage: %s -p socket-addr -c config.toml [-t timeout]\n", prog);
-}
-
-static struct toml_node *mrb_pmilter_config_init(const char *path)
-{
-  struct toml_node *root;
-  char *buf = "[foo]\nbar = 'fuga'\n";
-  size_t len = sizeof(buf);
-
-  /* TODO: file open */
-  toml_init(&root);
-  toml_parse(root, buf, len);
-
-  return root;
-}
-
-static void mrb_pmilter_config_free(struct toml_node *root)
-{
-  toml_free(root);
-}
-
-static int pmilter_config_get_bool(pmilter_config *config, struct toml_node *root, char *key)
-{
-  struct toml_node *node = toml_get(root, key);
-
-  if (!toml_type(node) == TOML_BOOLEAN) {
-    pmilter_log_error(PMILTER_LOG_EMERG, config, "%s must be boolen type in config", key);
-    exit(1);
-  }
-
-  if (node->value.integer) {
-    return 1;
-  }
-
-  return 0;
-}
-
-static int pmilter_config_get_log_level(struct toml_node *root)
-{
-  int i;
-  int log_level = PMILTER_LOG_WARN;
-  struct toml_node *node = toml_get(root, "server.log_level");
-
-  if (node != NULL) {
-    for (i = 0; i < sizeof(err_levels) / sizeof(const char *); i++) {
-      if (strcmp(node->value.string, err_levels[i]) == 0) {
-        log_level = i;
-      }
-    }
-  }
-
-  return log_level;
 }
 
 int main(argc, argv) int argc;
