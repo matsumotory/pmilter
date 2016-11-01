@@ -29,7 +29,7 @@ void pmilter_log_core_error(int level, const char *fmt, ...)
 
   time(&now);
   pmilter_http_date_str(&now, date);
-  
+
   va_start(args, fmt);
   /* TODO: add time stamp */
   fprintf(stderr, "[%s][%s]: ", date, err_levels[level]);

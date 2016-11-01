@@ -77,10 +77,13 @@ typedef struct pmilter_config_t {
   */
   char *listen;
 
-  /* Sets the incoming socket backlog used by listen(2). If smfi_setbacklog is not called, the operating system default is used. */
+  /* Sets the incoming socket backlog used by listen(2). If smfi_setbacklog is not called, the operating system default
+   * is used. */
   int listen_backlog;
 
-  /* smfi_setdbg sets the milter library's internal debugging level to a new level so that code details may be traced. A level of zero turns off debugging. The greater (more positive) the level the more detailed the debugging. Six is the current, highest, useful value. */
+  /* smfi_setdbg sets the milter library's internal debugging level to a new level so that code details may be traced. A
+   * level of zero turns off debugging. The greater (more positive) the level the more detailed the debugging. Six is
+   * the current, highest, useful value. */
   int debug;
 
   const char *mruby_connect_handler_path;
