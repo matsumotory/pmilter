@@ -33,14 +33,6 @@
     (code)->ctx = NULL;                                                                                                \
   }
 
-#define PMILTER_GET_HANDLER_CONFIG_VALUE(root, node, config, phase)                                                    \
-  node = toml_get(root, "handler.mruby_" #phase "_handler");                                                           \
-  if (node != NULL) {                                                                                                  \
-    config->mruby_##phase##_handler_path = node->value.string;                                                         \
-  } else {                                                                                                             \
-    config->mruby_##phase##_handler_path = NULL;                                                                       \
-  }
-
 extern sfsistat mrb_xxfi_cleanup(SMFICTX *, bool);
 static pthread_mutex_t table_mutex = PTHREAD_MUTEX_INITIALIZER;
 
