@@ -1,4 +1,3 @@
-#include <arpa/inet.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
@@ -26,6 +25,7 @@
 #include "pmilter.h"
 #include "pmilter_config.h"
 #include "pmilter_log.h"
+#include "pmilter_utils.h"
 
 #define PMILTER_CODE_MRBC_CONTEXT_FREE(mrb, code)                                                                      \
   if (code != PMILTER_CONF_UNSET && mrb && (code)->ctx) {                                                              \
@@ -185,36 +185,6 @@ PMILTER_ADD_MRUBY_HADNLER(close)
 PMILTER_ADD_MRUBY_HADNLER(unknown)
 PMILTER_ADD_MRUBY_HADNLER(data)
 
-/* other utils */
-static char *ipaddrdup(const char *hostname, const _SOCK_ADDR *hostaddr)
-{
-  char addr_buf[INET6_ADDRSTRLEN];
-
-  switch (hostaddr->sa_family) {
-  case AF_INET: {
-    struct sockaddr_in *sin = (struct sockaddr_in *)hostaddr;
-    if (NULL == inet_ntop(AF_INET, &(sin->sin_addr), addr_buf, INET_ADDRSTRLEN)) {
-      fprintf(stderr, "inet_ntop AF_INET4 failed\n");
-      return NULL;
-    }
-    break;
-  }
-  case AF_INET6: {
-    struct sockaddr_in6 *sin6 = (struct sockaddr_in6 *)hostaddr;
-    if (NULL == inet_ntop(AF_INET6, &(sin6->sin6_addr), addr_buf, INET6_ADDRSTRLEN)) {
-      fprintf(stderr, "inet_ntop AF_INET6 failed\n");
-      return NULL;
-    }
-    break;
-  }
-  default:
-    fprintf(stderr, "Unknown protocol: sa_familyr=%d\n", hostaddr->sa_family);
-    return NULL;
-  }
-
-  return strdup(addr_buf);
-}
-
 static command_rec *pmilter_command_init()
 {
   command_rec *cmd;
@@ -279,7 +249,7 @@ _SOCK_ADDR *hostaddr;
     pmilter->cmd->connect_daemon = smfi_getsymval(ctx, "{daemon_name}");
     pmilter->cmd->conn->hostaddr = hostaddr;
     pmilter->cmd->conn->hostname = strdup(hostname);
-    pmilter->cmd->conn->ipaddr = ipaddrdup(hostname, hostaddr);
+    pmilter->cmd->conn->ipaddr = pmilter_ipaddrdup(pmilter, hostname, hostaddr);
     if (pmilter->cmd->conn->ipaddr == NULL) {
       return SMFIS_TEMPFAIL;
     }
@@ -539,6 +509,7 @@ bool ok;
 sfsistat mrb_xxfi_close(ctx) SMFICTX *ctx;
 {
   pmilter_state *pmilter = smfi_getpriv(ctx);
+  pmilter_config *config = pmilter->config;
   int ret;
 
   pmilter_log_error(PMILTER_LOG_DEBUG, pmilter->config, "=== %s ===", __func__);
@@ -553,15 +524,10 @@ sfsistat mrb_xxfi_close(ctx) SMFICTX *ctx;
     pmilter_close_handler(pmilter);
   }
 
-  if (pmilter == NULL) {
-    smfi_setpriv(ctx, NULL);
-    return SMFIS_CONTINUE;
-  }
-
   if (pmilter->mrb != NULL) {
     pmilter_mrb_delete_conf(pmilter);
-    smfi_setpriv(ctx, NULL);
   }
+  smfi_setpriv(ctx, config);
 
   return SMFIS_CONTINUE;
 }
@@ -620,9 +586,9 @@ unsigned long *pf1;
 unsigned long *pf2;
 unsigned long *pf3;
 {
-  pmilter_state *pmilter = smfi_getpriv(ctx);
+  pmilter_config *config = smfi_getpriv(ctx);
 
-  pmilter_log_error(PMILTER_LOG_DEBUG, pmilter->config, "=== %s ===", __func__);
+  pmilter_log_error(PMILTER_LOG_DEBUG, config, "=== %s ===", __func__);
 
   return SMFIS_ALL_OPTS;
 }

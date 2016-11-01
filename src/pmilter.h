@@ -2,6 +2,7 @@
 #define _PMILTER_H_
 
 #include "mruby.h"
+#include "mruby/compile.h"
 
 #include "libmilter/mfapi.h"
 #include "libmilter/mfdef.h"

@@ -11,6 +11,7 @@ src/pmilter.c \
 src/pmilter_init.c \
 src/pmilter_config.c \
 src/pmilter_log.c \
+src/pmilter_utils.c \
 src/pmilter_mruby_core.c \
 src/pmilter_mruby_session.c
 
