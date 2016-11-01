@@ -25,18 +25,12 @@ class TestMilterTransfer < Test::Unit::TestCase
                          ["--mail-file", fixture_path("no-emergency.eml")],
                          ["--envelope-from", "from@example.com"],
                          ["--envelope-recipient", "to@example.com"])
+
+    puts result.to_hash
     assert_equal("pass", result.status)
     assert_recipients(["to@example.com"], result.envelope_recipients)
+    assert_equal([["From", "<from@example.com>"], ["To", "<to@example.com>"], ["Subject", "Hello"], ["+ X-Pmilter", "Enable"]], result.headers)
   end
-
-  #def test_emergency_mail
-  #  result = @server.run(["--connection-spec", SPEC],
-  #                       ["--mail-file", fixture_path("emergency.eml")],
-  #                       ["--envelope-from", "from@example.com"],
-  #                       ["--envelope-recipient", "to@example.com"])
-  #  assert_equal("pass", result.status)
-  #  assert_recipients(["to@example.com"], result.envelope_recipients)
-  #end
 
   private
 
