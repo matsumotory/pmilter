@@ -1,8 +1,8 @@
+#include "pmilter.h"
+#include "libmilter/mfdef.h"
+#include "pmilter_log.h"
 #include <arpa/inet.h>
 #include <string.h>
-#include "libmilter/mfdef.h"
-#include "pmilter.h"
-#include "pmilter_log.h"
 
 char *pmilter_ipaddrdup(pmilter_state *pmilter, const char *hostname, const _SOCK_ADDR *hostaddr)
 {

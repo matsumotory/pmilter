@@ -64,6 +64,19 @@ typedef struct pmilter_config_t {
   /* enable mruby handler functions */
   int enable_mruby_handler : 1;
 
+  /* Sets the number of seconds libmilter will wait for an MTA connection before timing out a socket. If smfi_settimeout
+   * is not called, a default timeout of 7210 seconds is used. */
+  int timeout;
+
+  /* Sets the socket through which the filter communicates with sendmail.
+  ** The address of the desired communication socket. The address should be a NULL-terminated string in "proto:address"
+  ** format:
+  ** {unix|local}:/path/to/file -- A named pipe.
+  ** inet:port@{hostname|ip-address} -- An IPV4 socket.
+  ** inet6:port@{hostname|ip-address} -- An IPV6 socket.
+  */
+  char *listen;
+
   const char *mruby_connect_handler_path;
   const char *mruby_helo_handler_path;
   const char *mruby_envfrom_handler_path;

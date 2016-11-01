@@ -213,7 +213,7 @@ static command_rec *pmilter_command_init()
   cmd->conn->ipaddr = NULL;
   cmd->conn->hostname = NULL;
   cmd->connect_daemon = NULL;
-  cmd->helohost= NULL;
+  cmd->helohost = NULL;
   cmd->envelope_from = NULL;
   cmd->envelope_to = NULL;
   cmd->receive_time = 0;
@@ -616,66 +616,22 @@ int main(argc, argv) int argc;
 char **argv;
 {
   pmilter_config *pmilter_config;
-  bool setconn = FALSE;
-  int c, i;
-  const char *args = "c:p:t:h";
+  const char *args = "c:h";
   extern char *optarg;
   struct toml_node *toml_root;
   char *file = NULL;
-  struct stat st;
-  int exit_code = EXIT_SUCCESS;
+  int c;
 
-  /* Process command line options */
   while ((c = getopt(argc, argv, args)) != -1) {
     switch (c) {
     case 'c':
       file = optarg;
-      break;
-
-    case 'p':
-      if (optarg == NULL || *optarg == '\0') {
-        (void)fprintf(stderr, "Illegal conn: %s\n", optarg);
-        exit(EX_USAGE);
-      }
-      if (smfi_setconn(optarg) == MI_FAILURE) {
-        (void)fprintf(stderr, "smfi_setconn failed: port or socket already exists?\n");
-        exit(EX_SOFTWARE);
-      }
-      /*
-       * **  If we're using a local socket, make sure it
-       * **  doesn't already exist.  Don't ever run this
-       * **  code as root!!
-       */
-      if (strncasecmp(optarg, "unix:", 5) == 0)
-        unlink(optarg + 5);
-      else if (strncasecmp(optarg, "local:", 6) == 0)
-        unlink(optarg + 6);
-      setconn = TRUE;
-      break;
-    case 't':
-      if (optarg == NULL || *optarg == '\0') {
-        (void)fprintf(stderr, "Illegal timeout: %s\n", optarg);
-        exit(EX_USAGE);
-      }
-      if (smfi_settimeout(atoi(optarg)) == MI_FAILURE) {
-        (void)fprintf(stderr, "smfi_settimeout failed\n");
-        exit(EX_SOFTWARE);
-      }
       break;
     case 'h':
     default:
       usage(argv[0]);
       exit(EX_USAGE);
     }
-  }
-  if (!setconn) {
-    fprintf(stderr, "%s: Missing required -p argument\n", argv[0]);
-    usage(argv[0]);
-    exit(EX_USAGE);
-  }
-  if (smfi_register(smfilter) == MI_FAILURE) {
-    fprintf(stderr, "smfi_register failed\n");
-    exit(EX_UNAVAILABLE);
   }
 
   toml_root = pmilter_config_load(file, argv);
@@ -689,10 +645,18 @@ char **argv;
   pmilter_log_error(PMILTER_LOG_INFO, pmilter_config, "=====");
   pmilter_log_error(PMILTER_LOG_INFO, pmilter_config, "pmilter %s", "starting");
 
+  if (smfi_setconn(pmilter_config->listen) == MI_FAILURE) {
+    pmilter_log_error(PMILTER_LOG_ERR, pmilter_config, "smfi_setconn failed: port or socket already exists?");
+    exit(EX_SOFTWARE);
+  }
+  if (smfi_settimeout(pmilter_config->timeout) == MI_FAILURE) {
+    pmilter_log_error(PMILTER_LOG_ERR, pmilter_config, "smfi_settimeout failed");
+    exit(EX_SOFTWARE);
+  }
+  if (smfi_register(smfilter) == MI_FAILURE) {
+    pmilter_log_error(PMILTER_LOG_ERR, pmilter_config, "smfi_register failed\n");
+    exit(EX_UNAVAILABLE);
+  }
+
   return smfi_main(pmilter_config);
-
-bail:
-  toml_free(toml_root);
-
-  exit(exit_code);
 }

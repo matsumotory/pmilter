@@ -68,7 +68,8 @@ void command_rec_free(command_rec *cmd)
   free(cmd);
 }
 
-#define pmilter_mruby_code_free(code) if (code != PMILTER_CONF_UNSET) \
+#define pmilter_mruby_code_free(code)                                                                                  \
+  if (code != PMILTER_CONF_UNSET)                                                                                      \
   free(code)
 
 void pmilter_mrb_delete_conf(pmilter_state *pmilter)
@@ -151,6 +152,30 @@ void mrb_pmilter_config_free(struct toml_node *root)
   toml_free(root);
 }
 
+int pmilter_config_get_integer(pmilter_config *config, struct toml_node *root, char *key)
+{
+  struct toml_node *node = toml_get(root, key);
+
+  if (!toml_type(node) == TOML_INT) {
+    pmilter_log_error(PMILTER_LOG_EMERG, config, "%s must be integer type in config", key);
+    exit(1);
+  }
+
+  return node->value.integer;
+}
+
+char *pmilter_config_get_string(pmilter_config *config, struct toml_node *root, char *key)
+{
+  struct toml_node *node = toml_get(root, key);
+
+  if (!toml_type(node) == TOML_STRING) {
+    pmilter_log_error(PMILTER_LOG_EMERG, config, "%s must be string type in config", key);
+    exit(1);
+  }
+
+  return node->value.string;
+}
+
 int pmilter_config_get_bool(pmilter_config *config, struct toml_node *root, char *key)
 {
   struct toml_node *node = toml_get(root, key);
@@ -186,6 +211,8 @@ void pmilter_config_parse(pmilter_config *config, struct toml_node *root)
 
   config->log_level = pmilter_config_get_log_level(root);
   config->enable_mruby_handler = pmilter_config_get_bool(config, root, "server.mruby_handler");
+  config->timeout = pmilter_config_get_integer(config, root, "server.timeout");
+  config->listen = pmilter_config_get_string(config, root, "server.listen");
 
   PMILTER_GET_HANDLER_CONFIG_VALUE(root, node, config, connect);
   PMILTER_GET_HANDLER_CONFIG_VALUE(root, node, config, helo);
@@ -261,4 +288,3 @@ struct toml_node *pmilter_config_load(char *file, char **argv)
 
   return toml_root;
 }
-
