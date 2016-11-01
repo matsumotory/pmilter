@@ -67,14 +67,26 @@ void command_rec_free(command_rec *cmd)
   free(cmd);
 }
 
+#define pmilter_mruby_code_free(code) if (code != PMILTER_CONF_UNSET) \
+  free(code)
+
 void pmilter_mrb_delete_conf(pmilter_state *pmilter)
 {
 
   command_rec_free(pmilter->cmd);
 
-  if (pmilter->mruby_connect_handler != PMILTER_CONF_UNSET) {
-    free(pmilter->mruby_connect_handler);
-  }
+  pmilter_mruby_code_free(pmilter->mruby_connect_handler);
+  pmilter_mruby_code_free(pmilter->mruby_helo_handler);
+  pmilter_mruby_code_free(pmilter->mruby_envfrom_handler);
+  pmilter_mruby_code_free(pmilter->mruby_envrcpt_handler);
+  pmilter_mruby_code_free(pmilter->mruby_header_handler);
+  pmilter_mruby_code_free(pmilter->mruby_eoh_handler);
+  pmilter_mruby_code_free(pmilter->mruby_body_handler);
+  pmilter_mruby_code_free(pmilter->mruby_eom_handler);
+  pmilter_mruby_code_free(pmilter->mruby_abort_handler);
+  pmilter_mruby_code_free(pmilter->mruby_close_handler);
+  pmilter_mruby_code_free(pmilter->mruby_unknown_handler);
+  pmilter_mruby_code_free(pmilter->mruby_data_handler);
 
   mrb_close(pmilter->mrb);
 

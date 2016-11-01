@@ -465,8 +465,12 @@ void command_rec_free_per_session(command_rec *cmd)
 {
   if (cmd->envelope_from != NULL) {
     free(cmd->envelope_from);
-    cmd->envelope_from = NULL;
   }
+  cmd->envelope_from = NULL;
+  cmd->envelope_to = NULL;
+  cmd->receive_time = 0;
+  cmd->header->key = NULL;
+  cmd->header->value = NULL;
 }
 
 /* end of message */
