@@ -240,6 +240,8 @@ static command_rec *pmilter_command_init()
   }
 
   cmd->conn = conn;
+  cmd->conn->ipaddr = NULL;
+  cmd->conn->hostname = NULL;
   cmd->connect_daemon = NULL;
   cmd->envelope_from = NULL;
   cmd->envelope_to = NULL;
@@ -269,6 +271,7 @@ _SOCK_ADDR *hostaddr;
 
   pmilter->cmd->conn->hostaddr = hostaddr;
   pmilter->cmd->conn->ipaddr = ipaddrdup(hostname, hostaddr);
+  pmilter->cmd->conn->hostname = strdup(hostname);
 
   if (pmilter->cmd->conn->ipaddr == NULL) {
     return SMFIS_TEMPFAIL;

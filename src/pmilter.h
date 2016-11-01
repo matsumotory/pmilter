@@ -31,6 +31,7 @@
 
 typedef struct connection_rec_t {
 
+  char *hostname;
   char *ipaddr;
   const _SOCK_ADDR *hostaddr;
 
