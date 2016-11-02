@@ -44,9 +44,13 @@ libmilter:
 	test -f $(PMILTER_BUILD_DIR)/lib/libmilter.a || (cd src/libmilter && make && make install)
 
 #    compile libtoml
-libtoml:
+libtoml: icu
 	test -f $(PMILTER_BUILD_DIR)/lib/libtoml.a || (cd src/libtoml && cmake -G "Unix Makefiles" . && make && \
 		cp libtoml.a $(PMILTER_BUILD_DIR)/lib/. && cp -r toml.h config.h ccan toml_private.h $(PMILTER_BUILD_DIR)/include/.)
+
+#   compile icu
+icu:
+	test -f $(PMILTER_BUILD_DIR)/lib/libicuuc.a || (cd src/icu/source && ./configure --disable-shared --enable-static --prefix=$(PMILTER_BUILD_DIR) && make && make install)
 
 #    compile mruby
 mruby:
@@ -69,9 +73,10 @@ subtree:
 
 #   clean
 clean:
-	-rm -rf pmilter test/vendor test/.bundle build/include build/lib
+	-rm -rf pmilter test/vendor test/.bundle build/include build/lib build/bin build/sbin build/share
 	cd src/libmilter && make clean
 	cd src/libtoml && make clean
 	cd src/mruby && make clean
+	cd src/icu/source && make clean
 
 .PHONY: test
