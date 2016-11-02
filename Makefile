@@ -55,7 +55,8 @@ icu:
 #    compile mruby
 mruby:
 	test -f $(PMILTER_BUILD_DIR)/lib/libmruby.a || (cd src/mruby && \
-		make && cp build/host/lib/libmruby.a $(PMILTER_BUILD_DIR)/lib/. && \
+		make && mkdir -p $(PMILTER_BUILD_DIR)/lib $(PMILTER_BUILD_DIR)/include && \
+    cp build/host/lib/libmruby.a $(PMILTER_BUILD_DIR)/lib/. && \
 		cp -r include/* $(PMILTER_BUILD_DIR)/include/.)
 
 
