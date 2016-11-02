@@ -1,4 +1,4 @@
-# Pmilter: Progammable Mail Filter using mruby
+# Pmilter: Progammable Mail Filter
 
 ## dependency (on ubuntu 16.04)
 
