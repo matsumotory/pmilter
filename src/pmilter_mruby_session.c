@@ -123,6 +123,41 @@ static mrb_value pmilter_mrb_session_auth_author(mrb_state *mrb, mrb_value self)
   return mrb_str_new_cstr(mrb, smfi_getsymval(pmilter->ctx, "{auth_author}"));
 }
 
+static mrb_value pmilter_mrb_session_cert_issuer(mrb_state *mrb, mrb_value self)
+{
+  pmilter_state *pmilter = (pmilter_state *)mrb->ud;
+
+  return mrb_str_new_cstr(mrb, smfi_getsymval(pmilter->ctx, "{cert_issuer}"));
+}
+
+static mrb_value pmilter_mrb_session_cert_subject(mrb_state *mrb, mrb_value self)
+{
+  pmilter_state *pmilter = (pmilter_state *)mrb->ud;
+
+  return mrb_str_new_cstr(mrb, smfi_getsymval(pmilter->ctx, "{cert_subject}"));
+}
+
+static mrb_value pmilter_mrb_session_cipher_bits(mrb_state *mrb, mrb_value self)
+{
+  pmilter_state *pmilter = (pmilter_state *)mrb->ud;
+
+  return mrb_str_new_cstr(mrb, smfi_getsymval(pmilter->ctx, "{cipher_bits}"));
+}
+
+static mrb_value pmilter_mrb_session_cipher(mrb_state *mrb, mrb_value self)
+{
+  pmilter_state *pmilter = (pmilter_state *)mrb->ud;
+
+  return mrb_str_new_cstr(mrb, smfi_getsymval(pmilter->ctx, "{cipher}"));
+}
+
+static mrb_value pmilter_mrb_session_tls_version(mrb_state *mrb, mrb_value self)
+{
+  pmilter_state *pmilter = (pmilter_state *)mrb->ud;
+
+  return mrb_str_new_cstr(mrb, smfi_getsymval(pmilter->ctx, "{tls_version}"));
+}
+
 void pmilter_mrb_session_class_init(mrb_state *mrb, struct RClass *class)
 {
   struct RClass *class_session = mrb_define_class_under(mrb, class, "Session", mrb->object_class);
@@ -149,6 +184,17 @@ void pmilter_mrb_session_class_init(mrb_state *mrb, struct RClass *class)
   /* SASL login sender */
   mrb_define_method(mrb, class_session, "auth_author", pmilter_mrb_session_auth_author, MRB_ARGS_NONE());
 
+  /* helo, mail, data, eom phase using TLS */
+  /* tls client cert issuserr */
+  mrb_define_method(mrb, class_session, "cert_issuer", pmilter_mrb_session_cert_issuer, MRB_ARGS_NONE());
+  /* tls client cert subject */
+  mrb_define_method(mrb, class_session, "cert_subject", pmilter_mrb_session_cert_subject, MRB_ARGS_NONE());
+  /* tls session key size */
+  mrb_define_method(mrb, class_session, "cipher_bits", pmilter_mrb_session_cipher_bits, MRB_ARGS_NONE());
+  /* tls encryp method*/
+  mrb_define_method(mrb, class_session, "cipher", pmilter_mrb_session_cipher, MRB_ARGS_NONE());
+  /* tls version */
+  mrb_define_method(mrb, class_session, "tls_version", pmilter_mrb_session_tls_version, MRB_ARGS_NONE());
 
   /* Pmilter::Session::Heaers */
   mrb_define_method(mrb, class_headers, "header", pmilter_mrb_session_header, MRB_ARGS_NONE());
