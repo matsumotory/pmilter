@@ -60,6 +60,8 @@ typedef struct command_rec_t {
   char *helohost;
   int receive_time;
   smtp_header *header;
+  unsigned char *body_chunk;
+  size_t body_chunk_len;
 
 } command_rec;
 
