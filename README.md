@@ -58,7 +58,7 @@ mruby_envrcpt_handler = "handler/rcpt_to.rb"
 ## header filter handler
 mruby_header_handler = "handler/example_header.rb"
 
-## end of header handler
+# end of header handler
 #mruby_eoh_handler = "/path/to/handler.rb"
 
 # body block filter handler
@@ -67,59 +67,88 @@ mruby_body_handler = "handler/body.rb"
 # end of message handler
 mruby_eom_handler = "handler/example_eom.rb"
 
-## message aborted handler
+# message aborted handler
 #mruby_abort_handler = "/path/to/handler.rb"
-#
-## connection cleanup handler
+
+# connection cleanup handler
 #mruby_close_handler = "/path/to/handler.rb"
-#
-## unknown SMTP commands handler
+
+# unknown SMTP commands handler
 #mruby_unknown_handler = "/path/to/handler.rb"
-#
+
 ## DATA command handler
 #mruby_data_handler = "/path/to/handler.rb"
 ```
 
 ### handler example
 
+- `handler/body.rb`
+
+```
+puts "body chunk; #{Pmilter::Session.new.body_chunk}"
+
+# Skip over rest of same callbacks
+# only once call body handler when return Pmilter::SMFIS_SKIP
+Pmilter.status = Pmilter::SMFIS_SKIP
+```
+- `handler/example_eom.rb`
+
 ```ruby
-handler/body.rb:puts "body chunk; #{Pmilter::Session.new.body_chunk}"
-handler/body.rb:
-handler/body.rb:# Skip over rest of same callbacks
-handler/body.rb:# only once call body handler when return Pmilter::SMFIS_SKIP
-handler/body.rb:Pmilter.status = Pmilter::SMFIS_SKIP
-handler/example_eom.rb:puts "myhostname: #{Pmilter::Session.new.myhostname}"
-handler/example_eom.rb:puts "message_id: #{Pmilter::Session.new.message_id}"
-handler/example_eom.rb:puts "reveive_time: #{Time.at Pmilter::Session.new.receive_time}"
-handler/example_eom.rb:puts "add_header(X-Pmilter:True): #{Pmilter::Session::Headers.new['X-Pmilter'] = 'Enable'}"
-handler/example_header.rb:puts "header: #{Pmilter::Session::Headers.new.header}"
-handler/example_helo.rb:puts "helo hostname: #{Pmilter::Session.new.helo_hostname}"
-handler/example_helo.rb:puts "tls client issuer: #{Pmilter::Session.new.cert_issuer}"
-handler/example_helo.rb:puts "tls client subject: #{Pmilter::Session.new.cert_subject}"
-handler/example_helo.rb:puts "tls session key size: #{Pmilter::Session.new.cipher_bits}"
-handler/example_helo.rb:puts "tls encrypt method: #{Pmilter::Session.new.cipher}"
-handler/example_helo.rb:puts "tls version: #{Pmilter::Session.new.tls_version}"
-handler/example_helo.rb:
-handler/example.rb:puts "hello pmilter handler called from #{Pmilter.name}"
-handler/example.rb:puts "client ipaddr #{Pmilter::Session.new.client_ipaddr}"
-handler/example.rb:puts "client hostname #{Pmilter::Session.new.client_hostname}"
-handler/example.rb:puts "client daemon #{Pmilter::Session.new.client_daemon}"
-handler/example.rb:puts "handler phase name: #{Pmilter::Session.new.handler_phase_name}"
-handler/mail_from.rb:puts "env from from args: #{Pmilter::Session.new.envelope_from}"
-handler/mail_from.rb:puts "env from from symval: #{Pmilter::Session.new.mail_addr}"
-handler/mail_from.rb:puts "SASL login name: #{Pmilter::Session.new.auth_authen}"
-handler/mail_from.rb:puts "SASL login sender: #{Pmilter::Session.new.auth_author}"
-handler/mail_from.rb:puts "SASL login type: #{Pmilter::Session.new.auth_type}"
-handler/mail_from.rb:
-handler/mail_from.rb:if Pmilter::Session.new.envelope_from == "<spam-from@example.com>"
-handler/mail_from.rb:  Pmilter.status = Pmilter::SMFIS_REJECT
-handler/mail_from.rb:end
-handler/rcpt_to.rb:puts "env to from arg: #{Pmilter::Session.new.envelope_to}"
-handler/rcpt_to.rb:puts "env to from symval: #{Pmilter::Session.new.rcpt_addr}"
+puts "myhostname: #{Pmilter::Session.new.myhostname}"
+puts "message_id: #{Pmilter::Session.new.message_id}"
+puts "reveive_time: #{Time.at Pmilter::Session.new.receive_time}"
+puts "add_header(X-Pmilter:True): #{Pmilter::Session::Headers.new['X-Pmilter'] = 'Enable'}"
 ```
 
+- `handler/example_header.rb`
 
-### pmilter output debug meesages
+```ruby
+puts "header: #{Pmilter::Session::Headers.new.header}"
+```
+
+- `handler/example_helo.rb`
+
+```ruby
+puts "helo hostname: #{Pmilter::Session.new.helo_hostname}"
+puts "tls client issuer: #{Pmilter::Session.new.cert_issuer}"
+puts "tls client subject: #{Pmilter::Session.new.cert_subject}"
+puts "tls session key size: #{Pmilter::Session.new.cipher_bits}"
+puts "tls encrypt method: #{Pmilter::Session.new.cipher}"
+puts "tls version: #{Pmilter::Session.new.tls_version}"
+```
+
+- `handler/example.rb`
+
+```ruby
+puts "hello pmilter handler called from #{Pmilter.name}"
+puts "client ipaddr #{Pmilter::Session.new.client_ipaddr}"
+puts "client hostname #{Pmilter::Session.new.client_hostname}"
+puts "client daemon #{Pmilter::Session.new.client_daemon}"
+puts "handler phase name: #{Pmilter::Session.new.handler_phase_name}"
+```
+
+- `handler/mail_from.rb`
+
+```ruby
+puts "env from from args: #{Pmilter::Session.new.envelope_from}"
+puts "env from from symval: #{Pmilter::Session.new.mail_addr}"
+puts "SASL login name: #{Pmilter::Session.new.auth_authen}"
+puts "SASL login sender: #{Pmilter::Session.new.auth_author}"
+puts "SASL login type: #{Pmilter::Session.new.auth_type}"
+
+if Pmilter::Session.new.envelope_from == "<spam-from@example.com>"
+  Pmilter.status = Pmilter::SMFIS_REJECT
+end
+```
+
+- `handler/rcpt_to.rb`
+
+```ruby
+puts "env to from arg: #{Pmilter::Session.new.envelope_to}"
+puts "env to from symval: #{Pmilter::Session.new.rcpt_addr}"
+```
+
+### pmilter example handler run
 
 - `make test` after `make run`
 
