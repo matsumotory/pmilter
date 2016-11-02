@@ -207,6 +207,30 @@ add_header(X-Pmilter:True): Enable
 smtpd_milters = unix:/pmilter/pmilter.sock
 ```
 
+## Benchmarks
+
+- don't use pmilter
+
+```
+ubuntu@ubuntu-xenial:~$ postal -t 1 -r 10000 -m 1 -M 1 127.0.0.1 mail.list
+time,messages,data(K),errors,connections,SSL connections
+17:39,83,119,0,84,0
+17:40,1245,1774,0,1245,0
+17:41,1288,1833,0,1288,0
+17:42,1298,1847,0,1298,0
+```
+
+- use pmilter and callback mruby handler 10 times
+
+```
+ubuntu@ubuntu-xenial:~$ postal -t 1 -r 10000 -m 1 -M 1 127.0.0.1 mail.list
+time,messages,data(K),errors,connections,SSL connections
+17:45,687,979,0,688,0
+17:46,1030,1467,0,1030,0
+17:47,1027,1462,0,1027,0
+17:48,1042,1483,0,1042,0
+```
+
 # License
 under the MIT License: see also LICENSE file
 
