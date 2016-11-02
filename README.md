@@ -1,6 +1,25 @@
 # Pmilter: Progammable Mail Filter
 
-## dependency (on ubuntu 16.04)
+## milter install and run
+
+```
+make mruby
+make
+```
+
+- run
+
+```
+make run
+```
+
+or
+
+```
+./pmilter -c pmilter.conf
+```
+
+### build dependency (for example on ubuntu 16.04)
 
 - build essential
 - automake
@@ -15,27 +34,20 @@
 - ruby (for mruby)
 - bison (for mruby)
 
-## milter install and run
-
-```
-make mruby
-make
-make run
-```
-
-## milter test after `make run`
+### milter test after `make run`
 
 ```
 make test
 ```
 
-## pmilter.conf using toml
+## pmilter.conf and mruby handlers
+
+### pmilter.conf using toml
 
 ```toml
 [server]
 # hoge.sock or ipaddree:port
-#listen = "/var/spool/postfix/pmilter/pmilter.sock"
-listen = "pmilter.sock"
+listen = "/var/spool/postfix/pmilter/pmilter.sock"
 timeout = 7210
 log_level = "notice"
 mruby_handler = true
@@ -44,10 +56,10 @@ debug = 0
 
 [handler]
 # connection info filter handler
-mruby_connect_handler = "handler/example.rb"
+mruby_connect_handler = "handler/connect.rb"
 
 # SMTP HELO command filter handler
-mruby_helo_handler = "handler/example_helo.rb"
+mruby_helo_handler = "handler/helo.rb"
 
 # envelope sender filter handler
 mruby_envfrom_handler = "handler/mail_from.rb"
@@ -56,7 +68,7 @@ mruby_envfrom_handler = "handler/mail_from.rb"
 mruby_envrcpt_handler = "handler/rcpt_to.rb"
 
 ## header filter handler
-mruby_header_handler = "handler/example_header.rb"
+mruby_header_handler = "handler/header.rb"
 
 # end of header handler
 #mruby_eoh_handler = "/path/to/handler.rb"
@@ -65,7 +77,7 @@ mruby_header_handler = "handler/example_header.rb"
 mruby_body_handler = "handler/body.rb"
 
 # end of message handler
-mruby_eom_handler = "handler/example_eom.rb"
+mruby_eom_handler = "handler/eom.rb"
 
 # message aborted handler
 #mruby_abort_handler = "/path/to/handler.rb"
@@ -80,33 +92,19 @@ mruby_eom_handler = "handler/example_eom.rb"
 #mruby_data_handler = "/path/to/handler.rb"
 ```
 
-### handler example
+### mruby handler examples
 
-- `handler/body.rb`
-
-```
-puts "body chunk; #{Pmilter::Session.new.body_chunk}"
-
-# Skip over rest of same callbacks
-# only once call body handler when return Pmilter::SMFIS_SKIP
-Pmilter.status = Pmilter::SMFIS_SKIP
-```
-- `handler/example_eom.rb`
+- `handler/connect.rb`
 
 ```ruby
-puts "myhostname: #{Pmilter::Session.new.myhostname}"
-puts "message_id: #{Pmilter::Session.new.message_id}"
-puts "reveive_time: #{Time.at Pmilter::Session.new.receive_time}"
-puts "add_header(X-Pmilter:True): #{Pmilter::Session::Headers.new['X-Pmilter'] = 'Enable'}"
+puts "hello pmilter handler called from #{Pmilter.name}"
+puts "client ipaddr #{Pmilter::Session.new.client_ipaddr}"
+puts "client hostname #{Pmilter::Session.new.client_hostname}"
+puts "client daemon #{Pmilter::Session.new.client_daemon}"
+puts "handler phase name: #{Pmilter::Session.new.handler_phase_name}"
 ```
 
-- `handler/example_header.rb`
-
-```ruby
-puts "header: #{Pmilter::Session::Headers.new.header}"
-```
-
-- `handler/example_helo.rb`
+- `handler/helo.rb`
 
 ```ruby
 puts "helo hostname: #{Pmilter::Session.new.helo_hostname}"
@@ -115,16 +113,6 @@ puts "tls client subject: #{Pmilter::Session.new.cert_subject}"
 puts "tls session key size: #{Pmilter::Session.new.cipher_bits}"
 puts "tls encrypt method: #{Pmilter::Session.new.cipher}"
 puts "tls version: #{Pmilter::Session.new.tls_version}"
-```
-
-- `handler/example.rb`
-
-```ruby
-puts "hello pmilter handler called from #{Pmilter.name}"
-puts "client ipaddr #{Pmilter::Session.new.client_ipaddr}"
-puts "client hostname #{Pmilter::Session.new.client_hostname}"
-puts "client daemon #{Pmilter::Session.new.client_daemon}"
-puts "handler phase name: #{Pmilter::Session.new.handler_phase_name}"
 ```
 
 - `handler/mail_from.rb`
@@ -146,6 +134,31 @@ end
 ```ruby
 puts "env to from arg: #{Pmilter::Session.new.envelope_to}"
 puts "env to from symval: #{Pmilter::Session.new.rcpt_addr}"
+```
+
+- `handler/eom.rb`
+
+```ruby
+puts "myhostname: #{Pmilter::Session.new.myhostname}"
+puts "message_id: #{Pmilter::Session.new.message_id}"
+puts "reveive_time: #{Time.at Pmilter::Session.new.receive_time}"
+puts "add_header(X-Pmilter:True): #{Pmilter::Session::Headers.new['X-Pmilter'] = 'Enable'}"
+```
+
+- `handler/header.rb`
+
+```ruby
+puts "header: #{Pmilter::Session::Headers.new.header}"
+```
+
+- `handler/body.rb`
+
+```ruby
+puts "body chunk; #{Pmilter::Session.new.body_chunk}"
+
+# Skip over rest of same callbacks
+# only once call body handler when return Pmilter::SMFIS_SKIP
+Pmilter.status = Pmilter::SMFIS_SKIP
 ```
 
 ### pmilter example handler run
@@ -182,6 +195,16 @@ myhostname: mail.example.com
 message_id: message-id
 reveive_time: Wed Nov 02 21:02:15 2016
 add_header(X-Pmilter:True): Enable
+```
+
+## MTA like postfix configuration example
+
+- postfix main.cf
+
+```
+# postfix chroot on /var/spool/postfix
+# create pmilter.socket as /var/spool/postfix/pmilter/pmilter.sock
+smtpd_milters = unix:/pmilter/pmilter.sock
 ```
 
 # License
