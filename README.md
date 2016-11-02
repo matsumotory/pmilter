@@ -36,6 +36,19 @@ or
 - ruby (for mruby)
 - bison (for mruby)
 
+### run dependency
+
+very simple! :0
+
+```
+$ ldd pmilter
+        linux-vdso.so.1 =>  (0x00007ffc475ed000)
+        libpthread.so.0 => /lib/x86_64-linux-gnu/libpthread.so.0 (0x00007f5f81b95000)
+        libm.so.6 => /lib/x86_64-linux-gnu/libm.so.6 (0x00007f5f8188c000)
+        libc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x00007f5f814c2000)
+        /lib64/ld-linux-x86-64.so.2 (0x000055ef94336000)
+```
+
 ### milter test after `make run`
 
 ```
