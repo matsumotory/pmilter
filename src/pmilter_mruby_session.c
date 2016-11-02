@@ -101,6 +101,28 @@ static mrb_value pmilter_mrb_session_add_header(mrb_state *mrb, mrb_value self)
   return mrb_fixnum_value(ret);
 }
 
+/* SASL authentication */
+static mrb_value pmilter_mrb_session_auth_type(mrb_state *mrb, mrb_value self)
+{
+  pmilter_state *pmilter = (pmilter_state *)mrb->ud;
+
+  return mrb_str_new_cstr(mrb, smfi_getsymval(pmilter->ctx, "{auth_type}"));
+}
+
+static mrb_value pmilter_mrb_session_auth_authen(mrb_state *mrb, mrb_value self)
+{
+  pmilter_state *pmilter = (pmilter_state *)mrb->ud;
+
+  return mrb_str_new_cstr(mrb, smfi_getsymval(pmilter->ctx, "{auth_authen}"));
+}
+
+static mrb_value pmilter_mrb_session_auth_author(mrb_state *mrb, mrb_value self)
+{
+  pmilter_state *pmilter = (pmilter_state *)mrb->ud;
+
+  return mrb_str_new_cstr(mrb, smfi_getsymval(pmilter->ctx, "{auth_author}"));
+}
+
 void pmilter_mrb_session_class_init(mrb_state *mrb, struct RClass *class)
 {
   struct RClass *class_session = mrb_define_class_under(mrb, class, "Session", mrb->object_class);
@@ -118,6 +140,15 @@ void pmilter_mrb_session_class_init(mrb_state *mrb, struct RClass *class)
   mrb_define_method(mrb, class_session, "envelope_from", pmilter_mrb_session_envelope_from, MRB_ARGS_NONE());
   mrb_define_method(mrb, class_session, "envelope_to", pmilter_mrb_session_envelope_to, MRB_ARGS_NONE());
   mrb_define_method(mrb, class_session, "receive_time", pmilter_mrb_session_receive_time, MRB_ARGS_NONE());
+
+  /* mail, data, eom phase useing SASL auth */
+  /* SASL login method */
+  mrb_define_method(mrb, class_session, "auth_type", pmilter_mrb_session_auth_type, MRB_ARGS_NONE());
+  /* SASL login name */
+  mrb_define_method(mrb, class_session, "auth_authen", pmilter_mrb_session_auth_authen, MRB_ARGS_NONE());
+  /* SASL login sender */
+  mrb_define_method(mrb, class_session, "auth_author", pmilter_mrb_session_auth_author, MRB_ARGS_NONE());
+
 
   /* Pmilter::Session::Heaers */
   mrb_define_method(mrb, class_headers, "header", pmilter_mrb_session_header, MRB_ARGS_NONE());
