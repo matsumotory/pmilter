@@ -179,6 +179,20 @@ static mrb_value pmilter_mrb_session_message_id(mrb_state *mrb, mrb_value self)
   return mrb_str_new_cstr(mrb, smfi_getsymval(pmilter->ctx, "{i}"));
 }
 
+static mrb_value pmilter_mrb_session_mail_addr(mrb_state *mrb, mrb_value self)
+{
+  pmilter_state *pmilter = (pmilter_state *)mrb->ud;
+
+  return mrb_str_new_cstr(mrb, smfi_getsymval(pmilter->ctx, "{mail_addr}"));
+}
+
+static mrb_value pmilter_mrb_session_rcpt_addr(mrb_state *mrb, mrb_value self)
+{
+  pmilter_state *pmilter = (pmilter_state *)mrb->ud;
+
+  return mrb_str_new_cstr(mrb, smfi_getsymval(pmilter->ctx, "{rcpt_addr}"));
+}
+
 void pmilter_mrb_session_class_init(mrb_state *mrb, struct RClass *class)
 {
   struct RClass *class_session = mrb_define_class_under(mrb, class, "Session", mrb->object_class);
@@ -193,9 +207,17 @@ void pmilter_mrb_session_class_init(mrb_state *mrb, struct RClass *class)
   /* helo phase */
   mrb_define_method(mrb, class_session, "helo_hostname", pmilter_mrb_session_helo_hostname, MRB_ARGS_NONE());
 
+  /* sender address from callback args */
   mrb_define_method(mrb, class_session, "envelope_from", pmilter_mrb_session_envelope_from, MRB_ARGS_NONE());
+  /* reviever address from callback args */
   mrb_define_method(mrb, class_session, "envelope_to", pmilter_mrb_session_envelope_to, MRB_ARGS_NONE());
+
   mrb_define_method(mrb, class_session, "receive_time", pmilter_mrb_session_receive_time, MRB_ARGS_NONE());
+  
+  /* sender address from symval */
+  mrb_define_method(mrb, class_session, "mail_addr", pmilter_mrb_session_mail_addr, MRB_ARGS_NONE());
+  /* reciver address from symbal */
+  mrb_define_method(mrb, class_session, "rcpt_addr", pmilter_mrb_session_rcpt_addr, MRB_ARGS_NONE());
 
   /* data phase */
   mrb_define_method(mrb, class_session, "body_chunk", pmilter_mrb_session_body_chunk, MRB_ARGS_NONE());
