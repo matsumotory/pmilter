@@ -226,6 +226,8 @@ static command_rec *pmilter_command_init()
   cmd->header = header;
   cmd->header->key = NULL;
   cmd->header->value = NULL;
+  cmd->body_chunk = NULL;
+  cmd->body_chunk_len = 0;
 
   return cmd;
 }
@@ -418,21 +420,15 @@ size_t bodylen;
 {
   pmilter_state *pmilter = smfi_getpriv(ctx);
   int ret;
-  char *body = malloc(bodylen);
 
   pmilter->status = SMFIS_CONTINUE;
   pmilter_log_error(PMILTER_LOG_DEBUG, pmilter->config, "=== %s ===", __func__);
 
-  memcpy(body, bodyp, bodylen);
-  body[bodylen] = '\0';
-
-  DEBUG_SMFI_CHAR(body);
-
-  free(body);
-
   pmilter->mruby_body_handler = pmilter_mrb_code_from_file(pmilter->config->mruby_body_handler_path);
 
   if (pmilter->mruby_body_handler != NULL && pmilter->mrb != NULL) {
+    pmilter->cmd->body_chunk = bodyp;
+    pmilter->cmd->body_chunk_len = bodylen;
     ret = pmilter_state_compile(pmilter, pmilter->mruby_body_handler);
     if (ret == PMILTER_ERROR) {
       return SMFIS_TEMPFAIL;
