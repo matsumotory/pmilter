@@ -16,7 +16,7 @@ else
   include $(MRUBY_MAK_FILE)
 endif
 
-PMILTER_LIBS=-lmilter -lmruby -lpthread -ltoml -licuuc -licudata -lm $(MRUBY_LIBS)
+PMILTER_LIBS=-lmilter -lmruby -lpthread -ltoml -licuuc -licudata -lm $(MRUBY_LIBS) -lstdc++
 PMILTER_CFLAGS=-g -O0 -I$(PMILTER_INCLUDE_DIR)
 PMILTER_LDFLAGS=-L$(PMILTER_LIB_DIR) $(MRUBY_LDFLAGS)
 PMILTER_BIN=pmilter
@@ -50,7 +50,7 @@ libtoml: icu
 
 #   compile icu
 icu:
-	test -f $(PMILTER_BUILD_DIR)/lib/libicuuc.a || (cd src/icu/source && ./configure --disable-shared --enable-static --prefix=$(PMILTER_BUILD_DIR) && make && make install)
+	test -f $(PMILTER_BUILD_DIR)/lib/libicuuc.a || (cd src/icu/source && ./configure --enable-static --prefix=$(PMILTER_BUILD_DIR) && make && make install && rm $(PMILTER_BUILD_DIR)/lib/*.so.* $(PMILTER_BUILD_DIR)/lib/*.so)
 
 #    compile mruby
 mruby:
