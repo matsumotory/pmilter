@@ -675,7 +675,7 @@ char **argv;
     exit(EX_UNAVAILABLE);
   }
 
-  pmilter_log_error(PMILTER_LOG_NOTICE, pmilter_config, "pmilter %s", "starting");
+  pmilter_log_error(PMILTER_LOG_NOTICE, pmilter_config, "%s starting", PMILTER_DESCRIPTION);
 
   return smfi_main(pmilter_config);
 }
