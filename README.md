@@ -1,6 +1,6 @@
-# Pmilter: Programmable Mail Filter
+# Pmilter: Programmable Mail Filter Server
 
-Pmilter is a smple and programmable mail filter middle-ware. You can control smtp server like postfix or sendmail via some mruby scripts. Pmilter is one-binary. So you can deploy and setup environment very easily. Enjoy!!
+Pmilter is a smple and programmable mail filter server software. You can control smtp server like postfix or sendmail via some mruby scripts. Pmilter is one-binary. So you can deploy and setup environment very easily. Enjoy!!
 
 ## milter install and run
 
