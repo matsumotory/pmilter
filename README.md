@@ -19,6 +19,7 @@
 ## milter install and run
 
 ```
+make mruby
 make
 make run
 ```
