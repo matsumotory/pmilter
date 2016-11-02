@@ -241,6 +241,7 @@ _SOCK_ADDR *hostaddr;
   int ret;
 
   pmilter = pmilter_mrb_create_conf(config);
+  pmilter->status = SMFIS_CONTINUE;
   pmilter->ctx = ctx;
   pmilter->cmd = pmilter_command_init();
   if (pmilter->cmd == NULL) {
@@ -272,7 +273,7 @@ _SOCK_ADDR *hostaddr;
 
   smfi_setpriv(ctx, pmilter);
 
-  return SMFIS_CONTINUE;
+  return pmilter->status;
 }
 
 /* SMTP HELO command filter */
@@ -283,6 +284,7 @@ char *helohost;
   pmilter_state *pmilter = smfi_getpriv(ctx);
   int ret;
 
+  pmilter->status = SMFIS_CONTINUE;
   pmilter_log_error(PMILTER_LOG_DEBUG, pmilter->config, "=== %s ===", __func__);
 
   pmilter->mruby_helo_handler = pmilter_mrb_code_from_file(pmilter->config->mruby_helo_handler_path);
@@ -299,7 +301,7 @@ char *helohost;
     pmilter_helo_handler(pmilter);
   }
 
-  return SMFIS_CONTINUE;
+  return pmilter->status;
 }
 
 /* envelope sender filter */
@@ -310,6 +312,7 @@ char **argv;
   pmilter_state *pmilter = smfi_getpriv(ctx);
   int ret;
 
+  pmilter->status = SMFIS_CONTINUE;
   pmilter_log_error(PMILTER_LOG_DEBUG, pmilter->config, "=== %s ===", __func__);
 
   pmilter->mruby_envfrom_handler = pmilter_mrb_code_from_file(pmilter->config->mruby_envfrom_handler_path);
@@ -327,7 +330,7 @@ char **argv;
     pmilter_envfrom_handler(pmilter);
   }
 
-  return SMFIS_CONTINUE;
+  return pmilter->status;
 }
 
 /* envelope recipient filter */
@@ -337,6 +340,7 @@ char **argv;
   pmilter_state *pmilter = smfi_getpriv(ctx);
   int ret;
 
+  pmilter->status = SMFIS_CONTINUE;
   pmilter_log_error(PMILTER_LOG_DEBUG, pmilter->config, "=== %s ===", __func__);
 
   pmilter->mruby_envrcpt_handler = pmilter_mrb_code_from_file(pmilter->config->mruby_envrcpt_handler_path);
@@ -353,7 +357,7 @@ char **argv;
     pmilter_envrcpt_handler(pmilter);
   }
 
-  return SMFIS_CONTINUE;
+  return pmilter->status;
 }
 
 /* header filter */
@@ -364,6 +368,7 @@ unsigned char *headerv;
   pmilter_state *pmilter = smfi_getpriv(ctx);
   int ret;
 
+  pmilter->status = SMFIS_CONTINUE;
   pmilter_log_error(PMILTER_LOG_DEBUG, pmilter->config, "=== %s ===", __func__);
 
   pmilter->mruby_header_handler = pmilter_mrb_code_from_file(pmilter->config->mruby_header_handler_path);
@@ -381,7 +386,7 @@ unsigned char *headerv;
     pmilter_header_handler(pmilter);
   }
 
-  return SMFIS_CONTINUE;
+  return pmilter->status;
 }
 
 /* end of header */
@@ -390,6 +395,7 @@ sfsistat mrb_xxfi_eoh(ctx) SMFICTX *ctx;
   pmilter_state *pmilter = smfi_getpriv(ctx);
   int ret;
 
+  pmilter->status = SMFIS_CONTINUE;
   pmilter_log_error(PMILTER_LOG_DEBUG, pmilter->config, "=== %s ===", __func__);
 
   pmilter->mruby_eoh_handler = pmilter_mrb_code_from_file(pmilter->config->mruby_eoh_handler_path);
@@ -402,7 +408,7 @@ sfsistat mrb_xxfi_eoh(ctx) SMFICTX *ctx;
     pmilter_eoh_handler(pmilter);
   }
 
-  return SMFIS_CONTINUE;
+  return pmilter->status;
 }
 
 /* body block filter */
@@ -414,6 +420,7 @@ size_t bodylen;
   int ret;
   char *body = malloc(bodylen);
 
+  pmilter->status = SMFIS_CONTINUE;
   pmilter_log_error(PMILTER_LOG_DEBUG, pmilter->config, "=== %s ===", __func__);
 
   memcpy(body, bodyp, bodylen);
@@ -433,7 +440,7 @@ size_t bodylen;
     pmilter_body_handler(pmilter);
   }
 
-  return SMFIS_CONTINUE;
+  return pmilter->status;
 }
 
 /* free record without conenct and helo phase */
@@ -457,6 +464,7 @@ sfsistat mrb_xxfi_eom(ctx) SMFICTX *ctx;
   time_t accept_time;
   bool ok = TRUE;
 
+  pmilter->status = SMFIS_CONTINUE;
   pmilter_log_error(PMILTER_LOG_DEBUG, pmilter->config, "=== %s ===", __func__);
 
   pmilter->mruby_eom_handler = pmilter_mrb_code_from_file(pmilter->config->mruby_eom_handler_path);
@@ -475,7 +483,7 @@ sfsistat mrb_xxfi_eom(ctx) SMFICTX *ctx;
     command_rec_free_per_session(pmilter->cmd);
   }
 
-  return SMFIS_CONTINUE;
+  return pmilter->status;
 }
 
 /* message aborted */
@@ -484,6 +492,7 @@ sfsistat mrb_xxfi_abort(ctx) SMFICTX *ctx;
   pmilter_state *pmilter = smfi_getpriv(ctx);
   int ret;
 
+  pmilter->status = SMFIS_CONTINUE;
   pmilter_log_error(PMILTER_LOG_DEBUG, pmilter->config, "=== %s ===", __func__);
 
   pmilter->mruby_abort_handler = pmilter_mrb_code_from_file(pmilter->config->mruby_abort_handler_path);
@@ -507,7 +516,7 @@ bool ok;
 
   pmilter_log_error(PMILTER_LOG_DEBUG, pmilter->config, "=== %s ===", __func__);
 
-  return SMFIS_CONTINUE;
+  return pmilter->status;
 }
 
 /* connection cleanup */
@@ -518,6 +527,7 @@ sfsistat mrb_xxfi_close(ctx) SMFICTX *ctx;
   pmilter_config *config = pmilter->config;
   int ret;
 
+  pmilter->status = SMFIS_CONTINUE;
   pmilter_log_error(PMILTER_LOG_DEBUG, pmilter->config, "=== %s ===", __func__);
 
   pmilter->mruby_close_handler = pmilter_mrb_code_from_file(pmilter->config->mruby_close_handler_path);
@@ -535,7 +545,7 @@ sfsistat mrb_xxfi_close(ctx) SMFICTX *ctx;
   }
   smfi_setpriv(ctx, config);
 
-  return SMFIS_CONTINUE;
+  return pmilter->status;
 }
 
 /* Once, at the start of each SMTP connection */
@@ -545,6 +555,7 @@ char *scmd;
   pmilter_state *pmilter = smfi_getpriv(ctx);
   int ret;
 
+  pmilter->status = SMFIS_CONTINUE;
   pmilter_log_error(PMILTER_LOG_DEBUG, pmilter->config, "=== %s ===", __func__);
 
   pmilter->mruby_unknown_handler = pmilter_mrb_code_from_file(pmilter->config->mruby_unknown_handler_path);
@@ -557,7 +568,7 @@ char *scmd;
     pmilter_unknown_handler(pmilter);
   }
 
-  return SMFIS_CONTINUE;
+  return pmilter->status;
 }
 
 /* DATA command */
@@ -566,6 +577,7 @@ sfsistat mrb_xxfi_data(ctx) SMFICTX *ctx;
   pmilter_state *pmilter = smfi_getpriv(ctx);
   int ret;
 
+  pmilter->status = SMFIS_CONTINUE;
   pmilter_log_error(PMILTER_LOG_DEBUG, pmilter->config, "=== %s ===", __func__);
 
   pmilter->mruby_data_handler = pmilter_mrb_code_from_file(pmilter->config->mruby_data_handler_path);
@@ -578,7 +590,7 @@ sfsistat mrb_xxfi_data(ctx) SMFICTX *ctx;
     pmilter_data_handler(pmilter);
   }
 
-  return SMFIS_CONTINUE;
+  return pmilter->status;
 }
 
 /* Once, at the start of each SMTP connection */

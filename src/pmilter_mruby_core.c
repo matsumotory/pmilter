@@ -21,6 +21,18 @@ static mrb_value pmilter_mrb_get_name(mrb_state *mrb, mrb_value self)
   return mrb_str_new_lit(mrb, PMILTER_NAME);
 }
 
+static mrb_value pmilter_mrb_set_status(mrb_state *mrb, mrb_value self)
+{
+  pmilter_state *pmilter = mrb->ud;
+  mrb_int status;
+
+  mrb_get_args(mrb, "i", &status);
+
+  pmilter->status = status;
+
+  return mrb_fixnum_value(status);
+}
+
 #define PMILTER_DEFINE_CONST(val) mrb_define_const(mrb, class, #val, mrb_fixnum_value(val));
 
 void pmilter_mrb_core_class_init(mrb_state *mrb, struct RClass *class)
@@ -87,4 +99,5 @@ void pmilter_mrb_core_class_init(mrb_state *mrb, struct RClass *class)
   PMILTER_DEFINE_CONST(SMFIS_ALL_OPTS);
 
   mrb_define_class_method(mrb, class, "name", pmilter_mrb_get_name, MRB_ARGS_NONE());
+  mrb_define_class_method(mrb, class, "status=", pmilter_mrb_set_status, MRB_ARGS_REQ(1));
 }
