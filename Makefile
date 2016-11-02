@@ -3,8 +3,22 @@ PMILTER_ROOT=$(shell pwd)
 PMILTER_BUILD_DIR=$(PMILTER_ROOT)/build
 PMILTER_INCLUDE_DIR=$(PMILTER_BUILD_DIR)/include
 PMILTER_LIB_DIR=$(PMILTER_BUILD_DIR)/lib
-PMILTER_LIBS=-lmilter -lmruby -lpthread -ltoml -licuuc -licudata -lm
-PMILTER_CFLAGS=-g -O0
+PMILTER_BIN_DIR=$(PMILTER_BUILD_DIR)/bin
+
+#   suport mrbgems
+MRUBY_MAK_FILE := $(PMILTER_ROOT)/src/mruby/build/host/lib/libmruby.flags.mak
+ifeq ($(wildcard $(MRUBY_MAK_FILE)),)
+  MRUBY_CFLAGS =
+  MRUBY_LDFLAGS =
+  MRUBY_LIBS =
+  MRUBY_LDFLAGS_BEFORE_LIBS =
+else
+  include $(MRUBY_MAK_FILE)
+endif
+
+PMILTER_LIBS=-lmilter -lmruby -lpthread -ltoml -licuuc -licudata -lm $(MRUBY_LIBS)
+PMILTER_CFLAGS=-g -O0 -I$(PMILTER_INCLUDE_DIR)
+PMILTER_LDFLAGS=-L$(PMILTER_LIB_DIR) $(MRUBY_LDFLAGS)
 PMILTER_BIN=pmilter
 PMILTER_SRC=\
 src/pmilter.c \
@@ -20,7 +34,7 @@ all: pmilter-all
 
 #   compile binary
 pmilter-all: libmilter libtoml mruby
-	$(CC) $(PMILTER_CFLAGS) -I$(PMILTER_INCLUDE_DIR) -L$(PMILTER_LIB_DIR) $(PMILTER_SRC) -o $(PMILTER_BIN) $(PMILTER_LIBS)
+	$(CC) $(PMILTER_CFLAGS) $(PMILTER_LDFLAGS) $(PMILTER_SRC) $(MRUBY_LDFLAGS_BEFORE_LIBS) $(PMILTER_LIBS) -o $(PMILTER_BIN)
 
 #    compile libmilter
 libmilter:
@@ -39,6 +53,7 @@ mruby:
 	test -f $(PMILTER_BUILD_DIR)/lib/libmruby.a || (cd src/mruby && \
 		make && cp build/host/lib/libmruby.a $(PMILTER_BUILD_DIR)/lib/. && \
 		cp -r include/* $(PMILTER_BUILD_DIR)/include/.)
+
 
 #   run
 run:
