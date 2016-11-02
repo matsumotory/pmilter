@@ -158,6 +158,20 @@ static mrb_value pmilter_mrb_session_tls_version(mrb_state *mrb, mrb_value self)
   return mrb_str_new_cstr(mrb, smfi_getsymval(pmilter->ctx, "{tls_version}"));
 }
 
+static mrb_value pmilter_mrb_session_myhostname(mrb_state *mrb, mrb_value self)
+{
+  pmilter_state *pmilter = (pmilter_state *)mrb->ud;
+
+  return mrb_str_new_cstr(mrb, smfi_getsymval(pmilter->ctx, "{j}"));
+}
+
+static mrb_value pmilter_mrb_session_message_id(mrb_state *mrb, mrb_value self)
+{
+  pmilter_state *pmilter = (pmilter_state *)mrb->ud;
+
+  return mrb_str_new_cstr(mrb, smfi_getsymval(pmilter->ctx, "{i}"));
+}
+
 void pmilter_mrb_session_class_init(mrb_state *mrb, struct RClass *class)
 {
   struct RClass *class_session = mrb_define_class_under(mrb, class, "Session", mrb->object_class);
@@ -175,6 +189,12 @@ void pmilter_mrb_session_class_init(mrb_state *mrb, struct RClass *class)
   mrb_define_method(mrb, class_session, "envelope_from", pmilter_mrb_session_envelope_from, MRB_ARGS_NONE());
   mrb_define_method(mrb, class_session, "envelope_to", pmilter_mrb_session_envelope_to, MRB_ARGS_NONE());
   mrb_define_method(mrb, class_session, "receive_time", pmilter_mrb_session_receive_time, MRB_ARGS_NONE());
+
+  /* all phase */
+  mrb_define_method(mrb, class_session, "myhostname", pmilter_mrb_session_myhostname, MRB_ARGS_NONE());
+
+  /* data and eom message */
+  mrb_define_method(mrb, class_session, "message_id", pmilter_mrb_session_message_id, MRB_ARGS_NONE());
 
   /* mail, data, eom phase useing SASL auth */
   /* SASL login method */
