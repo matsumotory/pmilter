@@ -213,7 +213,7 @@ void pmilter_mrb_session_class_init(mrb_state *mrb, struct RClass *class)
   mrb_define_method(mrb, class_session, "envelope_to", pmilter_mrb_session_envelope_to, MRB_ARGS_NONE());
 
   mrb_define_method(mrb, class_session, "receive_time", pmilter_mrb_session_receive_time, MRB_ARGS_NONE());
-  
+
   /* sender address from symval */
   mrb_define_method(mrb, class_session, "mail_addr", pmilter_mrb_session_mail_addr, MRB_ARGS_NONE());
   /* reciver address from symbal */
