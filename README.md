@@ -50,6 +50,22 @@ $ ldd pmilter
         /lib64/ld-linux-x86-64.so.2 (0x000055ef94336000)
 ```
 
+### test dependency
+
+- ruby-milter-server
+- ruby-milter-client
+
+Thanks to [milter-manager](http://milter-manager.sourceforge.net/reference/ja/install-to.html)!!!
+
+- install example for ubuntu
+
+```
+sudo apt-get -y install software-properties-common
+sudo add-apt-repository -y ppa:milter-manager/ppa
+sudo apt-get update
+sudo apt-get -y install ruby-milter-server ruby-milter-client
+```
+
 ### milter test after `make run`
 
 ```
