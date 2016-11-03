@@ -9,7 +9,7 @@ before_install:
   - sudo apt-get -y install software-properties-common
   - sudo add-apt-repository -y ppa:milter-manager/ppa
   - sudo apt-get update
-  - sudo apt-get -V -y install milter-manager rake bison git gperf automake m4 autoreconf autoconf libtool cmake pkg-config libcunit1-dev ragel
+  - sudo apt-get -V -y install milter-manager rake bison git gperf automake m4  autoconf libtool cmake pkg-config libcunit1-dev ragel
 script:
   - make mruby
   - make
