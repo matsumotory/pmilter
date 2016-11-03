@@ -4,6 +4,8 @@ language: c
 compiler:
   - gcc
   - clang
+env:
+  - RUBYLIB=/usr/lib/ruby/vendor_ruby
 before_install:
   - sudo apt-get -y install software-properties-common
   - sudo add-apt-repository -y ppa:milter-manager/ppa
