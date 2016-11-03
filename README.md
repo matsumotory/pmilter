@@ -37,6 +37,13 @@ or
 - ruby (for mruby)
 - bison (for mruby)
 
+- install example for ubuntu
+
+```
+sudo apt-get -y install build-essential rake bison git gperf automake m4 \
+        autoconf libtool cmake pkg-config libcunit1-dev ragel
+```
+
 ### run dependency
 
 very simple! :0
@@ -48,6 +55,22 @@ $ ldd pmilter
         libm.so.6 => /lib/x86_64-linux-gnu/libm.so.6 (0x00007f5f8188c000)
         libc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x00007f5f814c2000)
         /lib64/ld-linux-x86-64.so.2 (0x000055ef94336000)
+```
+
+### test dependency
+
+- ruby-milter-server
+- ruby-milter-client
+
+Thanks to [milter-manager](http://milter-manager.sourceforge.net/reference/ja/install-to.html)!!!
+
+- install example for ubuntu
+
+```
+sudo apt-get -y install software-properties-common
+sudo add-apt-repository -y ppa:milter-manager/ppa
+sudo apt-get update
+sudo apt-get -y install ruby-milter-server ruby-milter-client
 ```
 
 ### milter test after `make run`
