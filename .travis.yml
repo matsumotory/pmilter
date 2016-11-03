@@ -27,6 +27,6 @@ compiler:
   - clang
 script:
   - make mruby
-  - make 
+  - make
   - make run &
   - make test
