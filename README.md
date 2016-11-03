@@ -37,6 +37,13 @@ or
 - ruby (for mruby)
 - bison (for mruby)
 
+- install example for ubuntu
+
+```
+sudo apt-get -y install build-essential rake bison git gperf automake m4 \
+        autoconf libtool cmake pkg-config libcunit1-dev ragel
+```
+
 ### run dependency
 
 very simple! :0
