@@ -3,6 +3,8 @@ sudo: false
 group: beta
 addons:
   apt:
+    sources:
+      - sourceline: 'ppa:milter-manager/ppa'
     packages:
       - rake
       - bison
@@ -17,6 +19,7 @@ addons:
       - pkg-config
       - libcunit1-dev
       - ragel
+      - milter-manager
 
 language: c
 compiler:
