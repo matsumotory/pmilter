@@ -1,0 +1,27 @@
+sudo: false
+addons:
+  apt:
+    packages:
+      - rake
+      - bison
+      - git
+      - gperf
+      - automake
+      - m4
+      - autoreconf
+      - autoconf
+      - libtool
+      - cmake
+      - pkg-config
+      - libcunit1-dev
+      - ragel
+
+language: c
+compiler:
+  - gcc
+  - clang
+script:
+  - make mruby
+  - make 
+  - make run &
+  - make test
