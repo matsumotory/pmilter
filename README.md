@@ -28,7 +28,6 @@ or
 - build essential
 - automake
 - m4
-- autoreconf
 - autoconf
 - libtool
 - cmake
