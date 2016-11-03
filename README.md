@@ -4,6 +4,8 @@ Pmilter is a simple and programmable mail filter server software. You can contro
 
 ## milter install and run
 
+- install
+
 ```
 make mruby
 make
