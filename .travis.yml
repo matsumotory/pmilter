@@ -16,4 +16,5 @@ script:
   - make mruby
   - make
   - make run &
-  - make test
+  # use system ruby gems
+  - sudo make test
