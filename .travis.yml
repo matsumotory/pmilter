@@ -1,6 +1,5 @@
 dist: trusty
-sudo: ture
-group: beta
+sudo: required
 language: c
 compiler:
   - gcc
@@ -9,7 +8,10 @@ before_install:
   - sudo apt-get -y install software-properties-common
   - sudo add-apt-repository -y ppa:milter-manager/ppa
   - sudo apt-get update
-  - sudo apt-get -V -y install milter-manager rake bison git gperf automake m4  autoconf libtool cmake pkg-config libcunit1-dev ragel
+  # for build
+  - sudo apt-get -y install rake bison git gperf automake m4  autoconf libtool cmake pkg-config libcunit1-dev ragel
+  # for test
+  - sudo apt-get -y install ruby-milter-server ruby-milter-client
 script:
   - make mruby
   - make
