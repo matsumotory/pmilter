@@ -5,7 +5,7 @@ compiler:
   - gcc
   - clang
 env:
-  - RUBYLIB=/usr/lib/ruby/vendor_ruby
+  - RUBYLIB=/usr/lib/ruby/vendor_ruby:/usr/lib/x86_64-linux-gnu/ruby/vendor_ruby/2.3.0
 before_install:
   - sudo apt-get -y install software-properties-common
   - sudo add-apt-repository -y ppa:milter-manager/ppa
