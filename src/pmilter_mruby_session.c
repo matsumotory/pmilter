@@ -193,10 +193,41 @@ static mrb_value pmilter_mrb_session_rcpt_addr(mrb_state *mrb, mrb_value self)
   return mrb_str_new_cstr(mrb, smfi_getsymval(pmilter->ctx, "{rcpt_addr}"));
 }
 
+static mrb_value pmilter_mrb_session_change_envelope_from(mrb_state *mrb, mrb_value self)
+{
+  pmilter_state *pmilter = (pmilter_state *)mrb->ud;
+  char *from, *esmpt_arg = NULL;
+  int ret;
+
+  mrb_get_args(mrb, "z|z", &from, &esmpt_arg);
+
+  ret = smfi_chgfrom(pmilter->ctx, from, esmpt_arg);
+
+  return mrb_fixnum_value(ret);
+}
+
+static mrb_value pmilter_mrb_session_add_rcpt_to(mrb_state *mrb, mrb_value self)
+{
+  pmilter_state *pmilter = (pmilter_state *)mrb->ud;
+  char *to, *esmpt_arg = NULL;
+  int ret;
+
+  mrb_get_args(mrb, "z|z", &to, &esmpt_arg);
+
+  ret = smfi_addrcpt_par(pmilter->ctx, to, esmpt_arg);
+
+  return mrb_fixnum_value(ret);
+}
+
 void pmilter_mrb_session_class_init(mrb_state *mrb, struct RClass *class)
 {
   struct RClass *class_session = mrb_define_class_under(mrb, class, "Session", mrb->object_class);
   struct RClass *class_headers = mrb_define_class_under(mrb, class_session, "Headers", mrb->object_class);
+
+  /* add or change envelope params */
+  mrb_define_method(mrb, class_session, "change_envelope_from", pmilter_mrb_session_change_envelope_from, MRB_ARGS_ANY());
+  mrb_define_method(mrb, class_session, "add_envelope_to", pmilter_mrb_session_add_rcpt_to, MRB_ARGS_ANY());
+  mrb_define_method(mrb, class_session, "add_rcpt_to", pmilter_mrb_session_add_rcpt_to, MRB_ARGS_ANY());
 
   /* connect phase */
   mrb_define_method(mrb, class_session, "client_ipaddr", pmilter_mrb_session_client_ipaddr, MRB_ARGS_NONE());
@@ -211,6 +242,7 @@ void pmilter_mrb_session_class_init(mrb_state *mrb, struct RClass *class)
   mrb_define_method(mrb, class_session, "envelope_from", pmilter_mrb_session_envelope_from, MRB_ARGS_NONE());
   /* reviever address from callback args */
   mrb_define_method(mrb, class_session, "envelope_to", pmilter_mrb_session_envelope_to, MRB_ARGS_NONE());
+  mrb_define_method(mrb, class_session, "rcpt_to", pmilter_mrb_session_envelope_to, MRB_ARGS_NONE());
 
   mrb_define_method(mrb, class_session, "receive_time", pmilter_mrb_session_receive_time, MRB_ARGS_NONE());
 
