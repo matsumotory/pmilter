@@ -37,24 +37,17 @@ or
 - ruby (for mruby)
 - bison (for mruby)
 
-- install example for ubuntu
+##### install example for ubuntu
 
 ```
 sudo apt-get -y install build-essential rake bison git gperf automake m4 \
         autoconf libtool cmake pkg-config libcunit1-dev ragel
 ```
-- install example for CentOS7
+
+##### install example for CentOS7
 
 ```
-yum install -y ruby \
-               gcc \
-               gcc-c++ \
-               make \
-               cmake \
-               autoconf \
-               automake \
-               libtool \
-               bison
+yum install -y ruby gcc cc-c++ make cmake autoconf automake libtool bison
 rpm -ivh ftp://ftp.pbone.net/mirror/ftp.sourceforge.net/pub/sourceforge/k/ke/kenzy/special/C7/x86_64/ragel-6.8-3.el7.centos.x86_64.rpm
 ```
 
