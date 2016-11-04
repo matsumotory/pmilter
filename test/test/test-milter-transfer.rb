@@ -42,6 +42,19 @@ class TestMilterTransfer < Test::Unit::TestCase
     assert_equal("reject", result.status)
   end
 
+  def test_change_add_envelope
+    result = @server.run(["--connection-spec", SPEC],
+                         ["--mail-file", fixture_path("no-emergency.eml")],
+                         ["--envelope-from", "change-from@example.com"],
+                         ["--envelope-recipient", "add-to@example.com"])
+
+    puts result.to_hash
+    assert_equal("pass", result.status)
+    assert_equal("<new-from@example.com>", result.envelope_from)
+    assert_recipients(["add-to@example.com", "new-to@example.com"], result.envelope_recipients)
+    assert_equal([["From", "<from@example.com>"], ["To", "<to@example.com>"], ["Subject", "Hello"], ["+ X-Pmilter", "Enable"]], result.headers)
+  end
+
   private
 
   def assert_recipients(expected, actual)
