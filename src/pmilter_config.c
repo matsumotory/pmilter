@@ -78,11 +78,8 @@ void command_rec_free(command_rec *cmd)
   if (code != PMILTER_CONF_UNSET)                                                                                      \
   free(code)
 
-void pmilter_mrb_delete_conf(pmilter_state *pmilter)
+static void pmilter_config_mruby_handler_free(pmilter_state *pmilter)
 {
-
-  command_rec_free(pmilter->cmd);
-
   pmilter_mruby_code_free(pmilter->mruby_connect_handler);
   pmilter_mruby_code_free(pmilter->mruby_helo_handler);
   pmilter_mruby_code_free(pmilter->mruby_envfrom_handler);
@@ -95,9 +92,30 @@ void pmilter_mrb_delete_conf(pmilter_state *pmilter)
   pmilter_mruby_code_free(pmilter->mruby_close_handler);
   pmilter_mruby_code_free(pmilter->mruby_unknown_handler);
   pmilter_mruby_code_free(pmilter->mruby_data_handler);
+}
 
+static void pmilter_config_mruby_handler_init(pmilter_state *pmilter)
+{
+  pmilter->mruby_connect_handler = PMILTER_CONF_UNSET;
+  pmilter->mruby_helo_handler = PMILTER_CONF_UNSET;
+  pmilter->mruby_envfrom_handler = PMILTER_CONF_UNSET;
+  pmilter->mruby_envrcpt_handler = PMILTER_CONF_UNSET;
+  pmilter->mruby_header_handler = PMILTER_CONF_UNSET;
+  pmilter->mruby_eoh_handler = PMILTER_CONF_UNSET;
+  pmilter->mruby_body_handler = PMILTER_CONF_UNSET;
+  pmilter->mruby_eom_handler = PMILTER_CONF_UNSET;
+  pmilter->mruby_abort_handler = PMILTER_CONF_UNSET;
+  pmilter->mruby_close_handler = PMILTER_CONF_UNSET;
+  pmilter->mruby_unknown_handler = PMILTER_CONF_UNSET;
+  pmilter->mruby_data_handler = PMILTER_CONF_UNSET;
+}
+
+void pmilter_mrb_delete_conf(pmilter_state *pmilter)
+{
+
+  command_rec_free(pmilter->cmd);
+  pmilter_config_mruby_handler_free(pmilter);
   mrb_close(pmilter->mrb);
-
   free(pmilter);
 }
 
@@ -112,19 +130,7 @@ pmilter_state *pmilter_mrb_create_conf(pmilter_config *config)
   }
 
   pmilter->config = config;
-
-  pmilter->mruby_connect_handler = PMILTER_CONF_UNSET;
-  pmilter->mruby_helo_handler = PMILTER_CONF_UNSET;
-  pmilter->mruby_envfrom_handler = PMILTER_CONF_UNSET;
-  pmilter->mruby_envrcpt_handler = PMILTER_CONF_UNSET;
-  pmilter->mruby_header_handler = PMILTER_CONF_UNSET;
-  pmilter->mruby_eoh_handler = PMILTER_CONF_UNSET;
-  pmilter->mruby_body_handler = PMILTER_CONF_UNSET;
-  pmilter->mruby_eom_handler = PMILTER_CONF_UNSET;
-  pmilter->mruby_abort_handler = PMILTER_CONF_UNSET;
-  pmilter->mruby_close_handler = PMILTER_CONF_UNSET;
-  pmilter->mruby_unknown_handler = PMILTER_CONF_UNSET;
-  pmilter->mruby_data_handler = PMILTER_CONF_UNSET;
+  pmilter_config_mruby_handler_init(pmilter);
 
   if (config->enable_mruby_handler) {
     pmilter->mrb = mrb_open();
@@ -211,17 +217,8 @@ int pmilter_config_get_log_level(struct toml_node *root)
   return log_level;
 }
 
-void pmilter_config_parse(pmilter_config *config, struct toml_node *root)
+static void pmilter_config_mruby_handler(pmilter_config *config, struct toml_node *root, struct toml_node *node)
 {
-  struct toml_node *node;
-
-  config->log_level = pmilter_config_get_log_level(root);
-  config->enable_mruby_handler = pmilter_config_get_bool(config, root, "server.mruby_handler");
-  config->timeout = pmilter_config_get_integer(config, root, "server.timeout");
-  config->listen = pmilter_config_get_string(config, root, "server.listen");
-  config->listen_backlog = pmilter_config_get_integer(config, root, "server.listen_backlog");
-  config->debug = pmilter_config_get_integer(config, root, "server.debug");
-
   PMILTER_GET_HANDLER_CONFIG_VALUE(root, node, config, connect);
   PMILTER_GET_HANDLER_CONFIG_VALUE(root, node, config, helo);
   PMILTER_GET_HANDLER_CONFIG_VALUE(root, node, config, envfrom);
@@ -234,6 +231,20 @@ void pmilter_config_parse(pmilter_config *config, struct toml_node *root)
   PMILTER_GET_HANDLER_CONFIG_VALUE(root, node, config, close);
   PMILTER_GET_HANDLER_CONFIG_VALUE(root, node, config, unknown);
   PMILTER_GET_HANDLER_CONFIG_VALUE(root, node, config, data);
+}
+
+void pmilter_config_parse(pmilter_config *config, struct toml_node *root)
+{
+  struct toml_node *node;
+
+  config->log_level = pmilter_config_get_log_level(root);
+  config->enable_mruby_handler = pmilter_config_get_bool(config, root, "server.mruby_handler");
+  config->timeout = pmilter_config_get_integer(config, root, "server.timeout");
+  config->listen = pmilter_config_get_string(config, root, "server.listen");
+  config->listen_backlog = pmilter_config_get_integer(config, root, "server.listen_backlog");
+  config->debug = pmilter_config_get_integer(config, root, "server.debug");
+
+  pmilter_config_mruby_handler(config, root, node);
 }
 
 void usage(char *prog)
