@@ -1,4 +1,4 @@
-# Pmilter: Programmable Mail Filter Server [![Build Status](https://travis-ci.org/matsumoto-r/pmilter.svg?branch=master)](https://travis-ci.org/matsumoto-r/pmilter)
+# Pmilter: Programmable Mail Filter Server [![Build Status](https://travis-ci.org/matsumotory/pmilter.svg?branch=master)](https://travis-ci.org/matsumotory/pmilter)
 
 Pmilter is a simple and programmable mail filter server software. You can control smtp server like postfix or sendmail via some mruby scripts. Pmilter is one-binary. So you can deploy and setup environment very easily. Enjoy!!
 
