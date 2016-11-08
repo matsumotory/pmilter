@@ -56,13 +56,6 @@ static void pmilter_mrb_raise_error(mrb_state *mrb, mrb_value obj)
   }
 }
 
-static void pmilter_mruby_cleanup(pmilter_state *pmilter)
-{
-  PMILTER_CODE_MRBC_CONTEXT_FREE(pmilter->mrb, pmilter->mruby_connect_handler);
-
-  mrb_close(pmilter->mrb);
-}
-
 static void pmilter_mrb_state_clean(mrb_state *mrb)
 {
   mrb->exc = 0;
@@ -167,11 +160,11 @@ static int pmilter_state_compile(pmilter_state *pmilter, pmilter_mrb_code *code)
                                                                                                                        \
     if (mrb->exc) {                                                                                                    \
       pmilter_mrb_raise_error(mrb, mrb_obj_value(mrb->exc));                                                           \
-      pmilter_mrb_state_clean(mrb);                                                                                    \
-      mrb_gc_arena_restore(mrb, ai);                                                                                   \
-      return PMILTER_ERROR;                                                                                            \
+      pmilter->status = SMFIS_TEMPFAIL;                                                                                \
     }                                                                                                                  \
                                                                                                                        \
+    PMILTER_CODE_MRBC_CONTEXT_FREE(mrb, pmilter->mruby_##hook_phase##_handler);                                        \
+    pmilter_mruby_code_free(pmilter->mruby_##hook_phase##_handler);                                                    \
     pmilter_mrb_state_clean(mrb);                                                                                      \
     mrb_gc_arena_restore(mrb, ai);                                                                                     \
                                                                                                                        \
@@ -270,7 +263,7 @@ _SOCK_ADDR *hostaddr;
       return SMFIS_TEMPFAIL;
     }
 
-    pmilter_connect_handler(pmilter);
+    pmilter->status = pmilter_connect_handler(pmilter);
   }
 
   smfi_setpriv(ctx, pmilter);
@@ -300,7 +293,7 @@ char *helohost;
     if (ret == PMILTER_ERROR) {
       return SMFIS_TEMPFAIL;
     }
-    pmilter_helo_handler(pmilter);
+    pmilter->status = pmilter_helo_handler(pmilter);
   }
 
   return pmilter->status;
@@ -329,7 +322,7 @@ char **argv;
     if (ret == PMILTER_ERROR) {
       return SMFIS_TEMPFAIL;
     }
-    pmilter_envfrom_handler(pmilter);
+    pmilter->status = pmilter_envfrom_handler(pmilter);
   }
 
   return pmilter->status;
@@ -356,7 +349,7 @@ char **argv;
     if (ret == PMILTER_ERROR) {
       return SMFIS_TEMPFAIL;
     }
-    pmilter_envrcpt_handler(pmilter);
+    pmilter->status = pmilter_envrcpt_handler(pmilter);
   }
 
   return pmilter->status;
@@ -385,7 +378,7 @@ unsigned char *headerv;
     if (ret == PMILTER_ERROR) {
       return SMFIS_TEMPFAIL;
     }
-    pmilter_header_handler(pmilter);
+    pmilter->status = pmilter_header_handler(pmilter);
   }
 
   return pmilter->status;
@@ -407,7 +400,7 @@ sfsistat mrb_xxfi_eoh(ctx) SMFICTX *ctx;
     if (ret == PMILTER_ERROR) {
       return SMFIS_TEMPFAIL;
     }
-    pmilter_eoh_handler(pmilter);
+    pmilter->status = pmilter_eoh_handler(pmilter);
   }
 
   return pmilter->status;
@@ -433,7 +426,7 @@ size_t bodylen;
     if (ret == PMILTER_ERROR) {
       return SMFIS_TEMPFAIL;
     }
-    pmilter_body_handler(pmilter);
+    pmilter->status = pmilter_body_handler(pmilter);
   }
 
   return pmilter->status;
@@ -475,7 +468,7 @@ sfsistat mrb_xxfi_eom(ctx) SMFICTX *ctx;
     if (ret == PMILTER_ERROR) {
       return SMFIS_TEMPFAIL;
     }
-    pmilter_eom_handler(pmilter);
+    pmilter->status = pmilter_eom_handler(pmilter);
     command_rec_free_per_session(pmilter->cmd);
   }
 
@@ -498,7 +491,7 @@ sfsistat mrb_xxfi_abort(ctx) SMFICTX *ctx;
     if (ret == PMILTER_ERROR) {
       return SMFIS_TEMPFAIL;
     }
-    pmilter_abort_handler(pmilter);
+    pmilter->status = pmilter_abort_handler(pmilter);
   }
 
   return mrb_xxfi_cleanup(ctx, FALSE);
@@ -533,7 +526,7 @@ sfsistat mrb_xxfi_close(ctx) SMFICTX *ctx;
     if (ret == PMILTER_ERROR) {
       return SMFIS_TEMPFAIL;
     }
-    pmilter_close_handler(pmilter);
+    pmilter->status = pmilter_close_handler(pmilter);
   }
 
   if (pmilter->mrb != NULL) {
@@ -561,7 +554,7 @@ char *scmd;
     if (ret == PMILTER_ERROR) {
       return SMFIS_TEMPFAIL;
     }
-    pmilter_unknown_handler(pmilter);
+    pmilter->status = pmilter_unknown_handler(pmilter);
   }
 
   return pmilter->status;
@@ -583,7 +576,7 @@ sfsistat mrb_xxfi_data(ctx) SMFICTX *ctx;
     if (ret == PMILTER_ERROR) {
       return SMFIS_TEMPFAIL;
     }
-    pmilter_data_handler(pmilter);
+    pmilter->status = pmilter_data_handler(pmilter);
   }
 
   return pmilter->status;
@@ -634,7 +627,7 @@ char **argv;
   extern char *optarg;
   struct toml_node *toml_root;
   char *file = NULL;
-  int c;
+  int c, smfi_status;
 
   while ((c = getopt(argc, argv, args)) != -1) {
     switch (c) {
@@ -677,5 +670,10 @@ char **argv;
 
   pmilter_log_error(PMILTER_LOG_NOTICE, pmilter_config, "%s starting", PMILTER_DESCRIPTION);
 
-  return smfi_main(pmilter_config);
+  smfi_status = smfi_main(pmilter_config);
+
+  toml_free(toml_root);
+  pmilter_config_free(pmilter_config);
+
+  return smfi_status;
 }

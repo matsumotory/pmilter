@@ -11,6 +11,13 @@
 
 #include "pmilter.h"
 
+#define pmilter_mruby_code_free(code)                                                                                  \
+  if (code != PMILTER_CONF_UNSET) {                                                                                    \
+    free(code);                                                                                                        \
+    code = PMILTER_CONF_UNSET;                                                                                         \
+  }
+
+void pmilter_config_free(pmilter_config *config);
 pmilter_config *pmilter_config_init();
 
 void command_rec_free(command_rec *cmd);

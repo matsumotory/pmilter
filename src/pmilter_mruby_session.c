@@ -225,7 +225,8 @@ void pmilter_mrb_session_class_init(mrb_state *mrb, struct RClass *class)
   struct RClass *class_headers = mrb_define_class_under(mrb, class_session, "Headers", mrb->object_class);
 
   /* add or change envelope params */
-  mrb_define_method(mrb, class_session, "change_envelope_from", pmilter_mrb_session_change_envelope_from, MRB_ARGS_ANY());
+  mrb_define_method(mrb, class_session, "change_envelope_from", pmilter_mrb_session_change_envelope_from,
+                    MRB_ARGS_ANY());
   mrb_define_method(mrb, class_session, "add_envelope_to", pmilter_mrb_session_add_rcpt_to, MRB_ARGS_ANY());
   mrb_define_method(mrb, class_session, "add_rcpt_to", pmilter_mrb_session_add_rcpt_to, MRB_ARGS_ANY());
 

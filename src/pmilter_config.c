@@ -26,6 +26,7 @@
 #include "mruby/string.h"
 
 #include "pmilter.h"
+#include "pmilter_config.h"
 #include "pmilter_log.h"
 
 #define PMILTER_GET_HANDLER_CONFIG_VALUE(root, node, config, phase)                                                    \
@@ -35,6 +36,13 @@
   } else {                                                                                                             \
     config->mruby_##phase##_handler_path = NULL;                                                                       \
   }
+
+void pmilter_config_free(pmilter_config *config)
+{
+  if (config != NULL) {
+    free(config);
+  }
+}
 
 pmilter_config *pmilter_config_init()
 {
@@ -73,10 +81,6 @@ void command_rec_free(command_rec *cmd)
 
   free(cmd);
 }
-
-#define pmilter_mruby_code_free(code)                                                                                  \
-  if (code != PMILTER_CONF_UNSET)                                                                                      \
-  free(code)
 
 static void pmilter_config_mruby_handler_free(pmilter_state *pmilter)
 {
