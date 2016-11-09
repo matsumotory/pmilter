@@ -17,27 +17,18 @@
     code = PMILTER_CONF_UNSET;                                                                                         \
   }
 
-void pmilter_config_free(pmilter_config *config);
 pmilter_config *pmilter_config_init();
-
-void command_rec_free(command_rec *cmd);
-
-void pmilter_mrb_delete_conf(pmilter_state *pmilter);
-
-pmilter_state *pmilter_mrb_create_conf(pmilter_config *config);
-
-struct toml_node *mrb_pmilter_config_init(const char *path);
-
-void mrb_pmilter_config_free(struct toml_node *root);
+void pmilter_config_free(pmilter_config *config);
+void pmilter_config_parse(pmilter_config *config, struct toml_node *root);
+void pmilter_usage(char *prog);
 
 int pmilter_config_get_bool(pmilter_config *config, struct toml_node *root, char *key);
-
 int pmilter_config_get_log_level(struct toml_node *root);
 
-void pmilter_config_parse(pmilter_config *config, struct toml_node *root);
+pmilter_state *pmilter_create_conf(pmilter_config *config);
+void pmilter_delete_conf(pmilter_state *pmilter);
 
-void usage(char *prog);
 
-struct toml_node *pmilter_config_load(char *file, char **argv);
+struct toml_node *pmilter_toml_load(char *file, char **argv);
 
 #endif // _PMILTER_CONFIG_H_

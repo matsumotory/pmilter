@@ -60,7 +60,7 @@ pmilter_config *pmilter_config_init()
   return config;
 }
 
-void command_rec_free(command_rec *cmd)
+static void pmilter_command_rec_free(command_rec *cmd)
 {
   if (cmd->envelope_from != NULL) {
     free(cmd->envelope_from);
@@ -114,16 +114,16 @@ static void pmilter_config_mruby_handler_init(pmilter_state *pmilter)
   pmilter->mruby_data_handler = PMILTER_CONF_UNSET;
 }
 
-void pmilter_mrb_delete_conf(pmilter_state *pmilter)
+void pmilter_delete_conf(pmilter_state *pmilter)
 {
 
-  command_rec_free(pmilter->cmd);
+  pmilter_command_rec_free(pmilter->cmd);
   pmilter_config_mruby_handler_free(pmilter);
   mrb_close(pmilter->mrb);
   free(pmilter);
 }
 
-pmilter_state *pmilter_mrb_create_conf(pmilter_config *config)
+pmilter_state *pmilter_create_conf(pmilter_config *config)
 {
   pmilter_state *pmilter;
 
@@ -148,24 +148,6 @@ pmilter_state *pmilter_mrb_create_conf(pmilter_config *config)
   }
 
   return pmilter;
-}
-
-struct toml_node *mrb_pmilter_config_init(const char *path)
-{
-  struct toml_node *root;
-  char *buf = "[foo]\nbar = 'fuga'\n";
-  size_t len = sizeof(buf);
-
-  /* TODO: file open */
-  toml_init(&root);
-  toml_parse(root, buf, len);
-
-  return root;
-}
-
-void mrb_pmilter_config_free(struct toml_node *root)
-{
-  toml_free(root);
 }
 
 int pmilter_config_get_integer(pmilter_config *config, struct toml_node *root, char *key)
@@ -251,12 +233,12 @@ void pmilter_config_parse(pmilter_config *config, struct toml_node *root)
   pmilter_config_mruby_handler(config, root, node);
 }
 
-void usage(char *prog)
+void pmilter_usage(char *prog)
 {
   fprintf(stderr, "Usage: %s -p socket-addr -c config.toml [-t timeout]\n", prog);
 }
 
-struct toml_node *pmilter_config_load(char *file, char **argv)
+struct toml_node *pmilter_toml_load(char *file, char **argv)
 {
   struct stat st;
   struct toml_node *toml_root;
@@ -265,7 +247,7 @@ struct toml_node *pmilter_config_load(char *file, char **argv)
 
   if (!file) {
     fprintf(stderr, "%s: Missing required -c argument\n", argv[0]);
-    usage(argv[0]);
+    pmilter_usage(argv[0]);
     exit(EX_USAGE);
   }
 

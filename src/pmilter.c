@@ -235,7 +235,7 @@ _SOCK_ADDR *hostaddr;
   pmilter_config *config = smfi_getpriv(ctx);
   int ret;
 
-  pmilter = pmilter_mrb_create_conf(config);
+  pmilter = pmilter_create_conf(config);
   pmilter->status = SMFIS_CONTINUE;
   pmilter->ctx = ctx;
   pmilter->cmd = pmilter_command_init();
@@ -530,7 +530,7 @@ sfsistat mrb_xxfi_close(ctx) SMFICTX *ctx;
   }
 
   if (pmilter->mrb != NULL) {
-    pmilter_mrb_delete_conf(pmilter);
+    pmilter_delete_conf(pmilter);
   }
   smfi_setpriv(ctx, config);
 
@@ -636,17 +636,18 @@ char **argv;
       break;
     case 'h':
     default:
-      usage(argv[0]);
+      pmilter_usage(argv[0]);
       exit(EX_USAGE);
     }
   }
 
-  toml_root = pmilter_config_load(file, argv);
+  toml_root = pmilter_toml_load(file, argv);
 
   /* pmilter config setup */
   pmilter_config = pmilter_config_init();
   pmilter_config_parse(pmilter_config, toml_root);
 
+  /* libmilter configurations */
   if (smfi_setconn(pmilter_config->listen) == MI_FAILURE) {
     pmilter_log_error(PMILTER_LOG_ERR, pmilter_config, "smfi_setconn failed: port or socket already exists?");
     exit(EX_SOFTWARE);
@@ -670,8 +671,10 @@ char **argv;
 
   pmilter_log_error(PMILTER_LOG_NOTICE, pmilter_config, "%s starting", PMILTER_DESCRIPTION);
 
+  /* start pmilter */
   smfi_status = smfi_main(pmilter_config);
 
+  /* cleanup */
   toml_free(toml_root);
   pmilter_config_free(pmilter_config);
 
