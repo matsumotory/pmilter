@@ -28,11 +28,49 @@
 #ifndef MRUBY_H
 #define MRUBY_H
 
+#ifdef __cplusplus
+#define __STDC_LIMIT_MACROS
+#define __STDC_CONSTANT_MACROS
+#define __STDC_FORMAT_MACROS
+#endif
+
 #include <stdint.h>
 #include <stddef.h>
 #include <limits.h>
 
+#ifdef __cplusplus
+#ifndef SIZE_MAX
+#ifdef __SIZE_MAX__
+#define SIZE_MAX __SIZE_MAX__
+#else
+#define SIZE_MAX std::numeric_limits<size_t>::max()
+#endif
+#endif
+#endif
+
+#ifdef MRB_DEBUG
+#include <assert.h>
+#define mrb_assert(p) assert(p)
+#define mrb_assert_int_fit(t1,n,t2,max) assert((n)>=0 && ((sizeof(n)<=sizeof(t2))||(n<=(t1)(max))))
+#else
+#define mrb_assert(p) ((void)0)
+#define mrb_assert_int_fit(t1,n,t2,max) ((void)0)
+#endif
+
+#if __STDC_VERSION__ >= 201112L
+#define mrb_static_assert(exp, str) _Static_assert(exp, str)
+#else
+#define mrb_static_assert(exp, str) mrb_assert(exp)
+#endif
+
 #include "mrbconf.h"
+
+#ifdef MRB_USE_FLOAT
+#define MRB_FLOAT_EPSILON FLT_EPSILON
+#else
+#define MRB_FLOAT_EPSILON DBL_EPSILON
+#endif
+
 #include "mruby/common.h"
 #include <mruby/value.h>
 #include <mruby/gc.h>
@@ -183,6 +221,9 @@ typedef struct mrb_state {
   struct RClass *eException_class;
   struct RClass *eStandardError_class;
   struct RObject *nomem_err;              /* pre-allocated NoMemoryError */
+#ifdef MRB_GC_FIXED_ARENA
+  struct RObject *arena_err;              /* pre-allocated arena overfow error */
+#endif
 
   void *ud; /* auxiliary data */
 
@@ -392,7 +433,7 @@ MRB_API void mrb_define_const(mrb_state*, struct RClass*, const char *name, mrb_
  *
  *     mrb_value
  *     mrb_example_method(mrb_state *mrb){
- *       return mrb_str_new_cstr(mrb, "example");
+ *       return mrb_str_new_lit(mrb, "example");
  *     }
  *
  *     void
@@ -435,7 +476,7 @@ MRB_API void mrb_undef_method(mrb_state*, struct RClass*, const char*);
  *
  *     mrb_value
  *     mrb_example_method(mrb_state *mrb){
- *       return mrb_str_new_cstr(mrb, "example");
+ *       return mrb_str_new_lit(mrb, "example");
  *     }
  *
  *     void
@@ -567,6 +608,37 @@ MRB_API mrb_bool mrb_class_defined(mrb_state *mrb, const char *name);
 MRB_API struct RClass * mrb_class_get(mrb_state *mrb, const char *name);
 
 /**
+ * Returns an mrb_bool. True if inner class was defined, and false if the inner class was not defined.
+ *
+ * Example:
+ *     void
+ *     mrb_example_gem_init(mrb_state* mrb) {
+ *       struct RClass *example_outer, *example_inner;
+ *       mrb_bool cd;
+ *
+ *       example_outer = mrb_define_module(mrb, "ExampleOuter");
+ *
+ *       example_inner = mrb_define_class_under(mrb, example_outer, "ExampleInner", mrb->object_class);
+ *       cd = mrb_class_defined_under(mrb, example_outer, "ExampleInner");
+ *
+ *       // If mrb_class_defined_under returns 1 then puts "True"
+ *       // If mrb_class_defined_under returns 0 then puts "False"
+ *       if (cd == 1){
+ *         puts("True");
+ *       }
+ *       else {
+ *         puts("False");
+ *       }
+ *      }
+ *
+ * @param [mrb_state*] mrb The current mruby state.
+ * @param [struct RClass *] outer The name of the outer class.
+ * @param [const char *] name A string representing the name of the inner class.
+ * @return [mrb_bool] A boolean value.
+ */
+MRB_API mrb_bool mrb_class_defined_under(mrb_state *mrb, struct RClass *outer, const char *name);
+
+/**
  * Gets a child class.
  * @param [mrb_state*] mrb The current mruby state.
  * @param [struct RClass *] outer The name of the parent class.
@@ -627,7 +699,7 @@ MRB_API mrb_value mrb_check_to_integer(mrb_state *mrb, mrb_value val, const char
  *
  *        example_class = mrb_define_class(mrb, "ExampleClass", mrb->object_class);
  *        mrb_define_method(mrb, example_class, "example_method", exampleMethod, MRB_ARGS_NONE());
- *        mid = mrb_intern_str(mrb, mrb_str_new_cstr(mrb, "example_method" ));
+ *        mid = mrb_intern_str(mrb, mrb_str_new_lit(mrb, "example_method" ));
  *        obj_resp = mrb_obj_respond_to(mrb, example_class, mid); // => 1(true in Ruby world)
  *
  *        // If mrb_obj_respond_to returns 1 then puts "True"
@@ -815,7 +887,7 @@ MRB_API mrb_value mrb_funcall(mrb_state*, mrb_value, const char*, mrb_int,...);
  *        mrb_state *mrb = mrb_open();
  *
  *        if (!mrb) { }
- *        mrb_sym m_sym = mrb_intern_cstr(mrb, "method_name"); // Symbol for method.
+ *        mrb_sym m_sym = mrb_intern_lit(mrb, "method_name"); // Symbol for method.
  *
  *        FILE *fp = fopen("test.rb","r");
  *        mrb_value obj = mrb_load_file(mrb,fp);
@@ -843,7 +915,7 @@ MRB_API mrb_value mrb_funcall_with_block(mrb_state*, mrb_value, mrb_sym, mrb_int
  *     :pizza # => :pizza
  *
  *     // C style:
- *     mrb_sym m_sym = mrb_intern_cstr(mrb, "pizza"); //  => :pizza
+ *     mrb_sym m_sym = mrb_intern_lit(mrb, "pizza"); //  => :pizza
  * @param [mrb_state*] mrb_state* The current mruby state.
  * @param [const char*] const char* The name of the method.
  * @return [mrb_sym] mrb_sym A symbol.
@@ -1103,21 +1175,6 @@ MRB_API void mrb_state_atexit(mrb_state *mrb, mrb_atexit_func func);
 
 MRB_API void mrb_show_version(mrb_state *mrb);
 MRB_API void mrb_show_copyright(mrb_state *mrb);
-
-#ifdef MRB_DEBUG
-#include <assert.h>
-#define mrb_assert(p) assert(p)
-#define mrb_assert_int_fit(t1,n,t2,max) assert((n)>=0 && ((sizeof(n)<=sizeof(t2))||(n<=(t1)(max))))
-#else
-#define mrb_assert(p) ((void)0)
-#define mrb_assert_int_fit(t1,n,t2,max) ((void)0)
-#endif
-
-#if __STDC_VERSION__ >= 201112L
-#define mrb_static_assert(exp, str) _Static_assert(exp, str)
-#else
-#define mrb_static_assert(exp, str) mrb_assert(exp)
-#endif
 
 MRB_API mrb_value mrb_format(mrb_state *mrb, const char *format, ...);
 
