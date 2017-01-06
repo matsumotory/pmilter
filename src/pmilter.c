@@ -133,11 +133,11 @@ static int pmilter_state_compile_internal(mrb_state *mrb, pmilter_config *config
   }
 
   if (code->code_type == PMILTER_MRB_CODE_TYPE_FILE) {
-    pmilter_log_error(PMILTER_LOG_DEBUG, config, "%s:%d: compile info: code->code.file=(%s)", __func__,
-                      __LINE__, code->code.file);
+    pmilter_log_error(PMILTER_LOG_DEBUG, config, "%s:%d: compile info: code->code.file=(%s)", __func__, __LINE__,
+                      code->code.file);
   } else {
     pmilter_log_error(PMILTER_LOG_DEBUG, config, "%s:%d: compile info: "
-                                                          "code->code.string=(%s)",
+                                                 "code->code.string=(%s)",
                       __func__, __LINE__, code->code.string);
   }
 
@@ -146,7 +146,8 @@ static int pmilter_state_compile_internal(mrb_state *mrb, pmilter_config *config
 
 static int pmilter_state_compile(pmilter_state *pmilter, pmilter_mrb_code *code)
 {
-  return pmilter_state_compile_internal(pmilter->mrb, pmilter->config, code);;
+  return pmilter_state_compile_internal(pmilter->mrb, pmilter->config, code);
+  ;
 }
 
 /* pmilter mruby handlers */
@@ -190,9 +191,9 @@ PMILTER_ADD_MRUBY_HADNLER(data)
 
 static void pmilter_postconfig_handler_free(pmilter_config *c)
 {
-  PMILTER_CODE_MRBC_CONTEXT_FREE(c->mrb, c->mruby_postconfig_handler);  
-  pmilter_mruby_code_free(c->mruby_postconfig_handler);              
-  pmilter_mrb_state_clean(c->mrb);                                                
+  PMILTER_CODE_MRBC_CONTEXT_FREE(c->mrb, c->mruby_postconfig_handler);
+  pmilter_mruby_code_free(c->mruby_postconfig_handler);
+  pmilter_mrb_state_clean(c->mrb);
 }
 
 static int pmilter_postconfig_handler(pmilter_config *c)
@@ -202,14 +203,14 @@ static int pmilter_postconfig_handler(pmilter_config *c)
 
   mrb_run(mrb, c->mruby_postconfig_handler->proc, mrb_top_self(mrb));
 
-  if (mrb->exc) {                                                              
-    pmilter_mrb_raise_error(mrb, mrb_obj_value(mrb->exc));                     
+  if (mrb->exc) {
+    pmilter_mrb_raise_error(mrb, mrb_obj_value(mrb->exc));
     status = PMILTER_ERROR;
   } else {
     status = PMILTER_OK;
   }
 
-  return status;                                                      
+  return status;
 }
 
 static void pmilter_postconfig_handler_run(pmilter_config *config)

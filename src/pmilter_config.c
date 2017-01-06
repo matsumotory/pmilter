@@ -130,7 +130,7 @@ static mrb_state *pmilter_crete_mrb_state()
   if (mrb == NULL) {
     return NULL;
   }
-  
+
   pmilter_mrb_class_init(mrb);
 
   return mrb;

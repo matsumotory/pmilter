@@ -28,7 +28,6 @@ int pmilter_config_get_log_level(struct toml_node *root);
 pmilter_state *pmilter_create_conf(pmilter_config *config);
 void pmilter_delete_conf(pmilter_state *pmilter);
 
-
 struct toml_node *pmilter_toml_load(char *file, char **argv);
 
 #endif // _PMILTER_CONFIG_H_
