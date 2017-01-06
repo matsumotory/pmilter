@@ -130,7 +130,7 @@ static mrb_state *pmilter_crete_mrb_state()
   if (mrb == NULL) {
     return NULL;
   }
-  
+
   pmilter_mrb_class_init(mrb);
 
   return mrb;
@@ -216,6 +216,7 @@ int pmilter_config_get_log_level(struct toml_node *root)
 
 static void pmilter_config_mruby_handler(pmilter_config *config, struct toml_node *root, struct toml_node *node)
 {
+  PMILTER_GET_HANDLER_CONFIG_VALUE(root, node, config, postconfig);
   PMILTER_GET_HANDLER_CONFIG_VALUE(root, node, config, connect);
   PMILTER_GET_HANDLER_CONFIG_VALUE(root, node, config, helo);
   PMILTER_GET_HANDLER_CONFIG_VALUE(root, node, config, envfrom);
