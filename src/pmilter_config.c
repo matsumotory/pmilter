@@ -123,6 +123,19 @@ void pmilter_delete_conf(pmilter_state *pmilter)
   free(pmilter);
 }
 
+static mrb_state *pmilter_crete_mrb_state()
+{
+  mrb_state *mrb = mrb_open();
+
+  if (mrb == NULL) {
+    return NULL;
+  }
+  
+  pmilter_mrb_class_init(mrb);
+
+  return mrb;
+}
+
 pmilter_state *pmilter_create_conf(pmilter_config *config)
 {
   pmilter_state *pmilter;
@@ -137,12 +150,10 @@ pmilter_state *pmilter_create_conf(pmilter_config *config)
   pmilter_config_mruby_handler_init(pmilter);
 
   if (config->enable_mruby_handler) {
-    pmilter->mrb = mrb_open();
+    pmilter->mrb = pmilter_crete_mrb_state();
     if (pmilter->mrb == NULL) {
       return NULL;
     }
-
-    pmilter_mrb_class_init(pmilter->mrb);
   } else {
     pmilter->mrb = NULL;
   }
