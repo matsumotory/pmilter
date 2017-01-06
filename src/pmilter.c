@@ -188,19 +188,18 @@ PMILTER_ADD_MRUBY_HADNLER(close)
 PMILTER_ADD_MRUBY_HADNLER(unknown)
 PMILTER_ADD_MRUBY_HADNLER(data)
 
-static void pmilter_postconfig_handler_free(pmilter_config *c)
+static inline void pmilter_config_handler_free_inner(mrb_state *mrb, pmilter_mrb_code *code)
 {
-  PMILTER_CODE_MRBC_CONTEXT_FREE(c->mrb, c->mruby_postconfig_handler);
-  pmilter_mruby_code_free(c->mruby_postconfig_handler);
-  pmilter_mrb_state_clean(c->mrb);
+  PMILTER_CODE_MRBC_CONTEXT_FREE(mrb, code);
+  pmilter_mruby_code_free(code);
+  pmilter_mrb_state_clean(mrb);
 }
 
-static int pmilter_postconfig_handler(pmilter_config *c)
+static inline int pmilter_config_handler_inner(mrb_state *mrb, pmilter_mrb_code *code)
 {
   int status;
-  mrb_state *mrb = c->mrb;
 
-  mrb_run(mrb, c->mruby_postconfig_handler->proc, mrb_top_self(mrb));
+  mrb_run(mrb, code->proc, mrb_top_self(mrb));
 
   if (mrb->exc) {
     pmilter_mrb_raise_error(mrb, mrb_obj_value(mrb->exc));
@@ -210,6 +209,16 @@ static int pmilter_postconfig_handler(pmilter_config *c)
   }
 
   return status;
+}
+
+static void pmilter_postconfig_handler_free(pmilter_config *c)
+{
+  pmilter_config_handler_free_inner(c->mrb, c->mruby_postconfig_handler);
+}
+
+static int pmilter_postconfig_handler(pmilter_config *c)
+{
+  return pmilter_config_handler_inner(c->mrb, c->mruby_postconfig_handler);
 }
 
 static void pmilter_postconfig_handler_run(pmilter_config *config)
