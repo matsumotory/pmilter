@@ -9,6 +9,21 @@ src/libmilter/compile
 src/libtoml/libtoml.a
 src/icu/source
 src/icu/source/config.log
+src/icu/source/config.status
+src/icu/source/config/Makefile.inc
+src/icu/source/config/icu-config
+src/icu/source/config/pkgdata.inc
+src/icu/source/extra/scrptrun/Makefile
+src/icu/source/icudefs.mk
+src/icu/source/lib/libicui18n.so.50.1
+src/icu/source/lib/libicuio.so.50.1
+src/icu/source/lib/libicule.so.50.1
+src/icu/source/lib/libiculx.so.50.1
+src/icu/source/lib/libicutu.so.50.1
+src/icu/source/lib/libicuuc.so.50.1
+src/icu/source/stubdata/libicudata.so.50.1
+src/icu/source/tools/ctestfw/libicutest.so.50.1
+
 
 *.slo
 *.lo
