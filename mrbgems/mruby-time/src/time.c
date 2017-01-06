@@ -194,7 +194,7 @@ time_update_datetime(mrb_state *mrb, struct mrb_time *self)
     aid = localtime_r(&self->sec, &self->datetime);
   }
   if (!aid) {
-    mrb_raisef(mrb, E_ARGUMENT_ERROR, "%S out of Time range", mrb_float_value(mrb, self->sec));
+    mrb_raisef(mrb, E_ARGUMENT_ERROR, "%S out of Time range", mrb_float_value(mrb, (mrb_float)self->sec));
     /* not reached */
     return NULL;
   }
@@ -217,7 +217,7 @@ static struct mrb_time*
 time_alloc(mrb_state *mrb, double sec, double usec, enum mrb_timezone timezone)
 {
   struct mrb_time *tm;
-  time_t tsec;
+  time_t tsec = 0;
 
   if (sizeof(time_t) == 4 && (sec > (double)INT32_MAX || (double)INT32_MIN > sec)) {
     goto out_of_range;

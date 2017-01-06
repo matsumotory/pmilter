@@ -165,11 +165,12 @@ ary_make_shared(mrb_state *mrb, struct RArray *a)
 }
 
 static void
-ary_expand_capa(mrb_state *mrb, struct RArray *a, mrb_int len)
+ary_expand_capa(mrb_state *mrb, struct RArray *a, size_t len)
 {
-  mrb_int capa = a->aux.capa;
+  size_t capa = a->aux.capa;
 
   if (len > ARY_MAX_SIZE) {
+  size_error:
     mrb_raise(mrb, E_ARGUMENT_ERROR, "array size too big");
   }
 
@@ -179,12 +180,16 @@ ary_expand_capa(mrb_state *mrb, struct RArray *a, mrb_int len)
   while (capa < len) {
     if (capa <= ARY_MAX_SIZE / 2) {
       capa *= 2;
-    } else {
-      capa = ARY_MAX_SIZE;
+    }
+    else {
+      capa = len;
     }
   }
+  if (capa < len || capa > ARY_MAX_SIZE) {
+    goto size_error;
+  }
 
-  if (capa > a->aux.capa) {
+  if (capa > (size_t)a->aux.capa) {
     mrb_value *expanded_ptr = (mrb_value *)mrb_realloc(mrb, a->ptr, sizeof(mrb_value)*capa);
 
     a->aux.capa = capa;
@@ -619,6 +624,10 @@ mrb_ary_splice(mrb_state *mrb, mrb_value ary, mrb_int head, mrb_int len, mrb_val
   size = head + argc;
 
   if (tail < a->len) size += a->len - tail;
+
+  if (size < 0 || size > ARY_MAX_SIZE)
+    mrb_raise(mrb, E_ARGUMENT_ERROR, "array size too big");
+
   if (size > a->aux.capa)
     ary_expand_capa(mrb, a, size);
 
