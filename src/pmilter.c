@@ -43,7 +43,7 @@ extern sfsistat mrb_xxfi_cleanup(SMFICTX *, bool);
 static pthread_mutex_t table_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 /* mruby functions */
-static void pmilter_mrb_raise_error(mrb_state *mrb, mrb_value obj)
+static void pmilter_mrb_raise_error(pmilter_config *config, mrb_state *mrb, mrb_value obj)
 {
   struct RString *str;
   char *err_out;
@@ -52,7 +52,7 @@ static void pmilter_mrb_raise_error(mrb_state *mrb, mrb_value obj)
   if (mrb_type(obj) == MRB_TT_STRING) {
     str = mrb_str_ptr(obj);
     err_out = str->as.heap.ptr;
-    fprintf(stderr, "mrb_run failed: error: %s", err_out);
+    pmilter_log_error(PMILTER_LOG_ERR, config, "mrb_run failed: error: %s", err_out);
   }
 }
 
@@ -163,7 +163,7 @@ static int pmilter_state_compile(pmilter_state *pmilter, pmilter_mrb_code *code)
     mrb_run(mrb, pmilter->mruby_##hook_phase##_handler->proc, mrb_top_self(mrb));                                      \
                                                                                                                        \
     if (mrb->exc) {                                                                                                    \
-      pmilter_mrb_raise_error(mrb, mrb_obj_value(mrb->exc));                                                           \
+      pmilter_mrb_raise_error(pmilter->config, mrb, mrb_obj_value(mrb->exc));                                                           \
       pmilter->status = SMFIS_TEMPFAIL;                                                                                \
     }                                                                                                                  \
                                                                                                                        \
@@ -195,14 +195,14 @@ static inline void pmilter_config_handler_free_inner(mrb_state *mrb, pmilter_mrb
   pmilter_mrb_state_clean(mrb);
 }
 
-static inline int pmilter_config_handler_inner(mrb_state *mrb, pmilter_mrb_code *code)
+static inline int pmilter_config_handler_inner(pmilter_config *config, mrb_state *mrb, pmilter_mrb_code *code)
 {
   int status;
 
   mrb_run(mrb, code->proc, mrb_top_self(mrb));
 
   if (mrb->exc) {
-    pmilter_mrb_raise_error(mrb, mrb_obj_value(mrb->exc));
+    pmilter_mrb_raise_error(config, mrb, mrb_obj_value(mrb->exc));
     status = PMILTER_ERROR;
   } else {
     status = PMILTER_OK;
@@ -218,7 +218,7 @@ static void pmilter_postconfig_handler_free(pmilter_config *c)
 
 static int pmilter_postconfig_handler(pmilter_config *c)
 {
-  return pmilter_config_handler_inner(c->mrb, c->mruby_postconfig_handler);
+  return pmilter_config_handler_inner(c, c->mrb, c->mruby_postconfig_handler);
 }
 
 static void pmilter_config_handler_init(pmilter_config *config)
