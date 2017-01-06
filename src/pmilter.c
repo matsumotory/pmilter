@@ -221,9 +221,13 @@ static int pmilter_postconfig_handler(pmilter_config *c)
   return pmilter_config_handler_inner(c->mrb, c->mruby_postconfig_handler);
 }
 
-static void pmilter_postconfig_handler_run(pmilter_config *config)
+static void pmilter_config_handler_init(pmilter_config *config)
 {
   config->mrb = mrb_open();
+}
+
+static void pmilter_postconfig_handler_run(pmilter_config *config)
+{
   config->mruby_postconfig_handler = pmilter_mrb_code_from_file(config->mruby_postconfig_handler_path);
 
   if (config->mruby_postconfig_handler != NULL && config->mrb != NULL) {
@@ -726,6 +730,9 @@ char **argv;
     pmilter_log_error(PMILTER_LOG_ERR, pmilter_config, "smfi_register failed\n");
     exit(EX_UNAVAILABLE);
   }
+
+  /* config handler init */
+  pmilter_config_handler_init(pmilter_config);
 
   /* postconfig handler phase */
   pmilter_postconfig_handler_run(pmilter_config);
