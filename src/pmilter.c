@@ -97,11 +97,10 @@ static pmilter_mrb_code *pmilter_mrb_code_from_string(const char *code_string)
   return code;
 }
 
-static int pmilter_state_compile(pmilter_state *pmilter, pmilter_mrb_code *code)
+static int pmilter_state_compile_internal(mrb_state *mrb, pmilter_config *config, pmilter_mrb_code *code)
 {
   FILE *mrb_file;
   struct mrb_parser_state *p;
-  mrb_state *mrb = pmilter->mrb;
 
   if (code == NULL) {
     return PMILTER_ERROR;
@@ -134,15 +133,20 @@ static int pmilter_state_compile(pmilter_state *pmilter, pmilter_mrb_code *code)
   }
 
   if (code->code_type == PMILTER_MRB_CODE_TYPE_FILE) {
-    pmilter_log_error(PMILTER_LOG_DEBUG, pmilter->config, "%s:%d: compile info: code->code.file=(%s)", __func__,
+    pmilter_log_error(PMILTER_LOG_DEBUG, config, "%s:%d: compile info: code->code.file=(%s)", __func__,
                       __LINE__, code->code.file);
   } else {
-    pmilter_log_error(PMILTER_LOG_DEBUG, pmilter->config, "%s:%d: compile info: "
+    pmilter_log_error(PMILTER_LOG_DEBUG, config, "%s:%d: compile info: "
                                                           "code->code.string=(%s)",
                       __func__, __LINE__, code->code.string);
   }
 
   return PMILTER_OK;
+}
+
+static int pmilter_state_compile(pmilter_state *pmilter, pmilter_mrb_code *code)
+{
+  return pmilter_state_compile_internal(pmilter->mrb, pmilter->config, code);;
 }
 
 /* pmilter mruby handlers */
@@ -183,6 +187,51 @@ PMILTER_ADD_MRUBY_HADNLER(abort)
 PMILTER_ADD_MRUBY_HADNLER(close)
 PMILTER_ADD_MRUBY_HADNLER(unknown)
 PMILTER_ADD_MRUBY_HADNLER(data)
+
+static void pmilter_postconfig_handler_free(pmilter_config *c)
+{
+  PMILTER_CODE_MRBC_CONTEXT_FREE(c->mrb, c->mruby_postconfig_handler);  
+  pmilter_mruby_code_free(c->mruby_postconfig_handler);              
+  pmilter_mrb_state_clean(c->mrb);                                                
+}
+
+static int pmilter_postconfig_handler(pmilter_config *c)
+{
+  int status;
+  mrb_state *mrb = c->mrb;
+
+  mrb_run(mrb, c->mruby_postconfig_handler->proc, mrb_top_self(mrb));
+
+  if (mrb->exc) {                                                              
+    pmilter_mrb_raise_error(mrb, mrb_obj_value(mrb->exc));                     
+    status = PMILTER_ERROR;
+  } else {
+    status = PMILTER_OK;
+  }
+
+  return status;                                                      
+}
+
+static void pmilter_postconfig_handler_run(pmilter_config *config)
+{
+  config->mrb = mrb_open();
+  config->mruby_postconfig_handler = pmilter_mrb_code_from_file(config->mruby_postconfig_handler_path);
+
+  if (config->mruby_postconfig_handler != NULL && config->mrb != NULL) {
+    int ret;
+    ret = pmilter_state_compile_internal(config->mrb, config, config->mruby_postconfig_handler);
+    if (ret == PMILTER_ERROR) {
+      pmilter_log_error(PMILTER_LOG_ERR, config, "postconfig handler compile failed");
+      exit(EX_SOFTWARE);
+    }
+
+    ret = pmilter_postconfig_handler(config);
+    if (ret == PMILTER_ERROR) {
+      pmilter_log_error(PMILTER_LOG_ERR, config, "postconfig handler run failed");
+      exit(EX_SOFTWARE);
+    }
+  }
+}
 
 static command_rec *pmilter_command_init()
 {
@@ -669,12 +718,16 @@ char **argv;
     exit(EX_UNAVAILABLE);
   }
 
-  pmilter_log_error(PMILTER_LOG_NOTICE, pmilter_config, "%s starting", PMILTER_DESCRIPTION);
+  /* postconfig handler phase */
+  pmilter_postconfig_handler_run(pmilter_config);
 
   /* start pmilter */
+  pmilter_log_error(PMILTER_LOG_NOTICE, pmilter_config, "%s starting", PMILTER_DESCRIPTION);
+
   smfi_status = smfi_main(pmilter_config);
 
   /* cleanup */
+  pmilter_postconfig_handler_free(pmilter_config);
   toml_free(toml_root);
   pmilter_config_free(pmilter_config);
 

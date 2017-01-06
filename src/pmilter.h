@@ -37,6 +37,20 @@
 
 #define PMILTER_GET_SYMVAL(ctx, macro_name) smfi_getsymval(ctx, "{" #macro_name "}")
 
+typedef enum code_type_t { PMILTER_MRB_CODE_TYPE_FILE, PMILTER_MRB_CODE_TYPE_STRING } code_type;
+
+typedef struct pmilter_mrb_code_t {
+
+  union code {
+    const char *file;
+    const char *string;
+  } code;
+  code_type code_type;
+  struct RProc *proc;
+  mrbc_context *ctx;
+
+} pmilter_mrb_code;
+
 typedef struct connection_rec_t {
 
   char *hostname;
@@ -95,6 +109,14 @@ typedef struct pmilter_config_t {
    * the current, highest, useful value. */
   int debug;
 
+  /* mruby_state for init phase like postconfig */
+  mrb_state *mrb;
+
+  /* post config mruby handler */
+  const char *mruby_postconfig_handler_path;
+  pmilter_mrb_code *mruby_postconfig_handler;
+
+  /* session mrub handlers */
   const char *mruby_connect_handler_path;
   const char *mruby_helo_handler_path;
   const char *mruby_envfrom_handler_path;
@@ -109,20 +131,6 @@ typedef struct pmilter_config_t {
   const char *mruby_data_handler_path;
 
 } pmilter_config;
-
-typedef enum code_type_t { PMILTER_MRB_CODE_TYPE_FILE, PMILTER_MRB_CODE_TYPE_STRING } code_type;
-
-typedef struct pmilter_mrb_code_t {
-
-  union code {
-    const char *file;
-    const char *string;
-  } code;
-  code_type code_type;
-  struct RProc *proc;
-  mrbc_context *ctx;
-
-} pmilter_mrb_code;
 
 typedef struct pmilter_state_t {
 
