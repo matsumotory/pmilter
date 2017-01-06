@@ -147,7 +147,6 @@ static int pmilter_state_compile_internal(mrb_state *mrb, pmilter_config *config
 static int pmilter_state_compile(pmilter_state *pmilter, pmilter_mrb_code *code)
 {
   return pmilter_state_compile_internal(pmilter->mrb, pmilter->config, code);
-  ;
 }
 
 /* pmilter mruby handlers */
