@@ -134,8 +134,8 @@ static void
 stack_extend_alloc(mrb_state *mrb, int room, int keep)
 {
   mrb_value *oldbase = mrb->c->stbase;
-  int size = mrb->c->stend - mrb->c->stbase;
-  int off = mrb->c->stack - mrb->c->stbase;
+  size_t size = mrb->c->stend - mrb->c->stbase;
+  size_t off = mrb->c->stack - mrb->c->stbase;
 
 #ifdef MRB_STACK_EXTEND_DOUBLING
   if (room <= size)
@@ -1143,6 +1143,9 @@ RETRY_TRY_BLOCK:
         else {
           value_move(regs+a+2, regs+a+1, ++n);
           regs[a+1] = sym;
+          if (n == CALL_MAXARGS) {
+            regs[a+1] = mrb_ary_new_from_values(mrb, n, regs+a+1);
+          }
         }
       }
 
