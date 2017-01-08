@@ -209,6 +209,8 @@ static inline int pmilter_config_handler_inner(pmilter_config *config, mrb_state
   return status;
 }
 
+/* configration handler functions */
+
 static void pmilter_postconfig_handler_free(pmilter_config *c)
 {
   pmilter_config_handler_free_inner(c->mrb, c->mruby_postconfig_handler);
@@ -243,6 +245,8 @@ static void pmilter_postconfig_handler_run(pmilter_config *config)
     }
   }
 }
+
+/* command record fucntions */
 
 static command_rec *pmilter_command_init()
 {
