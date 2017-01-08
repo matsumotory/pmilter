@@ -148,7 +148,7 @@ static int pmilter_state_compile(pmilter_state *pmilter, pmilter_mrb_code *code)
 }
 
 /* pmilter mruby handlers */
-#define PMILTER_ADD_MRUBY_HADNLER(hook_phase)                                                                          \
+#define PMILTER_DEFINE_MRUBY_HADNLER(hook_phase)                                                                          \
   static int pmilter_##hook_phase##_handler(pmilter_state *pmilter)                                                    \
   {                                                                                                                    \
     mrb_state *mrb = pmilter->mrb;                                                                                     \
@@ -173,18 +173,18 @@ static int pmilter_state_compile(pmilter_state *pmilter, pmilter_mrb_code *code)
     return pmilter->status;                                                                                            \
   }
 
-PMILTER_ADD_MRUBY_HADNLER(connect)
-PMILTER_ADD_MRUBY_HADNLER(helo)
-PMILTER_ADD_MRUBY_HADNLER(envfrom)
-PMILTER_ADD_MRUBY_HADNLER(envrcpt)
-PMILTER_ADD_MRUBY_HADNLER(header)
-PMILTER_ADD_MRUBY_HADNLER(eoh)
-PMILTER_ADD_MRUBY_HADNLER(body)
-PMILTER_ADD_MRUBY_HADNLER(eom)
-PMILTER_ADD_MRUBY_HADNLER(abort)
-PMILTER_ADD_MRUBY_HADNLER(close)
-PMILTER_ADD_MRUBY_HADNLER(unknown)
-PMILTER_ADD_MRUBY_HADNLER(data)
+PMILTER_DEFINE_MRUBY_HADNLER(connect)
+PMILTER_DEFINE_MRUBY_HADNLER(helo)
+PMILTER_DEFINE_MRUBY_HADNLER(envfrom)
+PMILTER_DEFINE_MRUBY_HADNLER(envrcpt)
+PMILTER_DEFINE_MRUBY_HADNLER(header)
+PMILTER_DEFINE_MRUBY_HADNLER(eoh)
+PMILTER_DEFINE_MRUBY_HADNLER(body)
+PMILTER_DEFINE_MRUBY_HADNLER(eom)
+PMILTER_DEFINE_MRUBY_HADNLER(abort)
+PMILTER_DEFINE_MRUBY_HADNLER(close)
+PMILTER_DEFINE_MRUBY_HADNLER(unknown)
+PMILTER_DEFINE_MRUBY_HADNLER(data)
 
 static inline void pmilter_config_handler_free_inner(mrb_state *mrb, pmilter_mrb_code *code)
 {
