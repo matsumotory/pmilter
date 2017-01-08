@@ -39,7 +39,6 @@
     (code)->ctx = NULL;                                                                                                \
   }
 
-extern sfsistat mrb_xxfi_cleanup(SMFICTX *, bool);
 static pthread_mutex_t table_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 /* mruby functions */
@@ -554,17 +553,6 @@ sfsistat mrb_xxfi_abort(ctx) SMFICTX *ctx;
     }
     pmilter->status = pmilter_abort_handler(pmilter);
   }
-
-  return mrb_xxfi_cleanup(ctx, FALSE);
-}
-
-/* session cleanup */
-sfsistat mrb_xxfi_cleanup(ctx, ok) SMFICTX *ctx;
-bool ok;
-{
-  pmilter_state *pmilter = smfi_getpriv(ctx);
-
-  pmilter_log_error(PMILTER_LOG_DEBUG, pmilter->config, "=== %s ===", __func__);
 
   return pmilter->status;
 }
