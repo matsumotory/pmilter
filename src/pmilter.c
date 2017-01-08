@@ -287,9 +287,7 @@ static command_rec *pmilter_command_init()
 
 /* connection info filter */
 /* was not called on same connetion */
-sfsistat mrb_xxfi_connect(ctx, hostname, hostaddr) SMFICTX *ctx;
-char *hostname;
-_SOCK_ADDR *hostaddr;
+sfsistat mrb_xxfi_connect(SMFICTX *ctx, char *hostname, _SOCK_ADDR *hostaddr)
 {
   pmilter_state *pmilter;
   pmilter_config *config = smfi_getpriv(ctx);
@@ -333,8 +331,7 @@ _SOCK_ADDR *hostaddr;
 
 /* SMTP HELO command filter */
 /* was not called on same connetion */
-sfsistat mrb_xxfi_helo(ctx, helohost) SMFICTX *ctx;
-char *helohost;
+sfsistat mrb_xxfi_helo(SMFICTX *ctx, char *helohost)
 {
   pmilter_state *pmilter = smfi_getpriv(ctx);
   int ret;
@@ -361,8 +358,7 @@ char *helohost;
 
 /* envelope sender filter */
 /* call from this phase on same connection */
-sfsistat mrb_xxfi_envfrom(ctx, argv) SMFICTX *ctx;
-char **argv;
+sfsistat mrb_xxfi_envfrom(SMFICTX *ctx, char **argv)
 {
   pmilter_state *pmilter = smfi_getpriv(ctx);
   int ret;
@@ -389,8 +385,7 @@ char **argv;
 }
 
 /* envelope recipient filter */
-sfsistat mrb_xxfi_envrcpt(ctx, argv) SMFICTX *ctx;
-char **argv;
+sfsistat mrb_xxfi_envrcpt(SMFICTX *ctx, char **argv)
 {
   pmilter_state *pmilter = smfi_getpriv(ctx);
   int ret;
@@ -416,9 +411,7 @@ char **argv;
 }
 
 /* header filter */
-sfsistat mrb_xxfi_header(ctx, headerf, headerv) SMFICTX *ctx;
-char *headerf;
-unsigned char *headerv;
+sfsistat mrb_xxfi_header(ctx, headerf, headerv)SMFICTX *ctx; char *headerf; unsigned char *headerv;
 {
   pmilter_state *pmilter = smfi_getpriv(ctx);
   int ret;
@@ -445,7 +438,7 @@ unsigned char *headerv;
 }
 
 /* end of header */
-sfsistat mrb_xxfi_eoh(ctx) SMFICTX *ctx;
+sfsistat mrb_xxfi_eoh(SMFICTX *ctx)
 {
   pmilter_state *pmilter = smfi_getpriv(ctx);
   int ret;
@@ -467,9 +460,7 @@ sfsistat mrb_xxfi_eoh(ctx) SMFICTX *ctx;
 }
 
 /* body block filter */
-sfsistat mrb_xxfi_body(ctx, bodyp, bodylen) SMFICTX *ctx;
-unsigned char *bodyp;
-size_t bodylen;
+sfsistat mrb_xxfi_body(SMFICTX *ctx, unsigned char *bodyp, size_t bodylen)
 {
   pmilter_state *pmilter = smfi_getpriv(ctx);
   int ret;
@@ -506,7 +497,7 @@ void command_rec_free_per_session(command_rec *cmd)
 }
 
 /* end of message */
-sfsistat mrb_xxfi_eom(ctx) SMFICTX *ctx;
+sfsistat mrb_xxfi_eom(SMFICTX *ctx)
 {
   pmilter_state *pmilter = smfi_getpriv(ctx);
   int ret;
@@ -536,7 +527,7 @@ sfsistat mrb_xxfi_eom(ctx) SMFICTX *ctx;
 }
 
 /* message aborted */
-sfsistat mrb_xxfi_abort(ctx) SMFICTX *ctx;
+sfsistat mrb_xxfi_abort(SMFICTX *ctx)
 {
   pmilter_state *pmilter = smfi_getpriv(ctx);
   int ret;
@@ -559,7 +550,7 @@ sfsistat mrb_xxfi_abort(ctx) SMFICTX *ctx;
 
 /* connection cleanup */
 /* was not called on same connetion */
-sfsistat mrb_xxfi_close(ctx) SMFICTX *ctx;
+sfsistat mrb_xxfi_close(SMFICTX *ctx)
 {
   pmilter_state *pmilter = smfi_getpriv(ctx);
   pmilter_config *config = pmilter->config;
@@ -587,8 +578,7 @@ sfsistat mrb_xxfi_close(ctx) SMFICTX *ctx;
 }
 
 /* Once, at the start of each SMTP connection */
-sfsistat mrb_xxfi_unknown(ctx, scmd) SMFICTX *ctx;
-char *scmd;
+sfsistat mrb_xxfi_unknown(ctx, scmd)SMFICTX *ctx; char *scmd;
 {
   pmilter_state *pmilter = smfi_getpriv(ctx);
   int ret;
@@ -610,7 +600,7 @@ char *scmd;
 }
 
 /* DATA command */
-sfsistat mrb_xxfi_data(ctx) SMFICTX *ctx;
+sfsistat mrb_xxfi_data(SMFICTX *ctx)
 {
   pmilter_state *pmilter = smfi_getpriv(ctx);
   int ret;
@@ -632,15 +622,7 @@ sfsistat mrb_xxfi_data(ctx) SMFICTX *ctx;
 }
 
 /* Once, at the start of each SMTP connection */
-sfsistat mrb_xxfi_negotiate(ctx, f0, f1, f2, f3, pf0, pf1, pf2, pf3) SMFICTX *ctx;
-unsigned long f0;
-unsigned long f1;
-unsigned long f2;
-unsigned long f3;
-unsigned long *pf0;
-unsigned long *pf1;
-unsigned long *pf2;
-unsigned long *pf3;
+sfsistat mrb_xxfi_negotiate(SMFICTX *ctx, unsigned long f0, unsigned long f1, unsigned long f2, unsigned long f3, unsigned long *pf0, unsigned long *pf1, unsigned long *pf2, unsigned long *pf3)
 {
   pmilter_config *config = smfi_getpriv(ctx);
 
@@ -668,8 +650,7 @@ struct smfiDesc smfilter = {
     mrb_xxfi_negotiate             /* Once, at the start of each SMTP connection */
 };
 
-int main(argc, argv) int argc;
-char **argv;
+int main(int argc, char **argv)
 {
   pmilter_config *pmilter_config;
   const char *args = "c:h";
