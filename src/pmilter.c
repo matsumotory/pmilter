@@ -85,6 +85,10 @@ static pmilter_mrb_code *pmilter_mrb_code_from_string(const char *code_string)
 {
   pmilter_mrb_code *code;
 
+  if (code_string == NULL) {
+    return NULL;
+  }
+
   /* need free */
   code = malloc(sizeof(pmilter_mrb_code));
   if (code == NULL) {
