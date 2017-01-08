@@ -411,7 +411,9 @@ sfsistat mrb_xxfi_envrcpt(SMFICTX *ctx, char **argv)
 }
 
 /* header filter */
-sfsistat mrb_xxfi_header(ctx, headerf, headerv)SMFICTX *ctx; char *headerf; unsigned char *headerv;
+sfsistat mrb_xxfi_header(ctx, headerf, headerv) SMFICTX *ctx;
+char *headerf;
+unsigned char *headerv;
 {
   pmilter_state *pmilter = smfi_getpriv(ctx);
   int ret;
@@ -578,7 +580,8 @@ sfsistat mrb_xxfi_close(SMFICTX *ctx)
 }
 
 /* Once, at the start of each SMTP connection */
-sfsistat mrb_xxfi_unknown(ctx, scmd)SMFICTX *ctx; char *scmd;
+sfsistat mrb_xxfi_unknown(ctx, scmd) SMFICTX *ctx;
+char *scmd;
 {
   pmilter_state *pmilter = smfi_getpriv(ctx);
   int ret;
@@ -622,7 +625,8 @@ sfsistat mrb_xxfi_data(SMFICTX *ctx)
 }
 
 /* Once, at the start of each SMTP connection */
-sfsistat mrb_xxfi_negotiate(SMFICTX *ctx, unsigned long f0, unsigned long f1, unsigned long f2, unsigned long f3, unsigned long *pf0, unsigned long *pf1, unsigned long *pf2, unsigned long *pf3)
+sfsistat mrb_xxfi_negotiate(SMFICTX *ctx, unsigned long f0, unsigned long f1, unsigned long f2, unsigned long f3,
+                            unsigned long *pf0, unsigned long *pf1, unsigned long *pf2, unsigned long *pf3)
 {
   pmilter_config *config = smfi_getpriv(ctx);
 
