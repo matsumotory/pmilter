@@ -162,7 +162,7 @@ static int pmilter_state_compile(pmilter_state *pmilter, pmilter_mrb_code *code)
     mrb_run(mrb, pmilter->mruby_##hook_phase##_handler->proc, mrb_top_self(mrb));                                      \
                                                                                                                        \
     if (mrb->exc) {                                                                                                    \
-      pmilter_mrb_raise_error(pmilter->config, mrb, mrb_obj_value(mrb->exc));                                                           \
+      pmilter_mrb_raise_error(pmilter->config, mrb, mrb_obj_value(mrb->exc));                                          \
       pmilter->status = SMFIS_TEMPFAIL;                                                                                \
     }                                                                                                                  \
                                                                                                                        \
