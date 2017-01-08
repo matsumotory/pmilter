@@ -45,9 +45,6 @@ static pthread_mutex_t table_mutex = PTHREAD_MUTEX_INITIALIZER;
 /* mruby functions */
 static void pmilter_mrb_raise_error(pmilter_config *config, mrb_state *mrb, mrb_value obj)
 {
-  struct RString *str;
-  char *err_out;
-
   obj = mrb_funcall(mrb, obj, "inspect", 0);
   if (mrb_type(obj) == MRB_TT_STRING) {
     pmilter_log_error(PMILTER_LOG_ERR, config, "mrb_run failed: error: %s", mrb_str_to_cstr(mrb, obj));
