@@ -148,7 +148,7 @@ static int pmilter_state_compile(pmilter_state *pmilter, pmilter_mrb_code *code)
 }
 
 /* pmilter mruby handlers */
-#define PMILTER_DEFINE_MRUBY_HADNLER(hook_phase)                                                                          \
+#define PMILTER_DEFINE_MRUBY_HADNLER(hook_phase)                                                                       \
   static int pmilter_##hook_phase##_handler(pmilter_state *pmilter)                                                    \
   {                                                                                                                    \
     mrb_state *mrb = pmilter->mrb;                                                                                     \
@@ -216,69 +216,40 @@ static void pmilter_config_handler_init(pmilter_config *config)
   config->mrb = mrb_open();
 }
 
-/* postconfig handelr functions */
-
-static void pmilter_postconfig_handler_free(pmilter_config *c)
-{
-  pmilter_config_handler_free_inner(c->mrb, c->mruby_postconfig_handler);
-}
-
-static int pmilter_postconfig_handler(pmilter_config *c)
-{
-  return pmilter_config_handler_inner(c, c->mrb, c->mruby_postconfig_handler);
-}
-
-static void pmilter_postconfig_handler_run(pmilter_config *config)
-{
-  config->mruby_postconfig_handler = pmilter_mrb_code_from_file(config->mruby_postconfig_handler_path);
-
-  if (config->mruby_postconfig_handler != NULL && config->mrb != NULL) {
-    int ret;
-    ret = pmilter_state_compile_internal(config->mrb, config, config->mruby_postconfig_handler);
-    if (ret == PMILTER_ERROR) {
-      pmilter_log_error(PMILTER_LOG_ERR, config, "postconfig handler compile failed");
-      exit(EX_SOFTWARE);
-    }
-
-    ret = pmilter_postconfig_handler(config);
-    if (ret == PMILTER_ERROR) {
-      pmilter_log_error(PMILTER_LOG_ERR, config, "postconfig handler run failed");
-      exit(EX_SOFTWARE);
-    }
+/* pmilter mruby config handlers */
+#define PMILTER_DEFINE_MRUBY_CONFIG_HADNLER(hook_phase)                                                                \
+  static void pmilter_##hook_phase##_handler_free(pmilter_config *c)                                                   \
+  {                                                                                                                    \
+    pmilter_config_handler_free_inner(c->mrb, c->mruby_##hook_phase##_handler);                                        \
+  }                                                                                                                    \
+                                                                                                                       \
+  static int pmilter_##hook_phase##_handler(pmilter_config *c)                                                         \
+  {                                                                                                                    \
+    return pmilter_config_handler_inner(c, c->mrb, c->mruby_##hook_phase##_handler);                                   \
+  }                                                                                                                    \
+                                                                                                                       \
+  static void pmilter_##hook_phase##_handler_run(pmilter_config *config)                                               \
+  {                                                                                                                    \
+    config->mruby_##hook_phase##_handler = pmilter_mrb_code_from_file(config->mruby_##hook_phase##_handler_path);      \
+                                                                                                                       \
+    if (config->mruby_##hook_phase##_handler != NULL && config->mrb != NULL) {                                         \
+      int ret;                                                                                                         \
+      ret = pmilter_state_compile_internal(config->mrb, config, config->mruby_##hook_phase##_handler);                 \
+      if (ret == PMILTER_ERROR) {                                                                                      \
+        pmilter_log_error(PMILTER_LOG_ERR, config, #hook_phase " handler compile failed");                             \
+        exit(EX_SOFTWARE);                                                                                             \
+      }                                                                                                                \
+                                                                                                                       \
+      ret = pmilter_##hook_phase##_handler(config);                                                                    \
+      if (ret == PMILTER_ERROR) {                                                                                      \
+        pmilter_log_error(PMILTER_LOG_ERR, config, #hook_phase " handler run failed");                                 \
+        exit(EX_SOFTWARE);                                                                                             \
+      }                                                                                                                \
+    }                                                                                                                  \
   }
-}
 
-/* master_exit handelr functions */
-
-static void pmilter_master_exit_handler_free(pmilter_config *c)
-{
-  pmilter_config_handler_free_inner(c->mrb, c->mruby_master_exit_handler);
-}
-
-static int pmilter_master_exit_handler(pmilter_config *c)
-{
-  return pmilter_config_handler_inner(c, c->mrb, c->mruby_master_exit_handler);
-}
-
-static void pmilter_master_exit_handler_run(pmilter_config *config)
-{
-  config->mruby_master_exit_handler = pmilter_mrb_code_from_file(config->mruby_master_exit_handler_path);
-
-  if (config->mruby_master_exit_handler != NULL && config->mrb != NULL) {
-    int ret;
-    ret = pmilter_state_compile_internal(config->mrb, config, config->mruby_master_exit_handler);
-    if (ret == PMILTER_ERROR) {
-      pmilter_log_error(PMILTER_LOG_ERR, config, "master_exit handler compile failed");
-      exit(EX_SOFTWARE);
-    }
-
-    ret = pmilter_master_exit_handler(config);
-    if (ret == PMILTER_ERROR) {
-      pmilter_log_error(PMILTER_LOG_ERR, config, "master_exit handler run failed");
-      exit(EX_SOFTWARE);
-    }
-  }
-}
+PMILTER_DEFINE_MRUBY_CONFIG_HADNLER(postconfig)
+PMILTER_DEFINE_MRUBY_CONFIG_HADNLER(master_exit)
 
 /* command record fucntions */
 
