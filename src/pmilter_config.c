@@ -226,6 +226,7 @@ static void pmilter_config_mruby_handler(pmilter_config *config, struct toml_nod
 {
   /* config handlers */
   PMILTER_CONFIG_HANDLER_CONFIG_VALUE(root, node, config, postconfig);
+  PMILTER_CONFIG_HANDLER_CONFIG_VALUE(root, node, config, master_exit);
 
   /* session handlers */
   PMILTER_SESSION_HANDLER_CONFIG_VALUE(root, node, config, connect);

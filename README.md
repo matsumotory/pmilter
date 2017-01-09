@@ -106,6 +106,9 @@ make test
     # postconfig handler
     mruby_postconfig_handler = "handler/postconfig.rb"
 
+    # master exit config handler
+    mruby_master_exit_handler = "handler/master_exit.rb"
+
   [handler.session]
     # connection info filter handler
     mruby_connect_handler = "handler/connect.rb"
