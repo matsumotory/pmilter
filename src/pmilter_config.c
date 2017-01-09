@@ -29,8 +29,16 @@
 #include "pmilter_config.h"
 #include "pmilter_log.h"
 
-#define PMILTER_GET_HANDLER_CONFIG_VALUE(root, node, config, phase)                                                    \
-  node = toml_get(root, "handler.mruby_" #phase "_handler");                                                           \
+#define PMILTER_CONFIG_HANDLER_CONFIG_VALUE(root, node, config, phase)                                                    \
+  node = toml_get(root, "handler.config.mruby_" #phase "_handler");                                                           \
+  if (node != NULL) {                                                                                                  \
+    config->mruby_##phase##_handler_path = node->value.string;                                                         \
+  } else {                                                                                                             \
+    config->mruby_##phase##_handler_path = NULL;                                                                       \
+  }
+
+#define PMILTER_SESSION_HANDLER_CONFIG_VALUE(root, node, config, phase)                                                    \
+  node = toml_get(root, "handler.session.mruby_" #phase "_handler");                                                           \
   if (node != NULL) {                                                                                                  \
     config->mruby_##phase##_handler_path = node->value.string;                                                         \
   } else {                                                                                                             \
@@ -217,21 +225,21 @@ int pmilter_config_get_log_level(struct toml_node *root)
 static void pmilter_config_mruby_handler(pmilter_config *config, struct toml_node *root, struct toml_node *node)
 {
   /* config handlers */
-  PMILTER_GET_HANDLER_CONFIG_VALUE(root, node, config, postconfig);
+  PMILTER_CONFIG_HANDLER_CONFIG_VALUE(root, node, config, postconfig);
 
   /* session handlers */
-  PMILTER_GET_HANDLER_CONFIG_VALUE(root, node, config, connect);
-  PMILTER_GET_HANDLER_CONFIG_VALUE(root, node, config, helo);
-  PMILTER_GET_HANDLER_CONFIG_VALUE(root, node, config, envfrom);
-  PMILTER_GET_HANDLER_CONFIG_VALUE(root, node, config, envrcpt);
-  PMILTER_GET_HANDLER_CONFIG_VALUE(root, node, config, header);
-  PMILTER_GET_HANDLER_CONFIG_VALUE(root, node, config, eoh);
-  PMILTER_GET_HANDLER_CONFIG_VALUE(root, node, config, body);
-  PMILTER_GET_HANDLER_CONFIG_VALUE(root, node, config, eom);
-  PMILTER_GET_HANDLER_CONFIG_VALUE(root, node, config, abort);
-  PMILTER_GET_HANDLER_CONFIG_VALUE(root, node, config, close);
-  PMILTER_GET_HANDLER_CONFIG_VALUE(root, node, config, unknown);
-  PMILTER_GET_HANDLER_CONFIG_VALUE(root, node, config, data);
+  PMILTER_SESSION_HANDLER_CONFIG_VALUE(root, node, config, connect);
+  PMILTER_SESSION_HANDLER_CONFIG_VALUE(root, node, config, helo);
+  PMILTER_SESSION_HANDLER_CONFIG_VALUE(root, node, config, envfrom);
+  PMILTER_SESSION_HANDLER_CONFIG_VALUE(root, node, config, envrcpt);
+  PMILTER_SESSION_HANDLER_CONFIG_VALUE(root, node, config, header);
+  PMILTER_SESSION_HANDLER_CONFIG_VALUE(root, node, config, eoh);
+  PMILTER_SESSION_HANDLER_CONFIG_VALUE(root, node, config, body);
+  PMILTER_SESSION_HANDLER_CONFIG_VALUE(root, node, config, eom);
+  PMILTER_SESSION_HANDLER_CONFIG_VALUE(root, node, config, abort);
+  PMILTER_SESSION_HANDLER_CONFIG_VALUE(root, node, config, close);
+  PMILTER_SESSION_HANDLER_CONFIG_VALUE(root, node, config, unknown);
+  PMILTER_SESSION_HANDLER_CONFIG_VALUE(root, node, config, data);
 }
 
 void pmilter_config_parse(pmilter_config *config, struct toml_node *root)
