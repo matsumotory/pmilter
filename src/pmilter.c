@@ -248,6 +248,38 @@ static void pmilter_postconfig_handler_run(pmilter_config *config)
   }
 }
 
+/* master_exit handelr functions */
+
+static void pmilter_master_exit_handler_free(pmilter_config *c)
+{
+  pmilter_config_handler_free_inner(c->mrb, c->mruby_master_exit_handler);
+}
+
+static int pmilter_master_exit_handler(pmilter_config *c)
+{
+  return pmilter_config_handler_inner(c, c->mrb, c->mruby_master_exit_handler);
+}
+
+static void pmilter_master_exit_handler_run(pmilter_config *config)
+{
+  config->mruby_master_exit_handler = pmilter_mrb_code_from_file(config->mruby_master_exit_handler_path);
+
+  if (config->mruby_master_exit_handler != NULL && config->mrb != NULL) {
+    int ret;
+    ret = pmilter_state_compile_internal(config->mrb, config, config->mruby_master_exit_handler);
+    if (ret == PMILTER_ERROR) {
+      pmilter_log_error(PMILTER_LOG_ERR, config, "master_exit handler compile failed");
+      exit(EX_SOFTWARE);
+    }
+
+    ret = pmilter_master_exit_handler(config);
+    if (ret == PMILTER_ERROR) {
+      pmilter_log_error(PMILTER_LOG_ERR, config, "master_exit handler run failed");
+      exit(EX_SOFTWARE);
+    }
+  }
+}
+
 /* command record fucntions */
 
 static command_rec *pmilter_command_init()
@@ -720,9 +752,13 @@ int main(int argc, char **argv)
 
   smfi_status = smfi_main(pmilter_config);
 
+  /* master_exit handler phase */
+  pmilter_master_exit_handler_run(pmilter_config);
+
   /* cleanup */
-  pmilter_postconfig_handler_free(pmilter_config);
   toml_free(toml_root);
+  pmilter_postconfig_handler_free(pmilter_config);
+  pmilter_master_exit_handler_free(pmilter_config);
   pmilter_config_free(pmilter_config);
 
   return smfi_status;

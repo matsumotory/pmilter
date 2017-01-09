@@ -109,12 +109,15 @@ typedef struct pmilter_config_t {
    * the current, highest, useful value. */
   int debug;
 
-  /* mruby_state for init phase like postconfig */
+  /* mruby_state for config phase like postconfig or master_exit*/
   mrb_state *mrb;
 
-  /* post config mruby handler */
+  /* config mruby handler */
   const char *mruby_postconfig_handler_path;
   pmilter_mrb_code *mruby_postconfig_handler;
+
+  const char *mruby_master_exit_handler_path;
+  pmilter_mrb_code *mruby_master_exit_handler;
 
   /* session mrub handlers */
   const char *mruby_connect_handler_path;
