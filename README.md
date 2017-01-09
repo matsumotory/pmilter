@@ -101,6 +101,9 @@ listen_backlog = 128
 debug = 0
 
 [handler]
+# postconfig handler
+mruby_postconfig_handler = "handler/postconfig.rb"
+
 # connection info filter handler
 mruby_connect_handler = "handler/connect.rb"
 
