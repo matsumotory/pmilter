@@ -186,6 +186,8 @@ PMILTER_DEFINE_MRUBY_HADNLER(close)
 PMILTER_DEFINE_MRUBY_HADNLER(unknown)
 PMILTER_DEFINE_MRUBY_HADNLER(data)
 
+/* configration handler functions */
+
 static inline void pmilter_config_handler_free_inner(mrb_state *mrb, pmilter_mrb_code *code)
 {
   PMILTER_CODE_MRBC_CONTEXT_FREE(mrb, code);
@@ -208,8 +210,6 @@ static inline int pmilter_config_handler_inner(pmilter_config *config, mrb_state
 
   return status;
 }
-
-/* configration handler functions */
 
 static void pmilter_postconfig_handler_free(pmilter_config *c)
 {
