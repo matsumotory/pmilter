@@ -29,16 +29,16 @@
 #include "pmilter_config.h"
 #include "pmilter_log.h"
 
-#define PMILTER_CONFIG_HANDLER_CONFIG_VALUE(root, node, config, phase)                                                    \
-  node = toml_get(root, "handler.config.mruby_" #phase "_handler");                                                           \
+#define PMILTER_CONFIG_HANDLER_CONFIG_VALUE(root, node, config, phase)                                                 \
+  node = toml_get(root, "handler.config.mruby_" #phase "_handler");                                                    \
   if (node != NULL) {                                                                                                  \
     config->mruby_##phase##_handler_path = node->value.string;                                                         \
   } else {                                                                                                             \
     config->mruby_##phase##_handler_path = NULL;                                                                       \
   }
 
-#define PMILTER_SESSION_HANDLER_CONFIG_VALUE(root, node, config, phase)                                                    \
-  node = toml_get(root, "handler.session.mruby_" #phase "_handler");                                                           \
+#define PMILTER_SESSION_HANDLER_CONFIG_VALUE(root, node, config, phase)                                                \
+  node = toml_get(root, "handler.session.mruby_" #phase "_handler");                                                   \
   if (node != NULL) {                                                                                                  \
     config->mruby_##phase##_handler_path = node->value.string;                                                         \
   } else {                                                                                                             \
