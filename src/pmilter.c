@@ -211,6 +211,13 @@ static inline int pmilter_config_handler_inner(pmilter_config *config, mrb_state
   return status;
 }
 
+static void pmilter_config_handler_init(pmilter_config *config)
+{
+  config->mrb = mrb_open();
+}
+
+/* postconfig handelr functions */
+
 static void pmilter_postconfig_handler_free(pmilter_config *c)
 {
   pmilter_config_handler_free_inner(c->mrb, c->mruby_postconfig_handler);
@@ -219,11 +226,6 @@ static void pmilter_postconfig_handler_free(pmilter_config *c)
 static int pmilter_postconfig_handler(pmilter_config *c)
 {
   return pmilter_config_handler_inner(c, c->mrb, c->mruby_postconfig_handler);
-}
-
-static void pmilter_config_handler_init(pmilter_config *config)
-{
-  config->mrb = mrb_open();
 }
 
 static void pmilter_postconfig_handler_run(pmilter_config *config)
