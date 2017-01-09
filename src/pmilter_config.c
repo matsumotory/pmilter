@@ -216,7 +216,10 @@ int pmilter_config_get_log_level(struct toml_node *root)
 
 static void pmilter_config_mruby_handler(pmilter_config *config, struct toml_node *root, struct toml_node *node)
 {
+  /* config handlers */
   PMILTER_GET_HANDLER_CONFIG_VALUE(root, node, config, postconfig);
+
+  /* session handlers */
   PMILTER_GET_HANDLER_CONFIG_VALUE(root, node, config, connect);
   PMILTER_GET_HANDLER_CONFIG_VALUE(root, node, config, helo);
   PMILTER_GET_HANDLER_CONFIG_VALUE(root, node, config, envfrom);
