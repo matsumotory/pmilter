@@ -240,6 +240,8 @@ struct rusage;	/* forward declaration to get gcc to shut up in wait.h */
 **  End of site-specific configuration.
 **********************************************************************/
 
+#define _FFR_WORKERS_POOL 1
+
 #include <sm/conf.h>
 
 #endif /* ! CONF_H */
