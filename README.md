@@ -99,6 +99,7 @@ make test
   mruby_handler = true
   listen_backlog = 128
   debug = 0
+  min_worker = 32
 
 [handler]
 
