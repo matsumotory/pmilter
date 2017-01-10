@@ -709,13 +709,15 @@ mi_closener()
 #endif /* BROKEN_PTHREAD_SLEEP */
 
 int
-mi_listener(conn, dbg, smfi, initpriv, timeout, backlog)
+mi_listener(conn, dbg, smfi, initpriv, timeout, backlog, max_worker, min_worker)
 	char *conn;
 	int dbg;
 	smfiDesc_ptr smfi;
 	void *initpriv;
 	time_t timeout;
 	int backlog;
+	int max_worker;
+	int min_worker;
 {
 	socket_t connfd = INVALID_SOCKET;
 #if _FFR_DUP_FD
@@ -743,7 +745,7 @@ mi_listener(conn, dbg, smfi, initpriv, timeout, backlog)
 		return MI_FAILURE;
 
 #if _FFR_WORKERS_POOL
-	if (mi_pool_controller_init() == MI_FAILURE)
+	if (mi_pool_controller_init(max_worker, min_worker) == MI_FAILURE)
 		return MI_FAILURE;
 #endif /* _FFR_WORKERS_POOL */
 

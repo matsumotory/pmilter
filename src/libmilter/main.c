@@ -117,8 +117,8 @@ smfi_setworker(max, min)
 	int max;
 	int min;
 {
-	worker_max = max;
-	worker_min = min;
+	max_worker = max;
+	min_worker = min;
 	return MI_SUCCESS;
 }
 
@@ -263,7 +263,7 @@ smfi_main(privatedata)
 	r = MI_MONITOR_INIT();
 
 	/* Startup the listener */
-	if (mi_listener(conn, dbg, smfi, privatedata, timeout, backlog) != MI_SUCCESS)
+	if (mi_listener(conn, dbg, smfi, privatedata, timeout, backlog, max_worker, min_worker) != MI_SUCCESS)
 		r = MI_FAILURE;
 
 	return r;
