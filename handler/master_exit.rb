@@ -1,1 +1,1 @@
-puts "master exit at eixt phase"
+puts "master exit at exit phase"
