@@ -39,8 +39,6 @@
     (code)->ctx = NULL;                                                                                                \
   }
 
-static pthread_mutex_t table_mutex = PTHREAD_MUTEX_INITIALIZER;
-
 /* mruby functions */
 static void pmilter_mrb_raise_error(pmilter_config *config, mrb_state *mrb, mrb_value obj)
 {
