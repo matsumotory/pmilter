@@ -109,6 +109,8 @@ typedef struct pmilter_config_t {
    * the current, highest, useful value. */
   int debug;
 
+  int min_worker;
+
   /* mruby_state for config phase like postconfig or master_exit*/
   mrb_state *mrb;
 

@@ -701,10 +701,10 @@ int main(int argc, char **argv)
     pmilter_log_error(PMILTER_LOG_ERR, pmilter_config, "smfi_setbacklog failed");
     exit(EX_SOFTWARE);
   }
-  if (smfi_setdbg(pmilter_config->debug) == MI_FAILURE) {
-    pmilter_log_error(PMILTER_LOG_ERR, pmilter_config, "smfi_setdbg failed");
-    exit(EX_SOFTWARE);
-  }
+
+  smfi_setdbg(pmilter_config->debug);
+  smfi_setworker(pmilter_config->min_worker, 0);
+
   if (smfi_register(smfilter) == MI_FAILURE) {
     pmilter_log_error(PMILTER_LOG_ERR, pmilter_config, "smfi_register failed\n");
     exit(EX_UNAVAILABLE);

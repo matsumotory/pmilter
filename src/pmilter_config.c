@@ -253,6 +253,7 @@ void pmilter_config_parse(pmilter_config *config, struct toml_node *root)
   config->listen = pmilter_config_get_string(config, root, "server.listen");
   config->listen_backlog = pmilter_config_get_integer(config, root, "server.listen_backlog");
   config->debug = pmilter_config_get_integer(config, root, "server.debug");
+  config->min_worker = pmilter_config_get_integer(config, root, "server.min_worker");
 
   pmilter_config_mruby_handler(config, root, node);
 }
