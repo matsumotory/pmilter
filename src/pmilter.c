@@ -703,7 +703,7 @@ int main(int argc, char **argv)
   }
 
   smfi_setdbg(pmilter_config->debug);
-  smfi_setworker(pmilter_config->min_worker, 0);
+  smfi_setworker(0, pmilter_config->min_worker);
 
   if (smfi_register(smfilter) == MI_FAILURE) {
     pmilter_log_error(PMILTER_LOG_ERR, pmilter_config, "smfi_register failed\n");
