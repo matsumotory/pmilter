@@ -169,6 +169,7 @@ LIBMILTER_API int smfi_register __P((struct smfiDesc));
 LIBMILTER_API int smfi_main __P((void *));
 LIBMILTER_API int smfi_setbacklog __P((int));
 LIBMILTER_API int smfi_setdbg __P((int));
+LIBMILTER_API int smfi_setworker __P((int, int));
 LIBMILTER_API int smfi_settimeout __P((int));
 LIBMILTER_API int smfi_setconn __P((char *));
 LIBMILTER_API int smfi_stop __P((void));

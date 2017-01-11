@@ -98,6 +98,29 @@ static int dbg = 0;
 static char *conn = NULL;
 static int timeout = MI_TIMEOUT;
 static int backlog = MI_SOMAXCONN;
+static int max_worker = 0;
+static int min_worker = 0;
+
+/*
+**  SMFI_SETWORKER -- set max/min worker.
+**
+**	Parameters:
+**		max -- the number of max worker .
+**		min -- the number of min worker .
+**
+**	Returns:
+**		MI_SUCCESS
+*/
+
+int
+smfi_setworker(max, min)
+	int max;
+	int min;
+{
+	max_worker = max;
+	min_worker = min;
+	return MI_SUCCESS;
+}
 
 /*
 **  SMFI_OPENSOCKET -- try the socket setup to make sure we'll be
@@ -240,7 +263,7 @@ smfi_main(privatedata)
 	r = MI_MONITOR_INIT();
 
 	/* Startup the listener */
-	if (mi_listener(conn, dbg, smfi, privatedata, timeout, backlog) != MI_SUCCESS)
+	if (mi_listener(conn, dbg, smfi, privatedata, timeout, backlog, max_worker, min_worker) != MI_SUCCESS)
 		r = MI_FAILURE;
 
 	return r;

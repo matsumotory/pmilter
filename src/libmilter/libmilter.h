@@ -280,7 +280,7 @@ typedef pthread_cond_t scond_t;
 /* functions */
 extern int	mi_handle_session __P((SMFICTX_PTR));
 extern int	mi_engine __P((SMFICTX_PTR));
-extern int	mi_listener __P((char *, int, smfiDesc_ptr, void *, time_t, int));
+extern int	mi_listener __P((char *, int, smfiDesc_ptr, void *, time_t, int, int, int));
 extern void	mi_clr_macros __P((SMFICTX_PTR, int));
 extern void	mi_clr_ctx __P((SMFICTX_PTR));
 extern int	mi_stop __P((void));
@@ -328,7 +328,7 @@ int mi_monitor_work_end __P((SMFICTX_PTR, int));
 
 #if _FFR_WORKERS_POOL
 extern int mi_pool_manager_init __P((void));
-extern int mi_pool_controller_init __P((void));
+extern int mi_pool_controller_init __P((int, int));
 extern int mi_start_session __P((SMFICTX_PTR));
 #endif /* _FFR_WORKERS_POOL */
 

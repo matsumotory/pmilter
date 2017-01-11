@@ -37,6 +37,8 @@ struct taskmgr_S
 };
 
 static taskmgr_T     Tskmgr = {0};
+static int max_worker = 0;
+static int min_worker = 0;
 
 #define WRK_CTX_HEAD	Tskmgr.tm_ctx_head
 
@@ -96,6 +98,8 @@ static int mi_list_del_ctx __P((SMFICTX_PTR));
 #ifndef MIN_WORKERS
 # define MIN_WORKERS	2  /* minimum number of threads to keep around */
 #endif
+
+#define MAX_WORKERS	2048  /* maximum number of threads to keep around */
 
 #define MIN_IDLE	1  /* minimum number of idle threads */
 
@@ -265,10 +269,15 @@ nonblocking(int fd, const char *name)
 */
 
 int
-mi_pool_controller_init()
+mi_pool_controller_init(max, min)
+int max;
+int min;
 {
 	sthread_t tid;
 	int r, i;
+
+  max_worker = max;
+  min_worker = min;
 
 	if (Tskmgr.tm_signature == TM_SIGNATURE)
 		return MI_SUCCESS;
@@ -305,7 +314,13 @@ mi_pool_controller_init()
 	Tskmgr.tm_signature = TM_SIGNATURE;
 
 	/* Create the pool of workers */
-	for (i = 0; i < MIN_WORKERS; i++)
+  if (min_worker == 0) {
+    min_worker = MIN_WORKERS;
+  }
+  if (max_worker == 0) {
+    max_worker = MAX_WORKERS;
+  }
+	for (i = 0; i < min_worker; i++)
 	{
 		if ((r = thread_create(&tid, mi_worker, (void *) NULL)) != 0)
 		{
@@ -757,7 +772,7 @@ mi_worker(arg)
 		**	if yes: quit
 		*/
 
-		if (Tskmgr.tm_nb_workers > MIN_WORKERS &&
+		if (Tskmgr.tm_nb_workers > min_worker &&
 		    Tskmgr.tm_nb_idle > MIN_IDLE)
 			done = true;
 
