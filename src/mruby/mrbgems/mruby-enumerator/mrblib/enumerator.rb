@@ -177,8 +177,8 @@ class Enumerator
   #
   # If no block is given, a new Enumerator is returned that includes the index.
   #
-  def each_with_index
-    with_index
+  def each_with_index(&block)
+    with_index(0, &block)
   end
 
   ##
@@ -612,7 +612,7 @@ module Kernel
   def to_enum(meth=:each, *args)
     Enumerator.new self, meth, *args
   end
-  alias :enum_for :to_enum
+  alias enum_for to_enum
 end
 
 module Enumerable
