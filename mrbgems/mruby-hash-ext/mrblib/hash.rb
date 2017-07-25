@@ -28,11 +28,11 @@ class Hash
     if length == 1
       o = object[0]
       if o.respond_to?(:to_hash)
-        h = Hash.new
+        h = self.new
         object[0].to_hash.each { |k, v| h[k] = v }
         return h
       elsif o.respond_to?(:to_a)
-        h = Hash.new
+        h = self.new
         o.to_a.each do |i|
           raise ArgumentError, "wrong element type #{i.class} (expected array)" unless i.respond_to?(:to_a)
           k, v = nil
@@ -53,7 +53,7 @@ class Hash
     unless length % 2 == 0
       raise ArgumentError, 'odd number of arguments for Hash'
     end
-    h = Hash.new
+    h = self.new
     0.step(length - 2, 2) do |i|
       h[object[i]] = object[i + 1]
     end
@@ -211,7 +211,7 @@ class Hash
   #
 
   def invert
-    h = Hash.new
+    h = self.class.new
     self.each {|k, v| h[v] = k }
     h
   end
@@ -381,5 +381,81 @@ class Hash
     else
       n
     end
+  end
+
+  ##
+  # call-seq:
+  #    hsh.transform_keys {|key| block } -> new_hash
+  #    hsh.transform_keys                -> an_enumerator
+  #
+  # Returns a new hash, with the keys computed from running the block
+  # once for each key in the hash, and the values unchanged.
+  #
+  # If no block is given, an enumerator is returned instead.
+  #
+  def transform_keys(&b)
+    return to_enum :transform_keys unless block_given?
+    hash = {}
+    self.keys.each do |k|
+      new_key = yield(k)
+      hash[new_key] = self[k]
+    end
+    hash
+  end
+  ##
+  # call-seq:
+  #    hsh.transform_keys! {|key| block } -> hsh
+  #    hsh.transform_keys!                -> an_enumerator
+  #
+  # Invokes the given block once for each key in <i>hsh</i>, replacing it
+  # with the new key returned by the block, and then returns <i>hsh</i>.
+  #
+  # If no block is given, an enumerator is returned instead.
+  #
+  def transform_keys!(&b)
+    return to_enum :transform_keys! unless block_given?
+    self.keys.each do |k|
+      value = self[k]
+      new_key = yield(k)
+      self.__delete(k)
+      self[new_key] = value
+    end
+    self
+  end
+  ##
+  # call-seq:
+  #    hsh.transform_values {|value| block } -> new_hash
+  #    hsh.transform_values                  -> an_enumerator
+  #
+  # Returns a new hash with the results of running the block once for
+  # every value.
+  # This method does not change the keys.
+  #
+  # If no block is given, an enumerator is returned instead.
+  #
+  def transform_values(&b)
+    return to_enum :transform_values unless block_given?
+    hash = {}
+    self.keys.each do |k|
+      hash[k] = yield(self[k])
+    end
+    hash
+  end
+  ##
+  # call-seq:
+  #    hsh.transform_values! {|key| block } -> hsh
+  #    hsh.transform_values!                -> an_enumerator
+  #
+  # Invokes the given block once for each value in the hash, replacing
+  # with the new value returned by the block, and then returns <i>hsh</i>.
+  #
+  # If no block is given, an enumerator is returned instead.
+  #
+  def transform_values!(&b)
+    return to_enum :transform_values! unless block_given?
+    self.keys.each do |k|
+      self[k] = yield(self[k])
+    end
+    self
   end
 end

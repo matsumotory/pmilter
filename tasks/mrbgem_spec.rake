@@ -63,9 +63,6 @@ module MRuby
           objfile(f.relative_path_from(@dir).to_s.pathmap("#{build_dir}/%X"))
         end
 
-        @generate_functions = !(@rbfiles.empty? && @objs.empty?)
-        @objs << objfile("#{build_dir}/gem_init") if @generate_functions
-
         @test_rbfiles = Dir.glob("#{dir}/test/**/*.rb")
         @test_objs = Dir.glob("#{dir}/test/*.{c,cpp,cxx,cc,m,asm,s,S}").map do |f|
           objfile(f.relative_path_from(dir).to_s.pathmap("#{build_dir}/%X"))
@@ -83,6 +80,9 @@ module MRuby
 
         instance_eval(&@initializer)
 
+        @generate_functions = !(@rbfiles.empty? && @objs.empty?)
+        @objs << objfile("#{build_dir}/gem_init") if @generate_functions
+
         if !name || !licenses || !authors
           fail "#{name || dir} required to set name, license(s) and author(s)"
         end
@@ -90,7 +90,9 @@ module MRuby
         build.libmruby << @objs
 
         instance_eval(&@build_config_initializer) if @build_config_initializer
+      end
 
+      def setup_compilers
         compilers.each do |compiler|
           compiler.define_rules build_dir, "#{dir}"
           compiler.defines << %Q[MRBGEM_#{funcname.upcase}_VERSION=#{version}]
@@ -135,7 +137,7 @@ module MRuby
         if system("pkg-config --exists #{escaped_package_query}")
           cc.flags += [`pkg-config --cflags #{escaped_package_query}`.strip]
           cxx.flags += [`pkg-config --cflags #{escaped_package_query}`.strip]
-          linker.flags += [`pkg-config --libs #{escaped_package_query}`.strip]
+          linker.flags_before_libraries += [`pkg-config --libs #{escaped_package_query}`.strip]
           true
         else
           false
@@ -418,6 +420,8 @@ module MRuby
         gem_table = generate_gem_table build
 
         @ary = tsort_dependencies gem_table.keys, gem_table, true
+
+        each(&:setup_compilers)
 
         each do |g|
           import_include_paths(g)
