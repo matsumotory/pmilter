@@ -7,7 +7,7 @@ build/share
 src/libmilter/libmilter_la*.o
 src/libmilter/compile
 src/libtoml/libtoml.a
-src/icu/source
+src/icu/source/**
 src/icu/source/config.log
 src/icu/source/config.status
 src/icu/source/config/Makefile.inc
