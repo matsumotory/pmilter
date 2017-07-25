@@ -27,6 +27,7 @@
 #include "mruby.h"
 #include "mruby/compile.h"
 #include "mruby/string.h"
+#include "mruby/version.h"
 
 #include "pmilter.h"
 #include "pmilter_config.h"
@@ -717,7 +718,7 @@ int main(int argc, char **argv)
   pmilter_postconfig_handler_run(pmilter_config);
 
   /* start pmilter */
-  pmilter_log_error(PMILTER_LOG_NOTICE, pmilter_config, "%s starting", PMILTER_DESCRIPTION);
+  pmilter_log_error(PMILTER_LOG_NOTICE, pmilter_config, "%s starting (using mruby %s)", PMILTER_DESCRIPTION, MRUBY_VERSION);
 
   smfi_status = smfi_main(pmilter_config);
 

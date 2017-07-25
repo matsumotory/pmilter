@@ -224,7 +224,8 @@ Pmilter.status = Pmilter::SMFIS_SKIP
 ```
 ubuntu@ubuntu-xenial:~/pmilter$ make run
 ./pmilter -c pmilter.conf
-[Wed, 02 Nov 2016 12:02:11 GMT][notice]: pmilter starting
+[Tue, 25 Jul 2017 13:02:34 GMT][notice]: pmilter/0.0.1 starting (using mruby 1.3.0)
+
 hello pmilter handler called from pmilter
 client ipaddr 192.168.123.123
 client hostname mx.example.net
