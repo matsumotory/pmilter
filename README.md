@@ -48,7 +48,7 @@ sudo apt-get -y install build-essential rake bison git gperf automake m4 \
 
 ```
 yum install -y ruby gcc cc-c++ make cmake autoconf automake libtool bison
-rpm -ivh ftp://ftp.pbone.net/mirror/ftp.sourceforge.net/pub/sourceforge/k/ke/kenzy/special/C7/x86_64/ragel-6.8-3.el7.centos.x86_64.rpm
+rpm -ivh https://downloads.sourceforge.net/project/kenzy/special/C7/x86_64/ragel-6.8-3.el7.centos.x86_64.rpm
 ```
 
 ### run dependency
