@@ -1,6 +1,8 @@
+// © 2016 and later: Unicode, Inc. and others.
+// License & terms of use: http://www.unicode.org/copyright.html
 /********************************************************************
  * COPYRIGHT: 
- * Copyright (c) 2005-2012, International Business Machines Corporation and
+ * Copyright (c) 2005-2016, International Business Machines Corporation and
  * others. All Rights Reserved.
  ********************************************************************/
 /************************************************************************
@@ -33,6 +35,10 @@ public:
     void FreezeTest();
     void Ticket5560();
     void Ticket6847();
+    void Ticket10562();
+    void Ticket10983();
+    void Ticket12130();
+    void Ticket13344();
 
 private:
     struct m {                              // Map between native indices & code points.

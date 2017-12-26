@@ -1,7 +1,8 @@
-
+// © 2016 and later: Unicode, Inc. and others.
+// License & terms of use: http://www.unicode.org/copyright.html
 /***********************************************************************
- * COPYRIGHT: 
- * Copyright (c) 1997-2005, International Business Machines Corporation
+ * COPYRIGHT:
+ * Copyright (c) 1997-2016, International Business Machines Corporation
  * and others. All Rights Reserved.
  ***********************************************************************/
 
@@ -11,6 +12,7 @@
 
 #include "intltest.h"
 #include "tfsmalls.h"
+#include "cmemory.h"
 
 #include "unicode/msgfmt.h"
 #include "unicode/choicfmt.h"
@@ -18,8 +20,6 @@
 #include "unicode/parsepos.h"
 #include "unicode/fieldpos.h"
 #include "unicode/fmtable.h"
-
-#define LENGTHOF(array) (int32_t)(sizeof(array)/sizeof((array)[0]))
 
 /*static UBool chkstatus( UErrorCode &status, char* msg = NULL )
 {
@@ -84,7 +84,7 @@ void test_FieldPosition_example( void )
     //***** this test is for compiler checks and visual verification only.
     double doubleNum[] = { 123456789.0, -12345678.9, 1234567.89, -123456.789,
         12345.6789, -1234.56789, 123.456789, -12.3456789, 1.23456789};
-    int32_t dNumSize = (int32_t)(sizeof(doubleNum)/sizeof(double));
+    int32_t dNumSize = UPRV_LENGTHOF(doubleNum);
 
     UErrorCode status = U_ZERO_ERROR;
     DecimalFormat* fmt = (DecimalFormat*) NumberFormat::createInstance(status);
@@ -255,7 +255,7 @@ void test_Formattable( void )
         ucs,
         ucs_ptr
     };
-    const int32_t ft_cnt = LENGTHOF(ftarray);
+    const int32_t ft_cnt = UPRV_LENGTHOF(ftarray);
     Formattable ft_arr( ftarray, ft_cnt );
     UnicodeString temp;
     if ((ft_arr[0].getType() == Formattable::kDate)   && (ft_arr[0].getDate()   == 1.0)
@@ -308,7 +308,7 @@ void test_Formattable( void )
     for(i = 0; i < ft_cnt; ++i) {
         pf = ftarray[i].clone();
         if(pf == (ftarray + i) || *pf != ftarray[i]) {
-            it_errln("Formattable.clone() failed for item %d" + i);
+            it_errln(UnicodeString("Formattable.clone() failed for item ") + i);
         }
         delete pf;
     }
@@ -316,8 +316,8 @@ void test_Formattable( void )
     const Formattable ftarr1[] = { Formattable( (int32_t)1 ), Formattable( (int32_t)2 ) };
     const Formattable ftarr2[] = { Formattable( (int32_t)3 ), Formattable( (int32_t)4 ) };
 
-    const int32_t ftarr1_cnt = (int32_t)(sizeof(ftarr1) / sizeof(Formattable));
-    const int32_t ftarr2_cnt = (int32_t)(sizeof(ftarr2) / sizeof(Formattable));
+    const int32_t ftarr1_cnt = UPRV_LENGTHOF(ftarr1);
+    const int32_t ftarr2_cnt = UPRV_LENGTHOF(ftarr2);
 
     ft_arr.setArray( ftarr1, ftarr1_cnt );
     if ((ft_arr[0].getType() == Formattable::kLong) && (ft_arr[0].getLong() == (int32_t)1)) {

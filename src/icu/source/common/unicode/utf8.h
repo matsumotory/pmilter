@@ -1,12 +1,14 @@
+// © 2016 and later: Unicode, Inc. and others.
+// License & terms of use: http://www.unicode.org/copyright.html
 /*
 *******************************************************************************
 *
-*   Copyright (C) 1999-2012, International Business Machines
+*   Copyright (C) 1999-2015, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 *
 *******************************************************************************
 *   file name:  utf8.h
-*   encoding:   US-ASCII
+*   encoding:   UTF-8
 *   tab size:   8 (not used)
 *   indentation:4
 *
@@ -40,51 +42,23 @@
 /* internal definitions ----------------------------------------------------- */
 
 /**
- * \var utf8_countTrailBytes
- * Internal array with numbers of trail bytes for any given byte used in
- * lead byte position.
- *
- * This is internal since it is not meant to be called directly by external clients;
- * however it is called by public macros in this file and thus must remain stable,
- * and should not be hidden when other internal functions are hidden (otherwise
- * public macros would fail to compile).
- * @internal
- */
-#ifdef U_UTF8_IMPL
-U_EXPORT const uint8_t 
-#elif defined(U_STATIC_IMPLEMENTATION) || defined(U_COMMON_IMPLEMENTATION)
-U_CFUNC const uint8_t
-#else
-U_CFUNC U_IMPORT const uint8_t /* U_IMPORT2? */ /*U_IMPORT*/ 
-#endif
-utf8_countTrailBytes[256];
-
-/**
  * Counts the trail bytes for a UTF-8 lead byte.
- * Returns 0 for 0..0xbf as well as for 0xfe and 0xff.
+ * Returns 0 for 0..0xc1 as well as for 0xf5..0xff.
+ * leadByte might be evaluated multiple times.
  *
  * This is internal since it is not meant to be called directly by external clients;
  * however it is called by public macros in this file and thus must remain stable.
- *
- * Note: Beginning with ICU 50, the implementation uses a multi-condition expression
- * which was shown in 2012 (on x86-64) to compile to fast, branch-free code.
- * leadByte is evaluated multiple times.
- *
- * The pre-ICU 50 implementation used the exported array utf8_countTrailBytes:
- * #define U8_COUNT_TRAIL_BYTES(leadByte) (utf8_countTrailBytes[leadByte])
- * leadByte was evaluated exactly once.
  *
  * @param leadByte The first byte of a UTF-8 sequence. Must be 0..0xff.
  * @internal
  */
 #define U8_COUNT_TRAIL_BYTES(leadByte) \
-    ((leadByte)<0xf0 ? \
-        ((leadByte)>=0xc0)+((leadByte)>=0xe0) : \
-        (leadByte)<0xfe ? 3+((leadByte)>=0xf8)+((leadByte)>=0xfc) : 0)
+    (U8_IS_LEAD(leadByte) ? \
+        ((uint8_t)(leadByte)>=0xe0)+((uint8_t)(leadByte)>=0xf0)+1 : 0)
 
 /**
  * Counts the trail bytes for a UTF-8 lead byte of a valid UTF-8 sequence.
- * The maximum supported lead byte is 0xf4 corresponding to U+10FFFF.
+ * Returns 0 for 0..0xc1. Undefined for 0xf5..0xff.
  * leadByte might be evaluated multiple times.
  *
  * This is internal since it is not meant to be called directly by external clients;
@@ -94,7 +68,7 @@ utf8_countTrailBytes[256];
  * @internal
  */
 #define U8_COUNT_TRAIL_BYTES_UNSAFE(leadByte) \
-    (((leadByte)>=0xc0)+((leadByte)>=0xe0)+((leadByte)>=0xf0))
+    (((uint8_t)(leadByte)>=0xc2)+((uint8_t)(leadByte)>=0xe0)+((uint8_t)(leadByte)>=0xf0))
 
 /**
  * Mask a UTF-8 lead byte, leave only the lower bits that form part of the code point value.
@@ -104,6 +78,40 @@ utf8_countTrailBytes[256];
  * @internal
  */
 #define U8_MASK_LEAD_BYTE(leadByte, countTrailBytes) ((leadByte)&=(1<<(6-(countTrailBytes)))-1)
+
+/**
+ * Internal bit vector for 3-byte UTF-8 validity check, for use in U8_IS_VALID_LEAD3_AND_T1.
+ * Each bit indicates whether one lead byte + first trail byte pair starts a valid sequence.
+ * Lead byte E0..EF bits 3..0 are used as byte index,
+ * first trail byte bits 7..5 are used as bit index into that byte.
+ * @see U8_IS_VALID_LEAD3_AND_T1
+ * @internal
+ */
+#define U8_LEAD3_T1_BITS "\x20\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x10\x30\x30"
+
+/**
+ * Internal 3-byte UTF-8 validity check.
+ * Non-zero if lead byte E0..EF and first trail byte 00..FF start a valid sequence.
+ * @internal
+ */
+#define U8_IS_VALID_LEAD3_AND_T1(lead, t1) (U8_LEAD3_T1_BITS[(lead)&0xf]&(1<<((uint8_t)(t1)>>5)))
+
+/**
+ * Internal bit vector for 4-byte UTF-8 validity check, for use in U8_IS_VALID_LEAD4_AND_T1.
+ * Each bit indicates whether one lead byte + first trail byte pair starts a valid sequence.
+ * First trail byte bits 7..4 are used as byte index,
+ * lead byte F0..F4 bits 2..0 are used as bit index into that byte.
+ * @see U8_IS_VALID_LEAD4_AND_T1
+ * @internal
+ */
+#define U8_LEAD4_T1_BITS "\x00\x00\x00\x00\x00\x00\x00\x00\x1E\x0F\x0F\x0F\x00\x00\x00\x00"
+
+/**
+ * Internal 4-byte UTF-8 validity check.
+ * Non-zero if lead byte F0..F4 and first trail byte 00..FF start a valid sequence.
+ * @internal
+ */
+#define U8_IS_VALID_LEAD4_AND_T1(lead, t1) (U8_LEAD4_T1_BITS[(uint8_t)(t1)>>4]&(1<<((lead)&7)))
 
 /**
  * Function for handling "next code point" with error-checking.
@@ -164,20 +172,21 @@ utf8_back1SafeBody(const uint8_t *s, int32_t start, int32_t i);
 #define U8_IS_SINGLE(c) (((c)&0x80)==0)
 
 /**
- * Is this code unit (byte) a UTF-8 lead byte?
+ * Is this code unit (byte) a UTF-8 lead byte? (0xC2..0xF4)
  * @param c 8-bit code unit (byte)
  * @return TRUE or FALSE
  * @stable ICU 2.4
  */
-#define U8_IS_LEAD(c) ((uint8_t)((c)-0xc0)<0x3e)
+#define U8_IS_LEAD(c) ((uint8_t)((c)-0xc2)<=0x32)
+// 0x32=0xf4-0xc2
 
 /**
- * Is this code unit (byte) a UTF-8 trail byte?
+ * Is this code unit (byte) a UTF-8 trail byte? (0x80..0xBF)
  * @param c 8-bit code unit (byte)
  * @return TRUE or FALSE
  * @stable ICU 2.4
  */
-#define U8_IS_TRAIL(c) (((c)&0xc0)==0x80)
+#define U8_IS_TRAIL(c) ((int8_t)(c)<-0x40)
 
 /**
  * How many code units (bytes) are used for the UTF-8 encoding
@@ -232,22 +241,56 @@ utf8_back1SafeBody(const uint8_t *s, int32_t start, int32_t i);
  * The offset may point to either the lead byte or one of the trail bytes
  * for a code point, in which case the macro will read all of the bytes
  * for the code point.
+ *
+ * The length can be negative for a NUL-terminated string.
+ *
  * If the offset points to an illegal UTF-8 byte sequence, then
  * c is set to a negative value.
  * Iteration through a string is more efficient with U8_NEXT_UNSAFE or U8_NEXT.
  *
  * @param s const uint8_t * string
- * @param start starting string offset
- * @param i string offset, must be start<=i<length
- * @param length string length
+ * @param start int32_t starting string offset
+ * @param i int32_t string offset, must be start<=i<length
+ * @param length int32_t string length
  * @param c output UChar32 variable, set to <0 in case of an error
  * @see U8_GET_UNSAFE
  * @stable ICU 2.4
  */
 #define U8_GET(s, start, i, length, c) { \
-    int32_t _u8_get_index=(int32_t)(i); \
+    int32_t _u8_get_index=(i); \
     U8_SET_CP_START(s, start, _u8_get_index); \
     U8_NEXT(s, _u8_get_index, length, c); \
+}
+
+/**
+ * Get a code point from a string at a random-access offset,
+ * without changing the offset.
+ * The offset may point to either the lead byte or one of the trail bytes
+ * for a code point, in which case the macro will read all of the bytes
+ * for the code point.
+ *
+ * The length can be negative for a NUL-terminated string.
+ *
+ * If the offset points to an illegal UTF-8 byte sequence, then
+ * c is set to U+FFFD.
+ * Iteration through a string is more efficient with U8_NEXT_UNSAFE or U8_NEXT_OR_FFFD.
+ *
+ * This macro does not distinguish between a real U+FFFD in the text
+ * and U+FFFD returned for an ill-formed sequence.
+ * Use U8_GET() if that distinction is important.
+ *
+ * @param s const uint8_t * string
+ * @param start int32_t starting string offset
+ * @param i int32_t string offset, must be start<=i<length
+ * @param length int32_t string length
+ * @param c output UChar32 variable, set to U+FFFD in case of an error
+ * @see U8_GET
+ * @stable ICU 51
+ */
+#define U8_GET_OR_FFFD(s, start, i, length, c) { \
+    int32_t _u8_get_index=(i); \
+    U8_SET_CP_START(s, start, _u8_get_index); \
+    U8_NEXT_OR_FFFD(s, _u8_get_index, length, c); \
 }
 
 /* definitions with forward iteration --------------------------------------- */
@@ -271,7 +314,7 @@ utf8_back1SafeBody(const uint8_t *s, int32_t start, int32_t i);
  */
 #define U8_NEXT_UNSAFE(s, i, c) { \
     (c)=(uint8_t)(s)[(i)++]; \
-    if((c)>=0x80) { \
+    if(!U8_IS_SINGLE(c)) { \
         if((c)<0xe0) { \
             (c)=(((c)&0x1f)<<6)|((s)[(i)++]&0x3f); \
         } else if((c)<0xf0) { \
@@ -291,43 +334,88 @@ utf8_back1SafeBody(const uint8_t *s, int32_t start, int32_t i);
  * (Post-incrementing forward iteration.)
  * "Safe" macro, checks for illegal sequences and for string boundaries.
  *
+ * The length can be negative for a NUL-terminated string.
+ *
  * The offset may point to the lead byte of a multi-byte sequence,
  * in which case the macro will read the whole sequence.
  * If the offset points to a trail byte or an illegal UTF-8 sequence, then
  * c is set to a negative value.
  *
  * @param s const uint8_t * string
- * @param i string offset, must be i<length
- * @param length string length
+ * @param i int32_t string offset, must be i<length
+ * @param length int32_t string length
  * @param c output UChar32 variable, set to <0 in case of an error
  * @see U8_NEXT_UNSAFE
  * @stable ICU 2.4
  */
 #define U8_NEXT(s, i, length, c) { \
     (c)=(uint8_t)(s)[(i)++]; \
-    if((c)>=0x80) { \
+    if(!U8_IS_SINGLE(c)) { \
         uint8_t __t1, __t2; \
-        if( /* handle U+1000..U+CFFF inline */ \
-            (0xe0<(c) && (c)<=0xec) && \
-            (((i)+1)<(length)) && \
-            (__t1=(uint8_t)((s)[i]-0x80))<=0x3f && \
-            (__t2=(uint8_t)((s)[(i)+1]-0x80))<= 0x3f \
-        ) { \
-            /* no need for (c&0xf) because the upper bits are truncated after <<12 in the cast to (UChar) */ \
-            (c)=(UChar)(((c)<<12)|(__t1<<6)|__t2); \
+        if( /* handle U+0800..U+FFFF inline */ \
+                (0xe0<=(c) && (c)<0xf0) && \
+                (((i)+1)<(length) || (length)<0) && \
+                U8_IS_VALID_LEAD3_AND_T1((c), __t1=(s)[i]) && \
+                (__t2=(s)[(i)+1]-0x80)<=0x3f) { \
+            (c)=(((c)&0xf)<<12)|((__t1&0x3f)<<6)|__t2; \
             (i)+=2; \
         } else if( /* handle U+0080..U+07FF inline */ \
-            ((c)<0xe0 && (c)>=0xc2) && \
-            ((i)<(length)) && \
-            (__t1=(uint8_t)((s)[i]-0x80))<=0x3f \
-        ) { \
-            (c)=(UChar)((((c)&0x1f)<<6)|__t1); \
+                ((c)<0xe0 && (c)>=0xc2) && \
+                ((i)!=(length)) && \
+                (__t1=(s)[i]-0x80)<=0x3f) { \
+            (c)=(((c)&0x1f)<<6)|__t1; \
             ++(i); \
-        } else if(U8_IS_LEAD(c)) { \
-            /* function call for "complicated" and error cases */ \
-            (c)=utf8_nextCharSafeBody((const uint8_t *)s, &(i), (int32_t)(length), c, -1); \
         } else { \
-            (c)=U_SENTINEL; \
+            /* function call for "complicated" and error cases */ \
+            (c)=utf8_nextCharSafeBody((const uint8_t *)s, &(i), (length), c, -1); \
+        } \
+    } \
+}
+
+/**
+ * Get a code point from a string at a code point boundary offset,
+ * and advance the offset to the next code point boundary.
+ * (Post-incrementing forward iteration.)
+ * "Safe" macro, checks for illegal sequences and for string boundaries.
+ *
+ * The length can be negative for a NUL-terminated string.
+ *
+ * The offset may point to the lead byte of a multi-byte sequence,
+ * in which case the macro will read the whole sequence.
+ * If the offset points to a trail byte or an illegal UTF-8 sequence, then
+ * c is set to U+FFFD.
+ *
+ * This macro does not distinguish between a real U+FFFD in the text
+ * and U+FFFD returned for an ill-formed sequence.
+ * Use U8_NEXT() if that distinction is important.
+ *
+ * @param s const uint8_t * string
+ * @param i int32_t string offset, must be i<length
+ * @param length int32_t string length
+ * @param c output UChar32 variable, set to U+FFFD in case of an error
+ * @see U8_NEXT
+ * @stable ICU 51
+ */
+#define U8_NEXT_OR_FFFD(s, i, length, c) { \
+    (c)=(uint8_t)(s)[(i)++]; \
+    if(!U8_IS_SINGLE(c)) { \
+        uint8_t __t1, __t2; \
+        if( /* handle U+0800..U+FFFF inline */ \
+                (0xe0<=(c) && (c)<0xf0) && \
+                (((i)+1)<(length) || (length)<0) && \
+                U8_IS_VALID_LEAD3_AND_T1((c), __t1=(s)[i]) && \
+                (__t2=(s)[(i)+1]-0x80)<=0x3f) { \
+            (c)=(((c)&0xf)<<12)|((__t1&0x3f)<<6)|__t2; \
+            (i)+=2; \
+        } else if( /* handle U+0080..U+07FF inline */ \
+                ((c)<0xe0 && (c)>=0xc2) && \
+                ((i)!=(length)) && \
+                (__t1=(s)[i]-0x80)<=0x3f) { \
+            (c)=(((c)&0x1f)<<6)|__t1; \
+            ++(i); \
+        } else { \
+            /* function call for "complicated" and error cases */ \
+            (c)=utf8_nextCharSafeBody((const uint8_t *)s, &(i), (length), c, -3); \
         } \
     } \
 }
@@ -374,9 +462,9 @@ utf8_back1SafeBody(const uint8_t *s, int32_t start, int32_t i);
  * then isError is set to TRUE.
  *
  * @param s const uint8_t * string buffer
- * @param i string offset, must be i<capacity
- * @param capacity size of the string buffer
- * @param c code point to append
+ * @param i int32_t string offset, must be i<capacity
+ * @param capacity int32_t size of the string buffer
+ * @param c UChar32 code point to append
  * @param isError output UBool set to TRUE if an error occurs, otherwise not modified
  * @see U8_APPEND_UNSAFE
  * @stable ICU 2.4
@@ -392,7 +480,7 @@ utf8_back1SafeBody(const uint8_t *s, int32_t start, int32_t i);
         (s)[(i)++]=(uint8_t)((((c)>>6)&0x3f)|0x80); \
         (s)[(i)++]=(uint8_t)(((c)&0x3f)|0x80); \
     } else { \
-        (i)=utf8_appendCharSafeBody(s, (int32_t)(i), (int32_t)(capacity), c, &(isError)); \
+        (i)=utf8_appendCharSafeBody(s, (i), (capacity), c, &(isError)); \
     } \
 }
 
@@ -407,7 +495,7 @@ utf8_back1SafeBody(const uint8_t *s, int32_t start, int32_t i);
  * @stable ICU 2.4
  */
 #define U8_FWD_1_UNSAFE(s, i) { \
-    (i)+=1+U8_COUNT_TRAIL_BYTES_UNSAFE((uint8_t)(s)[i]); \
+    (i)+=1+U8_COUNT_TRAIL_BYTES_UNSAFE((s)[i]); \
 }
 
 /**
@@ -415,22 +503,33 @@ utf8_back1SafeBody(const uint8_t *s, int32_t start, int32_t i);
  * (Post-incrementing iteration.)
  * "Safe" macro, checks for illegal sequences and for string boundaries.
  *
+ * The length can be negative for a NUL-terminated string.
+ *
  * @param s const uint8_t * string
- * @param i string offset, must be i<length
- * @param length string length
+ * @param i int32_t string offset, must be i<length
+ * @param length int32_t string length
  * @see U8_FWD_1_UNSAFE
  * @stable ICU 2.4
  */
 #define U8_FWD_1(s, i, length) { \
-    uint8_t __b=(uint8_t)(s)[(i)++]; \
-    if(U8_IS_LEAD(__b)) { \
-        uint8_t __count=U8_COUNT_TRAIL_BYTES(__b); \
-        if((i)+__count>(length)) { \
-            __count=(uint8_t)((length)-(i)); \
-        } \
-        while(__count>0 && U8_IS_TRAIL((s)[i])) { \
-            ++(i); \
-            --__count; \
+    uint8_t __b=(s)[(i)++]; \
+    if(U8_IS_LEAD(__b) && (i)!=(length)) { \
+        uint8_t __t1=(s)[i]; \
+        if((0xe0<=__b && __b<0xf0)) { \
+            if(U8_IS_VALID_LEAD3_AND_T1(__b, __t1) && \
+                    ++(i)!=(length) && U8_IS_TRAIL((s)[i])) { \
+                ++(i); \
+            } \
+        } else if(__b<0xe0) { \
+            if(U8_IS_TRAIL(__t1)) { \
+                ++(i); \
+            } \
+        } else /* c>=0xf0 */ { \
+            if(U8_IS_VALID_LEAD4_AND_T1(__b, __t1) && \
+                    ++(i)!=(length) && U8_IS_TRAIL((s)[i]) && \
+                    ++(i)!=(length) && U8_IS_TRAIL((s)[i])) { \
+                ++(i); \
+            } \
         } \
     } \
 }
@@ -461,16 +560,18 @@ utf8_back1SafeBody(const uint8_t *s, int32_t start, int32_t i);
  * (Post-incrementing iteration.)
  * "Safe" macro, checks for illegal sequences and for string boundaries.
  *
+ * The length can be negative for a NUL-terminated string.
+ *
  * @param s const uint8_t * string
- * @param i string offset, must be i<length
- * @param length string length
+ * @param i int32_t string offset, must be i<length
+ * @param length int32_t string length
  * @param n number of code points to skip
  * @see U8_FWD_N_UNSAFE
  * @stable ICU 2.4
  */
 #define U8_FWD_N(s, i, length, n) { \
     int32_t __N=(n); \
-    while(__N>0 && (i)<(length)) { \
+    while(__N>0 && ((i)<(length) || ((length)<0 && (s)[i]!=0))) { \
         U8_FWD_1(s, i, length); \
         --__N; \
     } \
@@ -502,14 +603,14 @@ utf8_back1SafeBody(const uint8_t *s, int32_t start, int32_t i);
  * "Safe" macro, checks for illegal sequences and for string boundaries.
  *
  * @param s const uint8_t * string
- * @param start starting string offset (usually 0)
- * @param i string offset, must be start<=i
+ * @param start int32_t starting string offset (usually 0)
+ * @param i int32_t string offset, must be start<=i
  * @see U8_SET_CP_START_UNSAFE
  * @stable ICU 2.4
  */
 #define U8_SET_CP_START(s, start, i) { \
     if(U8_IS_TRAIL((s)[(i)])) { \
-        (i)=utf8_back1SafeBody(s, start, (int32_t)(i)); \
+        (i)=utf8_back1SafeBody(s, start, (i)); \
     } \
 }
 
@@ -542,7 +643,7 @@ utf8_back1SafeBody(const uint8_t *s, int32_t start, int32_t i);
         /* c is a trail byte */ \
         (c)&=0x3f; \
         for(;;) { \
-            __b=(uint8_t)(s)[--(i)]; \
+            __b=(s)[--(i)]; \
             if(__b>=0xc0) { \
                 U8_MASK_LEAD_BYTE(__b, __count); \
                 (c)|=(UChar32)__b<<__shift; \
@@ -570,20 +671,47 @@ utf8_back1SafeBody(const uint8_t *s, int32_t start, int32_t i);
  * If the offset is behind an illegal UTF-8 sequence, then c is set to a negative value.
  *
  * @param s const uint8_t * string
- * @param start starting string offset (usually 0)
- * @param i string offset, must be start<i
+ * @param start int32_t starting string offset (usually 0)
+ * @param i int32_t string offset, must be start<i
  * @param c output UChar32 variable, set to <0 in case of an error
  * @see U8_PREV_UNSAFE
  * @stable ICU 2.4
  */
 #define U8_PREV(s, start, i, c) { \
     (c)=(uint8_t)(s)[--(i)]; \
-    if((c)>=0x80) { \
-        if((c)<=0xbf) { \
-            (c)=utf8_prevCharSafeBody((const uint8_t *)s, start, &(i), c, -1); \
-        } else { \
-            (c)=U_SENTINEL; \
-        } \
+    if(!U8_IS_SINGLE(c)) { \
+        (c)=utf8_prevCharSafeBody((const uint8_t *)s, start, &(i), c, -1); \
+    } \
+}
+
+/**
+ * Move the string offset from one code point boundary to the previous one
+ * and get the code point between them.
+ * (Pre-decrementing backward iteration.)
+ * "Safe" macro, checks for illegal sequences and for string boundaries.
+ *
+ * The input offset may be the same as the string length.
+ * If the offset is behind a multi-byte sequence, then the macro will read
+ * the whole sequence.
+ * If the offset is behind a lead byte, then that itself
+ * will be returned as the code point.
+ * If the offset is behind an illegal UTF-8 sequence, then c is set to U+FFFD.
+ *
+ * This macro does not distinguish between a real U+FFFD in the text
+ * and U+FFFD returned for an ill-formed sequence.
+ * Use U8_PREV() if that distinction is important.
+ *
+ * @param s const uint8_t * string
+ * @param start int32_t starting string offset (usually 0)
+ * @param i int32_t string offset, must be start<i
+ * @param c output UChar32 variable, set to U+FFFD in case of an error
+ * @see U8_PREV
+ * @stable ICU 51
+ */
+#define U8_PREV_OR_FFFD(s, start, i, c) { \
+    (c)=(uint8_t)(s)[--(i)]; \
+    if(!U8_IS_SINGLE(c)) { \
+        (c)=utf8_prevCharSafeBody((const uint8_t *)s, start, &(i), c, -3); \
     } \
 }
 
@@ -609,14 +737,14 @@ utf8_back1SafeBody(const uint8_t *s, int32_t start, int32_t i);
  * "Safe" macro, checks for illegal sequences and for string boundaries.
  *
  * @param s const uint8_t * string
- * @param start starting string offset (usually 0)
- * @param i string offset, must be start<i
+ * @param start int32_t starting string offset (usually 0)
+ * @param i int32_t string offset, must be start<i
  * @see U8_BACK_1_UNSAFE
  * @stable ICU 2.4
  */
 #define U8_BACK_1(s, start, i) { \
     if(U8_IS_TRAIL((s)[--(i)])) { \
-        (i)=utf8_back1SafeBody(s, start, (int32_t)(i)); \
+        (i)=utf8_back1SafeBody(s, start, (i)); \
     } \
 }
 
@@ -649,8 +777,8 @@ utf8_back1SafeBody(const uint8_t *s, int32_t start, int32_t i);
  * "Safe" macro, checks for illegal sequences and for string boundaries.
  *
  * @param s const uint8_t * string
- * @param start index of the start of the string
- * @param i string offset, must be start<i
+ * @param start int32_t index of the start of the string
+ * @param i int32_t string offset, must be start<i
  * @param n number of code points to skip
  * @see U8_BACK_N_UNSAFE
  * @stable ICU 2.4
@@ -689,15 +817,17 @@ utf8_back1SafeBody(const uint8_t *s, int32_t start, int32_t i);
  * The input offset may be the same as the string length.
  * "Safe" macro, checks for illegal sequences and for string boundaries.
  *
+ * The length can be negative for a NUL-terminated string.
+ *
  * @param s const uint8_t * string
- * @param start starting string offset (usually 0)
- * @param i string offset, must be start<=i<=length
- * @param length string length
+ * @param start int32_t starting string offset (usually 0)
+ * @param i int32_t string offset, must be start<=i<=length
+ * @param length int32_t string length
  * @see U8_SET_CP_LIMIT_UNSAFE
  * @stable ICU 2.4
  */
 #define U8_SET_CP_LIMIT(s, start, i, length) { \
-    if((start)<(i) && (i)<(length)) { \
+    if((start)<(i) && ((i)<(length) || (length)<0)) { \
         U8_BACK_1(s, start, i); \
         U8_FWD_1(s, i, length); \
     } \

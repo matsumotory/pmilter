@@ -1,12 +1,14 @@
+// © 2016 and later: Unicode, Inc. and others.
+// License & terms of use: http://www.unicode.org/copyright.html
 /*
 ******************************************************************************
 *
-*   Copyright (C) 2001-2008, International Business Machines
+*   Copyright (C) 2001-2014, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 *
 ******************************************************************************
 *   file name:  trietest.c
-*   encoding:   US-ASCII
+*   encoding:   UTF-8
 *   tab size:   8 (not used)
 *   indentation:4
 *
@@ -16,14 +18,13 @@
 
 #include <stdio.h>
 #include "unicode/utypes.h"
+#include "unicode/utf8.h"
 #include "utrie2.h"
 #include "utrie.h"
 #include "cstring.h"
 #include "cmemory.h"
 #include "udataswp.h"
 #include "cintltst.h"
-
-#define LENGTHOF(array) (int32_t)(sizeof(array)/sizeof((array)[0]))
 
 void addTrie2Test(TestNode** root);
 
@@ -349,6 +350,11 @@ static void
 testTrieUTF8(const char *testName,
              const UTrie2 *trie, UTrie2ValueBits valueBits,
              const CheckRange checkRanges[], int32_t countCheckRanges) {
+    // Note: The byte sequence comments refer to the original UTF-8 definition.
+    // Starting with ICU 60, any sequence that is not a prefix of a valid one
+    // is treated as multiple single-byte errors.
+    // For testing, we only rely on U8_... and UTrie2 UTF-8 macros
+    // iterating consistently.
     static const uint8_t illegal[]={
         0xc0, 0x80,                         /* non-shortest U+0000 */
         0xc1, 0xbf,                         /* non-shortest U+007f */
@@ -393,15 +399,36 @@ testTrieUTF8(const char *testName,
         value=checkRanges[i].value;
         /* write three legal (or surrogate) code points */
         U8_APPEND_UNSAFE(s, length, prevCP);    /* start of the range */
-        values[countValues++]=U_IS_SURROGATE(prevCP) ? errorValue : value;
+        if(U_IS_SURROGATE(prevCP)) {
+            // A surrogate byte sequence counts as 3 single-byte errors.
+            values[countValues++]=errorValue;
+            values[countValues++]=errorValue;
+            values[countValues++]=errorValue;
+        } else {
+            values[countValues++]=value;
+        }
         c=checkRanges[i].limit;
         prevCP=(prevCP+c)/2;                    /* middle of the range */
         U8_APPEND_UNSAFE(s, length, prevCP);
-        values[countValues++]=U_IS_SURROGATE(prevCP) ? errorValue : value;
+        if(U_IS_SURROGATE(prevCP)) {
+            // A surrogate byte sequence counts as 3 single-byte errors.
+            values[countValues++]=errorValue;
+            values[countValues++]=errorValue;
+            values[countValues++]=errorValue;
+        } else {
+            values[countValues++]=value;
+        }
         prevCP=c;
         --c;                                    /* end of the range */
         U8_APPEND_UNSAFE(s, length, c);
-        values[countValues++]=U_IS_SURROGATE(c) ? errorValue : value;
+        if(U_IS_SURROGATE(prevCP)) {
+            // A surrogate byte sequence counts as 3 single-byte errors.
+            values[countValues++]=errorValue;
+            values[countValues++]=errorValue;
+            values[countValues++]=errorValue;
+        } else {
+            values[countValues++]=value;
+        }
         /* write an illegal byte sequence */
         if(i8<sizeof(illegal)) {
             U8_FWD_1(illegal, i8, sizeof(illegal));
@@ -434,17 +461,20 @@ testTrieUTF8(const char *testName,
         }
         bytes=0;
         if(value!=values[i] || i8!=(p-s)) {
-            while(prev8<i8) {
-                bytes=(bytes<<8)|s[prev8++];
+            int32_t k=prev8;
+            while(k<i8) {
+                bytes=(bytes<<8)|s[k++];
             }
         }
         if(value!=values[i]) {
-            log_err("error: wrong value from UTRIE2_U8_NEXT(%s)(%lx->U+%04lx): 0x%lx instead of 0x%lx\n",
-                    testName, (unsigned long)bytes, (long)c, (long)value, (long)values[i]);
+            log_err("error: wrong value from UTRIE2_U8_NEXT(%s)(from %d %lx->U+%04lx) (read %d bytes): "
+                    "0x%lx instead of 0x%lx\n",
+                    testName, (int)prev8, (unsigned long)bytes, (long)c, (int)((p-s)-prev8),
+                    (long)value, (long)values[i]);
         }
         if(i8!=(p-s)) {
-            log_err("error: wrong end index from UTRIE2_U8_NEXT(%s)(%lx->U+%04lx): %ld != %ld\n",
-                    testName, (unsigned long)bytes, (long)c, (long)(p-s), (long)i8);
+            log_err("error: wrong end index from UTRIE2_U8_NEXT(%s)(from %d %lx->U+%04lx): %ld != %ld\n",
+                    testName, (int)prev8, (unsigned long)bytes, (long)c, (long)(p-s), (long)i8);
             continue;
         }
         ++i;
@@ -470,12 +500,14 @@ testTrieUTF8(const char *testName,
             }
         }
         if(value!=values[i]) {
-            log_err("error: wrong value from UTRIE2_U8_PREV(%s)(%lx->U+%04lx): 0x%lx instead of 0x%lx\n",
-                    testName, (unsigned long)bytes, (long)c, (long)value, (long)values[i]);
+            log_err("error: wrong value from UTRIE2_U8_PREV(%s)(from %d %lx->U+%04lx) (read %d bytes): "
+                    ": 0x%lx instead of 0x%lx\n",
+                    testName, (int)prev8, (unsigned long)bytes, (long)c, (int)(prev8-(p-s)),
+                    (long)value, (long)values[i]);
         }
         if(i8!=(p-s)) {
-            log_err("error: wrong end index from UTRIE2_U8_PREV(%s)(%lx->U+%04lx): %ld != %ld\n",
-                    testName, (unsigned long)bytes, (long)c, (long)(p-s), (long)i8);
+            log_err("error: wrong end index from UTRIE2_U8_PREV(%s)(from %d %lx->U+%04lx): %ld != %ld\n",
+                    testName, (int)prev8, (unsigned long)bytes, (long)c, (long)(p-s), (long)i8);
             continue;
         }
     }
@@ -1034,32 +1066,32 @@ checkRangesSingleValue[]={
 static void
 TrieTest(void) {
     testTrieRanges("set1", FALSE,
-        setRanges1, LENGTHOF(setRanges1),
-        checkRanges1, LENGTHOF(checkRanges1));
+        setRanges1, UPRV_LENGTHOF(setRanges1),
+        checkRanges1, UPRV_LENGTHOF(checkRanges1));
     testTrieRanges("set2-overlap", FALSE,
-        setRanges2, LENGTHOF(setRanges2),
-        checkRanges2, LENGTHOF(checkRanges2));
+        setRanges2, UPRV_LENGTHOF(setRanges2),
+        checkRanges2, UPRV_LENGTHOF(checkRanges2));
     testTrieRanges("set3-initial-9", FALSE,
-        setRanges3, LENGTHOF(setRanges3),
-        checkRanges3, LENGTHOF(checkRanges3));
+        setRanges3, UPRV_LENGTHOF(setRanges3),
+        checkRanges3, UPRV_LENGTHOF(checkRanges3));
     testTrieRanges("set-empty", FALSE,
         setRangesEmpty, 0,
-        checkRangesEmpty, LENGTHOF(checkRangesEmpty));
+        checkRangesEmpty, UPRV_LENGTHOF(checkRangesEmpty));
     testTrieRanges("set-single-value", FALSE,
-        setRangesSingleValue, LENGTHOF(setRangesSingleValue),
-        checkRangesSingleValue, LENGTHOF(checkRangesSingleValue));
+        setRangesSingleValue, UPRV_LENGTHOF(setRangesSingleValue),
+        checkRangesSingleValue, UPRV_LENGTHOF(checkRangesSingleValue));
 
     testTrieRanges("set2-overlap.withClone", TRUE,
-        setRanges2, LENGTHOF(setRanges2),
-        checkRanges2, LENGTHOF(checkRanges2));
+        setRanges2, UPRV_LENGTHOF(setRanges2),
+        checkRanges2, UPRV_LENGTHOF(checkRanges2));
 }
 
 static void
 EnumNewTrieForLeadSurrogateTest(void) {
     static const char *const testName="enum-for-lead";
     UTrie2 *trie=makeTrieWithRanges(testName, FALSE,
-                                    setRanges2, LENGTHOF(setRanges2),
-                                    checkRanges2, LENGTHOF(checkRanges2));
+                                    setRanges2, UPRV_LENGTHOF(setRanges2),
+                                    checkRanges2, UPRV_LENGTHOF(checkRanges2));
     while(trie!=NULL) {
         const CheckRange *checkRanges;
 
@@ -1130,7 +1162,7 @@ dummyTest(UTrie2ValueBits valueBits) {
         return;
     }
 
-    testFrozenTrie(testName, trie, valueBits, checkRanges, LENGTHOF(checkRanges));
+    testFrozenTrie(testName, trie, valueBits, checkRanges, UPRV_LENGTHOF(checkRanges));
     utrie2_close(trie);
 }
 
@@ -1191,7 +1223,7 @@ FreeBlocksTest(void) {
     }
 
     trie=testTrieSerializeAllValueBits(testName, trie, FALSE,
-                                       checkRanges, LENGTHOF(checkRanges));
+                                       checkRanges, UPRV_LENGTHOF(checkRanges));
     utrie2_close(trie);
 }
 
@@ -1249,7 +1281,7 @@ GrowDataArrayTest(void) {
     }
 
     trie=testTrieSerializeAllValueBits(testName, trie, FALSE,
-                                          checkRanges, LENGTHOF(checkRanges));
+                                          checkRanges, UPRV_LENGTHOF(checkRanges));
     utrie2_close(trie);
 }
 
@@ -1411,8 +1443,8 @@ testTrie2FromTrie1(const char *testName,
 static void
 Trie12ConversionTest(void) {
     testTrie2FromTrie1("trie1->trie2",
-                       setRanges2, LENGTHOF(setRanges2),
-                       checkRanges2, LENGTHOF(checkRanges2));
+                       setRanges2, UPRV_LENGTHOF(setRanges2),
+                       checkRanges2, UPRV_LENGTHOF(checkRanges2));
 }
 
 void

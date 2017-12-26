@@ -1,6 +1,8 @@
+// © 2016 and later: Unicode, Inc. and others.
+// License & terms of use: http://www.unicode.org/copyright.html
 /********************************************************************
  * COPYRIGHT: 
- * Copyright (c) 1997-2011, International Business Machines Corporation and
+ * Copyright (c) 1997-2014, International Business Machines Corporation and
  * others. All Rights Reserved.
  * Copyright (C) 2010 , Yahoo! Inc. 
  ********************************************************************/
@@ -12,8 +14,6 @@
 #include "selfmts.h"
 #include "cmemory.h"
 #include "unicode/selfmt.h"
-
-#define LENGTHOF(array) (int32_t)(sizeof(array)/sizeof((array)[0]))
 
 #define SIMPLE_PATTERN_STRING                                                    "feminine {feminineVerbValue} other{otherVerbValue}"
 
@@ -183,7 +183,7 @@ void SelectFormatTest::selectFormatUnitTest(/*char *par*/)
     selFmt = NULL;
 
     selFmt = new SelectFormat( SIMPLE_PATTERN , status); 
-    for (int32_t i = 0; i < LENGTHOF(keywords); i++ ){
+    for (int32_t i = 0; i < UPRV_LENGTHOF(keywords); i++ ){
         status = U_ZERO_ERROR;
         selFmt->format( keywords[i], result , ignore , status);
         if (!U_FAILURE(status)) {

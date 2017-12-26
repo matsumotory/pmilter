@@ -1,12 +1,14 @@
+// © 2016 and later: Unicode, Inc. and others.
+// License & terms of use: http://www.unicode.org/copyright.html
 /*
  *******************************************************************************
  *
- *   Copyright (C) 2003-2010, International Business Machines
+ *   Copyright (C) 2003-2014, International Business Machines
  *   Corporation and others.  All Rights Reserved.
  *
  *******************************************************************************
  *   file name:  nptrans.h
- *   encoding:   US-ASCII
+ *   encoding:   UTF-8
  *   tab size:   8 (not used)
  *   indentation:4
  *
@@ -27,7 +29,7 @@
 #include "ustr_imp.h"
 #include "intltest.h"
 
-#ifdef DEBUG 
+#ifdef NPTRANS_DEBUG 
 #include <stdio.h>
 #endif
 
@@ -84,14 +86,14 @@ NamePrepTransform::NamePrepTransform(UParseError& parseError, UErrorCode& status
         pattern =  ures_getStringByKey(bundle,"ProhibitedSet",&patternLen, &status);
         UnicodeString test(pattern,patternLen);
         prohibited.applyPattern(test,status);
-#ifdef DEBUG
+#ifdef NPTRANS_DEBUG
         if(U_FAILURE(status)){
             printf("Construction of Unicode set failed\n");
         }
 
         if(U_SUCCESS(status)){
             if(prohibited.contains((UChar) 0x644)){
-                printf("The string contains 0x644 ... damn !!\n");
+                printf("The string contains 0x644 ... !!\n");
             }
             UnicodeString temp;
             prohibited.toPattern(temp,TRUE);
@@ -172,7 +174,7 @@ int32_t NamePrepTransform::map(const UChar* src, int32_t srcLength,
     }
     // check if there is enough room in the output
     if(bufLen < destCapacity){
-        uprv_memcpy(dest,buffer,bufLen*U_SIZEOF_UCHAR);
+        u_memcpy(dest, buffer, bufLen);
     }
 
     return u_terminateUChars(dest, destCapacity, bufLen, &status);
@@ -264,7 +266,7 @@ int32_t NamePrepTransform::process( const UChar* src, int32_t srcLength,
     }
 
     if(b1Len <= destCapacity){
-        uprv_memmove(dest,b1, b1Len*U_SIZEOF_UCHAR);
+        u_memmove(dest, b1, b1Len);
     }
 
 CLEANUP:

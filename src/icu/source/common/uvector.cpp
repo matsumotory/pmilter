@@ -1,7 +1,9 @@
+// © 2016 and later: Unicode, Inc. and others.
+// License & terms of use: http://www.unicode.org/copyright.html
 /*
 ******************************************************************************
-* Copyright (C) 1999-2011, International Business Machines Corporation and   *
-* others. All Rights Reserved.                                               *
+* Copyright (C) 1999-2013, International Business Machines Corporation and
+* others. All Rights Reserved.
 ******************************************************************************
 *   Date        Name        Description
 *   10/22/99    alan        Creation.
@@ -552,12 +554,12 @@ void UVector::sort(UElementComparator *compare, UErrorCode &ec) {
 
 
 /**
- *  Sort with a user supplied comparator of type UComparator.
+ *  Stable sort with a user supplied comparator of type UComparator.
  */
 void UVector::sortWithUComparator(UComparator *compare, const void *context, UErrorCode &ec) {
     if (U_SUCCESS(ec)) {
         uprv_sortArray(elements, count, sizeof(UElement),
-                       compare, context, FALSE, &ec);
+                       compare, context, TRUE, &ec);
     }
 }
 

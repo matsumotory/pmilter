@@ -1,6 +1,8 @@
+// © 2016 and later: Unicode, Inc. and others.
+// License & terms of use: http://www.unicode.org/copyright.html
 /********************************************************************
  * COPYRIGHT: 
- * Copyright (c) 1997-2012, International Business Machines Corporation and
+ * Copyright (c) 1997-2016, International Business Machines Corporation and
  * others. All Rights Reserved.
  ********************************************************************
  *
@@ -27,8 +29,7 @@
 #include "cintltst.h"
 #include "cmsgtst.h"
 #include "cformtst.h"
-
-#define LENGTHOF(array) (int32_t)(sizeof(array)/sizeof((array)[0]))
+#include "cmemory.h"
 
 static const char* const txt_testCasePatterns[] = {
    "Quotes '', '{', a {0,number,integer} '{'0}",
@@ -89,6 +90,9 @@ static void FreeStrings( void )
     strings_initialized = FALSE;
 }
 
+#if (U_PLATFORM == U_PF_LINUX) /* add platforms here .. */
+/* Keep the #if above in sync with the one below that has the same "add platforms here .." comment. */
+#else
 /* Platform dependent test to detect if this type will return NULL when interpreted as a pointer. */
 static UBool returnsNullForType(int firstParam, ...) {
     UBool isNULL;
@@ -98,6 +102,7 @@ static UBool returnsNullForType(int firstParam, ...) {
     va_end(marker);
     return isNULL;
 }
+#endif
 
 /* Test u_formatMessage() with various test patterns() */
 static void MessageFormatTest( void ) 
@@ -183,7 +188,7 @@ static void MessageFormatTest( void )
         UMessageFormat formatter = umsg_open(testCasePatterns[0],patternLength,"en_US",NULL,&ec);
 
         if(U_FAILURE(ec)){
-            log_data_err("umsg_open() failed for testCasePattens[%d]. -> %s (Are you missing data?)\n",i, u_errorName(ec));
+            log_data_err("umsg_open() failed for testCasePattens[0]. -> %s (Are you missing data?)\n", u_errorName(ec));
             return;
         }
         for(i = 0;i<cnt_testCases; i++){
@@ -194,8 +199,9 @@ static void MessageFormatTest( void )
             UDate d2=0;
     
             result=NULL;
-            patternLength = u_strlen(testCasePatterns[i]);
-            
+            // Alternate between specifying the length and using NUL-termination.
+            patternLength = ((i & 1) == 0) ? u_strlen(testCasePatterns[i]) : -1;
+
             umsg_applyPattern(formatter,testCasePatterns[i],patternLength,&parseError,&ec);
             if(U_FAILURE(ec)){
                 log_err("umsg_applyPattern() failed for testCasePattens[%d].\n",i);
@@ -709,7 +715,7 @@ static void TestMsgFormatSelect(void)
         status=U_ZERO_ERROR;
         resultlength=resultLengthOut+1;
         result=(UChar*)malloc(sizeof(UChar) * resultlength);
-        u_formatMessage( "fr", pattern, u_strlen(pattern), result, resultlength, &status, str , str1);
+        u_formatMessage( "fr", pattern, u_strlen(pattern), result, resultlength, &status, str , str1, 6);
         if(u_strcmp(result, expected)==0)
             log_verbose("PASS: MessagFormat successful on Select test#2\n");
         else{
@@ -997,6 +1003,7 @@ static void TestJ904(void) {
                              result, 256, &status,
                              string, 1/7.0,
                              789.0+1000*(56+60*(34+60*12)));
+    (void)length;   /* Suppress set but not used warning. */
 
     u_austrncpy(cresult, result, sizeof(cresult));
 
@@ -1027,7 +1034,7 @@ static void OpenMessageFormatTest(void)
     int32_t length=0;
     UErrorCode status = U_ZERO_ERROR;
 
-    u_uastrncpy(pattern, PAT, sizeof(pattern)/sizeof(pattern[0]));
+    u_uastrncpy(pattern, PAT, UPRV_LENGTHOF(pattern));
 
     /* Test umsg_open                   */
     f1 = umsg_open(pattern,length,NULL,NULL,&status);
@@ -1100,10 +1107,10 @@ static void MessageLength(void)
     UChar result[128] = {0};
     UChar expected[sizeof(expectedChars)];
 
-    u_uastrncpy(pattern, patChars, sizeof(pattern)/sizeof(pattern[0]));
-    u_uastrncpy(expected, expectedChars, sizeof(expected)/sizeof(expected[0]));
+    u_uastrncpy(pattern, patChars, UPRV_LENGTHOF(pattern));
+    u_uastrncpy(expected, expectedChars, UPRV_LENGTHOF(expected));
 
-    u_formatMessage("en_US", pattern, 6, result, sizeof(result)/sizeof(result[0]), &status, arg);
+    u_formatMessage("en_US", pattern, 6, result, UPRV_LENGTHOF(result), &status, arg);
     if (U_FAILURE(status)) {
         log_err("u_formatMessage method failed. Error: %s \n",u_errorName(status));
     }
@@ -1123,7 +1130,7 @@ static void TestMessageWithUnusedArgNumber() {
 
     U_STRING_INIT(pattern, "abc {1} def", 11);
     U_STRING_INIT(expected, "abc y def", 9);
-    length = u_formatMessage("en", pattern, -1, result, LENGTHOF(result), &errorCode, x, y);
+    length = u_formatMessage("en", pattern, -1, result, UPRV_LENGTHOF(result), &errorCode, x, y);
     if (U_FAILURE(errorCode) || length != u_strlen(expected) || u_strcmp(result, expected) != 0) {
         log_err("u_formatMessage(pattern with only {1}, 2 args) failed: result length %d, UErrorCode %s \n",
                 (int)length, u_errorName(errorCode));

@@ -1,12 +1,14 @@
+// © 2016 and later: Unicode, Inc. and others.
+// License & terms of use: http://www.unicode.org/copyright.html
 /*
 *******************************************************************************
 *
-*   Copyright (C) 2012, International Business Machines
+*   Copyright (C) 2012-2016, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 *
 *******************************************************************************
 *   file name:  listformattertest.cpp
-*   encoding:   US-ASCII
+*   encoding:   UTF-8
 *   tab size:   8 (not used)
 *   indentation:4
 *
@@ -37,51 +39,45 @@ void ListFormatterTest::CheckFormatting(const ListFormatter* formatter, UnicodeS
 void ListFormatterTest::CheckFourCases(const char* locale_string, UnicodeString one, UnicodeString two,
         UnicodeString three, UnicodeString four, UnicodeString results[4]) {
     UErrorCode errorCode = U_ZERO_ERROR;
-    ListFormatter* formatter = ListFormatter::createInstance(Locale(locale_string), errorCode);
-    if (formatter == NULL ||  U_FAILURE(errorCode)) {
-        errln("Allocation problem\n");
+    LocalPointer<ListFormatter> formatter(ListFormatter::createInstance(Locale(locale_string), errorCode));
+    if (U_FAILURE(errorCode)) {
+        dataerrln("ListFormatter::createInstance(Locale(\"%s\"), errorCode) failed in CheckFourCases: %s", locale_string, u_errorName(errorCode));
         return;
     }
     UnicodeString input1[] = {one};
-    CheckFormatting(formatter, input1, 1, results[0]);
+    CheckFormatting(formatter.getAlias(), input1, 1, results[0]);
 
     UnicodeString input2[] = {one, two};
-    CheckFormatting(formatter, input2, 2, results[1]);
+    CheckFormatting(formatter.getAlias(), input2, 2, results[1]);
 
     UnicodeString input3[] = {one, two, three};
-    CheckFormatting(formatter, input3, 3, results[2]);
+    CheckFormatting(formatter.getAlias(), input3, 3, results[2]);
 
     UnicodeString input4[] = {one, two, three, four};
-    CheckFormatting(formatter, input4, 4, results[3]);
-
-    delete formatter;
+    CheckFormatting(formatter.getAlias(), input4, 4, results[3]);
 }
 
-
-void ListFormatterTest::TestLocaleFallback() {
-    const char* testData[][4] = {
-        {"en_US", "en", "", ""},    // ULocale.getFallback("") should return ""
-        {"EN_us_Var", "en_US", "en", ""},   // Case is always normalized
-        {"de_DE@collation=phonebook", "de@collation=phonebook", "@collation=phonebook", "@collation=phonebook"},    // Keyword is preserved
-        {"en__POSIX", "en", "", ""},    // Trailing empty segment should be truncated
-        {"_US_POSIX", "_US", "", ""},   // Same as above
-        {"root", "", "", ""},               // No canonicalization
-    };
-    for (int i = 0; i < 6; ++i) {
-        for(int j = 1; j < 4; ++j) {
-            Locale in(testData[i][j-1]);
-            Locale out;
-            UErrorCode errorCode = U_ZERO_ERROR;
-            ListFormatter::getFallbackLocale(in, out, errorCode);
-            if (U_FAILURE(errorCode)) {
-                errln("Error in getLocaleFallback: %s", u_errorName(errorCode));
-            }
-
-            if (::strcmp(testData[i][j], out.getName())) {
-                errln("Expected: |%s|, Actual: |%s|\n", testData[i][j], out.getName());
-            }
-        }
+UBool ListFormatterTest::RecordFourCases(const Locale& locale, UnicodeString one, UnicodeString two,
+        UnicodeString three, UnicodeString four, UnicodeString results[4])  {
+    UErrorCode errorCode = U_ZERO_ERROR;
+    LocalPointer<ListFormatter> formatter(ListFormatter::createInstance(locale, errorCode));
+    if (U_FAILURE(errorCode)) {
+        dataerrln("ListFormatter::createInstance(\"%s\", errorCode) failed in RecordFourCases: %s", locale.getName(), u_errorName(errorCode));
+        return FALSE;
     }
+    UnicodeString input1[] = {one};
+    formatter->format(input1, 1, results[0], errorCode);
+    UnicodeString input2[] = {one, two};
+    formatter->format(input2, 2, results[1], errorCode);
+    UnicodeString input3[] = {one, two, three};
+    formatter->format(input3, 3, results[2], errorCode);
+    UnicodeString input4[] = {one, two, three, four};
+    formatter->format(input4, 4, results[3], errorCode);
+    if (U_FAILURE(errorCode)) {
+        errln("RecordFourCases failed: %s", u_errorName(errorCode));
+        return FALSE;
+    }
+    return TRUE;
 }
 
 void ListFormatterTest::TestRoot() {
@@ -97,14 +93,10 @@ void ListFormatterTest::TestRoot() {
 
 // Bogus locale should fallback to root.
 void ListFormatterTest::TestBogus() {
-    UnicodeString results[4] = {
-        one,
-        one + ", " + two,
-        one + ", " + two + ", " + three,
-        one + ", " + two + ", " + three + ", " + four
-    };
-
-    CheckFourCases("ex_PY", one, two, three, four, results);
+    UnicodeString results[4];
+    if (RecordFourCases(Locale::getDefault(), one, two, three, four, results)) {
+      CheckFourCases("ex_PY", one, two, three, four, results);
+    }
 }
 
 // Formatting in English.
@@ -120,6 +112,30 @@ void ListFormatterTest::TestEnglish() {
     CheckFourCases("en", one, two, three, four, results);
 }
 
+void ListFormatterTest::Test9946() {
+    UErrorCode errorCode = U_ZERO_ERROR;
+    LocalPointer<ListFormatter> formatter(ListFormatter::createInstance(Locale("en"), errorCode));
+    if (U_FAILURE(errorCode)) {
+        dataerrln(
+            "ListFormatter::createInstance(Locale(\"en\"), errorCode) failed in Test9946: %s",
+            u_errorName(errorCode));
+        return;
+    }
+    UnicodeString data[3] = {"{0}", "{1}", "{2}"};
+    UnicodeString actualResult;
+    formatter->format(data, 3, actualResult, errorCode);
+    if (U_FAILURE(errorCode)) {
+        dataerrln(
+            "ListFormatter::createInstance(Locale(\"en\"), errorCode) failed in Test9946: %s",
+            u_errorName(errorCode));
+        return;
+    }
+    UnicodeString expected("{0}, {1}, and {2}");
+    if (expected != actualResult) {
+        errln("Expected " + expected + ", got " + actualResult);
+    }
+}
+
 void ListFormatterTest::TestEnglishUS() {
     UnicodeString results[4] = {
         one,
@@ -129,6 +145,50 @@ void ListFormatterTest::TestEnglishUS() {
     };
 
     CheckFourCases("en_US", one, two, three, four, results);
+}
+
+// Tests resource loading and inheritance when region sublocale
+// has only partial data for the listPattern element (overriding
+// some of the parent data). #12994
+void ListFormatterTest::TestEnglishGB() {
+    UnicodeString results[4] = {
+        one,
+        one + " and " + two,
+        one + ", " + two + " and " + three,
+        one + ", " + two + ", " + three + " and " + four
+    };
+
+    CheckFourCases("en_GB", one, two, three, four, results);
+}
+
+// Tests resource loading and inheritance when region sublocale
+// has only partial data for the listPattern element (overriding
+// some of the parent data). #12994
+void ListFormatterTest::TestNynorsk() {
+    UnicodeString results[4] = {
+        one,
+        one + " og " + two,
+        one + ", " + two + " og " + three,
+        one + ", " + two + ", " + three + " og " + four
+    };
+
+    CheckFourCases("nn", one, two, three, four, results);
+}
+
+// Tests resource loading and inheritance when region sublocale
+// has only partial data for the listPattern element (overriding
+// some of the parent data). #12994
+void ListFormatterTest::TestChineseTradHK() {
+    UnicodeString and_string = UnicodeString("\\u53CA", -1, US_INV).unescape();
+    UnicodeString comma_string = UnicodeString("\\u3001", -1, US_INV).unescape();
+    UnicodeString results[4] = {
+        one,
+        one + and_string + two,
+        one + comma_string + two + and_string + three,
+        one + comma_string + two + comma_string + three + and_string + four
+    };
+
+    CheckFourCases("zh_Hant_HK", one, two, three, four, results);
 }
 
 // Formatting in Russian.
@@ -167,9 +227,9 @@ void ListFormatterTest::TestMalayalam() {
 void ListFormatterTest::TestZulu() {
     UnicodeString results[4] = {
         one,
-        "I-" + one + " ne-" + two,
-        one + ", " + two + ", no-" + three,
-        one + ", " + two + ", " + three + ", no-" + four
+        one + " ne-" + two,
+        one + ", " + two + ", ne-" + three,
+        one + ", " + two + ", " + three + ", ne-" + four
     };
 
     CheckFourCases("zu", one, two, three, four, results);
@@ -186,7 +246,7 @@ void ListFormatterTest::TestOutOfOrderPatterns() {
     UErrorCode errorCode = U_ZERO_ERROR;
     ListFormatData data("{1} after {0}", "{1} after the first {0}",
                         "{1} after {0}", "{1} in the last after {0}");
-    ListFormatter formatter(data);
+    ListFormatter formatter(data, errorCode);
 
     UnicodeString input1[] = {one};
     CheckFormatting(&formatter, input1, 1, results[0]);
@@ -211,8 +271,11 @@ void ListFormatterTest::runIndexedTest(int32_t index, UBool exec,
         case 4: name = "TestRussian"; if (exec) TestRussian(); break;
         case 5: name = "TestMalayalam"; if (exec) TestMalayalam(); break;
         case 6: name = "TestZulu"; if (exec) TestZulu(); break;
-        case 7: name = "TestLocaleFallback"; if (exec) TestLocaleFallback(); break;
-        case 8: name = "TestOutOfOrderPatterns"; if (exec) TestLocaleFallback(); break;
+        case 7: name = "TestOutOfOrderPatterns"; if (exec) TestOutOfOrderPatterns(); break;
+        case 8: name = "Test9946"; if (exec) Test9946(); break;
+        case 9: name = "TestEnglishGB"; if (exec) TestEnglishGB(); break;
+        case 10: name = "TestNynorsk"; if (exec) TestNynorsk(); break;
+        case 11: name = "TestChineseTradHK"; if (exec) TestChineseTradHK(); break;
 
         default: name = ""; break;
     }

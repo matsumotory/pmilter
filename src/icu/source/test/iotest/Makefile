@@ -1,6 +1,8 @@
+# Copyright (C) 2016 and later: Unicode, Inc. and others.
+# License & terms of use: http://www.unicode.org/copyright.html
 #******************************************************************************
 #
-#   Copyright (C) 1999-2011, International Business Machines
+#   Copyright (C) 1999-2014, International Business Machines
 #   Corporation and others.  All Rights Reserved.
 #
 #******************************************************************************
@@ -32,7 +34,8 @@ BUILDDIR := $(BUILDDIR:test\\iotest/../../=)
 # Simplify the path for Windows 98
 BUILDDIR := $(BUILDDIR:TEST\\IOTEST/../../=)
 
-CPPFLAGS += -I$(top_srcdir)/common -I$(top_srcdir)/i18n -I$(top_srcdir)/tools/ctestfw -I$(top_srcdir)/io
+CPPFLAGS += -I$(srcdir) -I$(top_srcdir)/common -I$(top_srcdir)/i18n -I$(top_srcdir)/tools/ctestfw -I$(top_srcdir)/io
+CPPFLAGS += -DUNISTR_FROM_CHAR_EXPLICIT= -DUNISTR_FROM_STRING_EXPLICIT=
 DEFS += -D'U_TOPSRCDIR="$(top_srcdir)/"' -D'U_TOPBUILDDIR="$(BUILDDIR)"'
 LIBS = $(LIBCTESTFW) $(LIBICUTOOLUTIL) $(LIBICUIO) $(LIBICUI18N) $(LIBICUUC) $(DEFAULT_LIBS) $(LIB_M)
 
@@ -74,14 +77,14 @@ distclean-local: clean-local
 	$(RMV) Makefile
 
 check-local: all-local
-	$(INVOKE) ./$(TARGET) $(IOTEST_OPTS) 
+	$(INVOKE) ./$(TARGET) $(TEST_OUTPUT_OPTS) $(IOTEST_OPTS)
 
 check-exhaustive-local: all-local
-	$(INVOKE) ./$(TARGET) -e
+	$(INVOKE) ./$(TARGET) $(TEST_OUTPUT_OPTS) -e
 
 TESTXML=$(top_builddir)/test-$(TARGET).xml
 xcheck-local: all-local
-	$(INVOKE) ./$(TARGET) $(IOTEST_OPTS) -x $(TESTXML)
+	$(INVOKE) ./$(TARGET) $(TEST_OUTPUT_OPTS) $(IOTEST_OPTS) -x $(TESTXML)
 
 Makefile: $(srcdir)/Makefile.in  $(top_builddir)/config.status
 	cd $(top_builddir) \

@@ -1,9 +1,13 @@
 /*
-**********************************************************************
-* Copyright (c) 2002-2005, International Business Machines
+***********************************************************************
+* © 2016 and later: Unicode, Inc. and others.
+* License & terms of use: http://www.unicode.org/copyright.html#License
+***********************************************************************
+***********************************************************************
+* Copyright (c) 2002-2014, International Business Machines
 * Corporation and others.  All Rights Reserved.
-**********************************************************************
-**********************************************************************
+***********************************************************************
+***********************************************************************
 */
 /** 
  * This Program tests the performance of ICU's Normalization engine against Windows
@@ -14,6 +18,7 @@
 #include "convperf.h"
 #include "data.h"
 #include <stdio.h>
+#include "cmemory.h" // for UPRV_LENGTHOF
 
 int main(int argc, const char* argv[]){
     UErrorCode status = U_ZERO_ERROR;
@@ -139,7 +144,7 @@ UPerfFunction* ConverterPerformanceTest::TestICU_OpenAllConverters() {
 
 UPerfFunction* ConverterPerformanceTest::TestICU_UTF8_FromUnicode(){
     UErrorCode status = U_ZERO_ERROR;
-    ICUFromUnicodePerfFunction* pf = new ICUFromUnicodePerfFunction("utf-8",utf8_uniSource, LENGTHOF(utf8_uniSource), status);
+    ICUFromUnicodePerfFunction* pf = new ICUFromUnicodePerfFunction("utf-8",utf8_uniSource, UPRV_LENGTHOF(utf8_uniSource), status);
     if(U_FAILURE(status)){
         return NULL;
     }
@@ -148,7 +153,7 @@ UPerfFunction* ConverterPerformanceTest::TestICU_UTF8_FromUnicode(){
 
 UPerfFunction*  ConverterPerformanceTest::TestICU_UTF8_ToUnicode(){
     UErrorCode status = U_ZERO_ERROR;
-    UPerfFunction* pf = new ICUToUnicodePerfFunction("utf-8",(char*)utf8_encSource, LENGTHOF(utf8_encSource), status);
+    UPerfFunction* pf = new ICUToUnicodePerfFunction("utf-8",(char*)utf8_encSource, UPRV_LENGTHOF(utf8_encSource), status);
     if(U_FAILURE(status)){
         return NULL;
     }
@@ -158,7 +163,7 @@ UPerfFunction*  ConverterPerformanceTest::TestICU_UTF8_ToUnicode(){
 
 UPerfFunction* ConverterPerformanceTest::TestWinIML2_UTF8_FromUnicode(){
     UErrorCode status = U_ZERO_ERROR;
-    UPerfFunction* pf = new WinIMultiLanguage2FromUnicodePerfFunction("utf-8",utf8_uniSource, LENGTHOF(utf8_uniSource), status);
+    UPerfFunction* pf = new WinIMultiLanguage2FromUnicodePerfFunction("utf-8",utf8_uniSource, UPRV_LENGTHOF(utf8_uniSource), status);
     if(U_FAILURE(status)){
         return NULL;
     }
@@ -167,7 +172,7 @@ UPerfFunction* ConverterPerformanceTest::TestWinIML2_UTF8_FromUnicode(){
 
 UPerfFunction*  ConverterPerformanceTest::TestWinIML2_UTF8_ToUnicode(){
     UErrorCode status = U_ZERO_ERROR;
-    UPerfFunction* pf = new WinIMultiLanguage2ToUnicodePerfFunction("utf-8",(char*)utf8_encSource, LENGTHOF(utf8_encSource), status);
+    UPerfFunction* pf = new WinIMultiLanguage2ToUnicodePerfFunction("utf-8",(char*)utf8_encSource, UPRV_LENGTHOF(utf8_encSource), status);
     if(U_FAILURE(status)){
         return NULL;
     }
@@ -176,7 +181,7 @@ UPerfFunction*  ConverterPerformanceTest::TestWinIML2_UTF8_ToUnicode(){
 
 UPerfFunction* ConverterPerformanceTest::TestWinANSI_UTF8_FromUnicode(){
     UErrorCode status = U_ZERO_ERROR;
-    UPerfFunction* pf = new WinANSIFromUnicodePerfFunction("utf-8",utf8_uniSource, LENGTHOF(utf8_uniSource), status);
+    UPerfFunction* pf = new WinANSIFromUnicodePerfFunction("utf-8",utf8_uniSource, UPRV_LENGTHOF(utf8_uniSource), status);
     if(U_FAILURE(status)){
         return NULL;
     }
@@ -185,7 +190,7 @@ UPerfFunction* ConverterPerformanceTest::TestWinANSI_UTF8_FromUnicode(){
 
 UPerfFunction*  ConverterPerformanceTest::TestWinANSI_UTF8_ToUnicode(){
     UErrorCode status = U_ZERO_ERROR;
-    UPerfFunction* pf = new WinANSIToUnicodePerfFunction("utf-8",(char*)utf8_encSource, LENGTHOF(utf8_encSource), status);
+    UPerfFunction* pf = new WinANSIToUnicodePerfFunction("utf-8",(char*)utf8_encSource, UPRV_LENGTHOF(utf8_encSource), status);
     if(U_FAILURE(status)){
         return NULL;
     }
@@ -196,7 +201,7 @@ UPerfFunction*  ConverterPerformanceTest::TestWinANSI_UTF8_ToUnicode(){
 
 UPerfFunction* ConverterPerformanceTest::TestICU_Latin1_FromUnicode(){
     UErrorCode status = U_ZERO_ERROR;
-    ICUFromUnicodePerfFunction* pf = new ICUFromUnicodePerfFunction("iso-8859-1",latin1_uniSource, LENGTHOF(latin1_uniSource), status);
+    ICUFromUnicodePerfFunction* pf = new ICUFromUnicodePerfFunction("iso-8859-1",latin1_uniSource, UPRV_LENGTHOF(latin1_uniSource), status);
     if(U_FAILURE(status)){
         return NULL;
     }
@@ -205,7 +210,7 @@ UPerfFunction* ConverterPerformanceTest::TestICU_Latin1_FromUnicode(){
 
 UPerfFunction*  ConverterPerformanceTest::TestICU_Latin1_ToUnicode(){
     UErrorCode status = U_ZERO_ERROR;
-    UPerfFunction* pf = new ICUToUnicodePerfFunction("iso-8859-1",(char*)latin1_encSource, LENGTHOF(latin1_encSource), status);
+    UPerfFunction* pf = new ICUToUnicodePerfFunction("iso-8859-1",(char*)latin1_encSource, UPRV_LENGTHOF(latin1_encSource), status);
     if(U_FAILURE(status)){
         return NULL;
     }
@@ -215,7 +220,7 @@ UPerfFunction*  ConverterPerformanceTest::TestICU_Latin1_ToUnicode(){
 
 UPerfFunction* ConverterPerformanceTest::TestWinIML2_Latin1_FromUnicode(){
     UErrorCode status = U_ZERO_ERROR;
-    UPerfFunction* pf = new WinIMultiLanguage2FromUnicodePerfFunction("iso-8859-1",latin1_uniSource, LENGTHOF(latin1_uniSource), status);
+    UPerfFunction* pf = new WinIMultiLanguage2FromUnicodePerfFunction("iso-8859-1",latin1_uniSource, UPRV_LENGTHOF(latin1_uniSource), status);
     if(U_FAILURE(status)){
         return NULL;
     }
@@ -224,7 +229,7 @@ UPerfFunction* ConverterPerformanceTest::TestWinIML2_Latin1_FromUnicode(){
 
 UPerfFunction*  ConverterPerformanceTest::TestWinIML2_Latin1_ToUnicode(){
     UErrorCode status = U_ZERO_ERROR;
-    UPerfFunction* pf = new WinIMultiLanguage2ToUnicodePerfFunction("iso-8859-1",(char*)latin1_encSource, LENGTHOF(latin1_encSource), status);
+    UPerfFunction* pf = new WinIMultiLanguage2ToUnicodePerfFunction("iso-8859-1",(char*)latin1_encSource, UPRV_LENGTHOF(latin1_encSource), status);
     if(U_FAILURE(status)){
         return NULL;
     }
@@ -233,7 +238,7 @@ UPerfFunction*  ConverterPerformanceTest::TestWinIML2_Latin1_ToUnicode(){
 
 UPerfFunction* ConverterPerformanceTest::TestWinANSI_Latin1_FromUnicode(){
     UErrorCode status = U_ZERO_ERROR;
-    UPerfFunction* pf = new WinANSIFromUnicodePerfFunction("iso-8859-1",latin1_uniSource, LENGTHOF(latin1_uniSource), status);
+    UPerfFunction* pf = new WinANSIFromUnicodePerfFunction("iso-8859-1",latin1_uniSource, UPRV_LENGTHOF(latin1_uniSource), status);
     if(U_FAILURE(status)){
         return NULL;
     }
@@ -242,7 +247,7 @@ UPerfFunction* ConverterPerformanceTest::TestWinANSI_Latin1_FromUnicode(){
 
 UPerfFunction*  ConverterPerformanceTest::TestWinANSI_Latin1_ToUnicode(){
     UErrorCode status = U_ZERO_ERROR;
-    UPerfFunction* pf = new WinANSIToUnicodePerfFunction("iso-8859-1",(char*)latin1_encSource, LENGTHOF(latin1_encSource), status);
+    UPerfFunction* pf = new WinANSIToUnicodePerfFunction("iso-8859-1",(char*)latin1_encSource, UPRV_LENGTHOF(latin1_encSource), status);
     if(U_FAILURE(status)){
         return NULL;
     }
@@ -253,7 +258,7 @@ UPerfFunction*  ConverterPerformanceTest::TestWinANSI_Latin1_ToUnicode(){
 
 UPerfFunction* ConverterPerformanceTest::TestICU_Latin8_FromUnicode(){
     UErrorCode status = U_ZERO_ERROR;
-    ICUFromUnicodePerfFunction* pf = new ICUFromUnicodePerfFunction("iso-8859-8",latin8_uniSource, LENGTHOF(latin8_uniSource), status);
+    ICUFromUnicodePerfFunction* pf = new ICUFromUnicodePerfFunction("iso-8859-8",latin8_uniSource, UPRV_LENGTHOF(latin8_uniSource), status);
     if(U_FAILURE(status)){
         return NULL;
     }
@@ -262,7 +267,7 @@ UPerfFunction* ConverterPerformanceTest::TestICU_Latin8_FromUnicode(){
 
 UPerfFunction*  ConverterPerformanceTest::TestICU_Latin8_ToUnicode(){
     UErrorCode status = U_ZERO_ERROR;
-    UPerfFunction* pf = new ICUToUnicodePerfFunction("iso-8859-8",(char*)latin8_encSource, LENGTHOF(latin8_encSource), status);
+    UPerfFunction* pf = new ICUToUnicodePerfFunction("iso-8859-8",(char*)latin8_encSource, UPRV_LENGTHOF(latin8_encSource), status);
     if(U_FAILURE(status)){
         return NULL;
     }
@@ -272,7 +277,7 @@ UPerfFunction*  ConverterPerformanceTest::TestICU_Latin8_ToUnicode(){
 
 UPerfFunction* ConverterPerformanceTest::TestWinIML2_Latin8_FromUnicode(){
     UErrorCode status = U_ZERO_ERROR;
-    UPerfFunction* pf = new WinIMultiLanguage2FromUnicodePerfFunction("iso-8859-8",latin8_uniSource, LENGTHOF(latin8_uniSource), status);
+    UPerfFunction* pf = new WinIMultiLanguage2FromUnicodePerfFunction("iso-8859-8",latin8_uniSource, UPRV_LENGTHOF(latin8_uniSource), status);
     if(U_FAILURE(status)){
         return NULL;
     }
@@ -281,7 +286,7 @@ UPerfFunction* ConverterPerformanceTest::TestWinIML2_Latin8_FromUnicode(){
 
 UPerfFunction*  ConverterPerformanceTest::TestWinIML2_Latin8_ToUnicode(){
     UErrorCode status = U_ZERO_ERROR;
-    UPerfFunction* pf = new WinIMultiLanguage2ToUnicodePerfFunction("iso-8859-8",(char*)latin8_encSource, LENGTHOF(latin8_encSource), status);
+    UPerfFunction* pf = new WinIMultiLanguage2ToUnicodePerfFunction("iso-8859-8",(char*)latin8_encSource, UPRV_LENGTHOF(latin8_encSource), status);
     if(U_FAILURE(status)){
         return NULL;
     }
@@ -289,7 +294,7 @@ UPerfFunction*  ConverterPerformanceTest::TestWinIML2_Latin8_ToUnicode(){
 }
 UPerfFunction* ConverterPerformanceTest::TestWinANSI_Latin8_FromUnicode(){
     UErrorCode status = U_ZERO_ERROR;
-    UPerfFunction* pf = new WinANSIFromUnicodePerfFunction("iso-8859-8",latin8_uniSource, LENGTHOF(latin8_uniSource), status);
+    UPerfFunction* pf = new WinANSIFromUnicodePerfFunction("iso-8859-8",latin8_uniSource, UPRV_LENGTHOF(latin8_uniSource), status);
     if(U_FAILURE(status)){
         return NULL;
     }
@@ -298,7 +303,7 @@ UPerfFunction* ConverterPerformanceTest::TestWinANSI_Latin8_FromUnicode(){
 
 UPerfFunction*  ConverterPerformanceTest::TestWinANSI_Latin8_ToUnicode(){
     UErrorCode status = U_ZERO_ERROR;
-    UPerfFunction* pf = new WinANSIToUnicodePerfFunction("iso-8859-8",(char*)latin8_encSource, LENGTHOF(latin8_encSource), status);
+    UPerfFunction* pf = new WinANSIToUnicodePerfFunction("iso-8859-8",(char*)latin8_encSource, UPRV_LENGTHOF(latin8_encSource), status);
     if(U_FAILURE(status)){
         return NULL;
     }
@@ -310,7 +315,7 @@ UPerfFunction*  ConverterPerformanceTest::TestWinANSI_Latin8_ToUnicode(){
 
 UPerfFunction* ConverterPerformanceTest::TestICU_EBCDIC_Arabic_FromUnicode(){
     UErrorCode status = U_ZERO_ERROR;
-    ICUFromUnicodePerfFunction* pf = new ICUFromUnicodePerfFunction("x-EBCDIC-Arabic",ebcdic_arabic_uniSource, LENGTHOF(ebcdic_arabic_uniSource), status);
+    ICUFromUnicodePerfFunction* pf = new ICUFromUnicodePerfFunction("x-EBCDIC-Arabic",ebcdic_arabic_uniSource, UPRV_LENGTHOF(ebcdic_arabic_uniSource), status);
     if(U_FAILURE(status)){
         return NULL;
     }
@@ -319,7 +324,7 @@ UPerfFunction* ConverterPerformanceTest::TestICU_EBCDIC_Arabic_FromUnicode(){
 
 UPerfFunction*  ConverterPerformanceTest::TestICU_EBCDIC_Arabic_ToUnicode(){
     UErrorCode status = U_ZERO_ERROR;
-    UPerfFunction* pf = new ICUToUnicodePerfFunction("x-EBCDIC-Arabic",(char*)ebcdic_arabic_encSource, LENGTHOF(ebcdic_arabic_encSource), status);
+    UPerfFunction* pf = new ICUToUnicodePerfFunction("x-EBCDIC-Arabic",(char*)ebcdic_arabic_encSource, UPRV_LENGTHOF(ebcdic_arabic_encSource), status);
     if(U_FAILURE(status)){
         return NULL;
     }
@@ -329,7 +334,7 @@ UPerfFunction*  ConverterPerformanceTest::TestICU_EBCDIC_Arabic_ToUnicode(){
 
 UPerfFunction* ConverterPerformanceTest::TestWinIML2_EBCDIC_Arabic_FromUnicode(){
     UErrorCode status = U_ZERO_ERROR;
-    UPerfFunction* pf = new WinIMultiLanguage2FromUnicodePerfFunction("x-EBCDIC-Arabic",ebcdic_arabic_uniSource, LENGTHOF(ebcdic_arabic_uniSource), status);
+    UPerfFunction* pf = new WinIMultiLanguage2FromUnicodePerfFunction("x-EBCDIC-Arabic",ebcdic_arabic_uniSource, UPRV_LENGTHOF(ebcdic_arabic_uniSource), status);
     if(U_FAILURE(status)){
         return NULL;
     }
@@ -338,7 +343,7 @@ UPerfFunction* ConverterPerformanceTest::TestWinIML2_EBCDIC_Arabic_FromUnicode()
 
 UPerfFunction*  ConverterPerformanceTest::TestWinIML2_EBCDIC_Arabic_ToUnicode(){
     UErrorCode status = U_ZERO_ERROR;
-    UPerfFunction* pf = new WinIMultiLanguage2ToUnicodePerfFunction("x-EBCDIC-Arabic",(char*)ebcdic_arabic_encSource, LENGTHOF(ebcdic_arabic_encSource), status);
+    UPerfFunction* pf = new WinIMultiLanguage2ToUnicodePerfFunction("x-EBCDIC-Arabic",(char*)ebcdic_arabic_encSource, UPRV_LENGTHOF(ebcdic_arabic_encSource), status);
     if(U_FAILURE(status)){
         return NULL;
     }
@@ -347,7 +352,7 @@ UPerfFunction*  ConverterPerformanceTest::TestWinIML2_EBCDIC_Arabic_ToUnicode(){
 
 UPerfFunction* ConverterPerformanceTest::TestWinANSI_EBCDIC_Arabic_FromUnicode(){
     UErrorCode status = U_ZERO_ERROR;
-    UPerfFunction* pf = new WinANSIFromUnicodePerfFunction("x-EBCDIC-Arabic",ebcdic_arabic_uniSource, LENGTHOF(ebcdic_arabic_uniSource), status);
+    UPerfFunction* pf = new WinANSIFromUnicodePerfFunction("x-EBCDIC-Arabic",ebcdic_arabic_uniSource, UPRV_LENGTHOF(ebcdic_arabic_uniSource), status);
     if(U_FAILURE(status)){
         return NULL;
     }
@@ -356,7 +361,7 @@ UPerfFunction* ConverterPerformanceTest::TestWinANSI_EBCDIC_Arabic_FromUnicode()
 
 UPerfFunction*  ConverterPerformanceTest::TestWinANSI_EBCDIC_Arabic_ToUnicode(){
     UErrorCode status = U_ZERO_ERROR;
-    UPerfFunction* pf = new WinANSIToUnicodePerfFunction("x-EBCDIC-Arabic",(char*)ebcdic_arabic_encSource, LENGTHOF(ebcdic_arabic_encSource), status);
+    UPerfFunction* pf = new WinANSIToUnicodePerfFunction("x-EBCDIC-Arabic",(char*)ebcdic_arabic_encSource, UPRV_LENGTHOF(ebcdic_arabic_encSource), status);
     if(U_FAILURE(status)){
         return NULL;
     }
@@ -367,7 +372,7 @@ UPerfFunction*  ConverterPerformanceTest::TestWinANSI_EBCDIC_Arabic_ToUnicode(){
 
 UPerfFunction* ConverterPerformanceTest::TestICU_SJIS_FromUnicode(){
     UErrorCode status = U_ZERO_ERROR;
-    ICUFromUnicodePerfFunction* pf = new ICUFromUnicodePerfFunction("sjis",sjis_uniSource, LENGTHOF(sjis_uniSource), status);
+    ICUFromUnicodePerfFunction* pf = new ICUFromUnicodePerfFunction("sjis",sjis_uniSource, UPRV_LENGTHOF(sjis_uniSource), status);
     if(U_FAILURE(status)){
         return NULL;
     }
@@ -376,7 +381,7 @@ UPerfFunction* ConverterPerformanceTest::TestICU_SJIS_FromUnicode(){
 
 UPerfFunction*  ConverterPerformanceTest::TestICU_SJIS_ToUnicode(){
     UErrorCode status = U_ZERO_ERROR;
-    UPerfFunction* pf = new ICUToUnicodePerfFunction("sjis",(char*)sjis_encSource, LENGTHOF(sjis_encSource), status);
+    UPerfFunction* pf = new ICUToUnicodePerfFunction("sjis",(char*)sjis_encSource, UPRV_LENGTHOF(sjis_encSource), status);
     if(U_FAILURE(status)){
         return NULL;
     }
@@ -386,7 +391,7 @@ UPerfFunction*  ConverterPerformanceTest::TestICU_SJIS_ToUnicode(){
 
 UPerfFunction* ConverterPerformanceTest::TestWinIML2_SJIS_FromUnicode(){
     UErrorCode status = U_ZERO_ERROR;
-    UPerfFunction* pf = new WinIMultiLanguage2FromUnicodePerfFunction("sjis",sjis_uniSource, LENGTHOF(sjis_uniSource), status);
+    UPerfFunction* pf = new WinIMultiLanguage2FromUnicodePerfFunction("sjis",sjis_uniSource, UPRV_LENGTHOF(sjis_uniSource), status);
     if(U_FAILURE(status)){
         return NULL;
     }
@@ -395,7 +400,7 @@ UPerfFunction* ConverterPerformanceTest::TestWinIML2_SJIS_FromUnicode(){
 
 UPerfFunction*  ConverterPerformanceTest::TestWinIML2_SJIS_ToUnicode(){
     UErrorCode status = U_ZERO_ERROR;
-    UPerfFunction* pf = new WinIMultiLanguage2ToUnicodePerfFunction("sjis",(char*)sjis_encSource, LENGTHOF(sjis_encSource), status);
+    UPerfFunction* pf = new WinIMultiLanguage2ToUnicodePerfFunction("sjis",(char*)sjis_encSource, UPRV_LENGTHOF(sjis_encSource), status);
     if(U_FAILURE(status)){
         return NULL;
     }
@@ -404,7 +409,7 @@ UPerfFunction*  ConverterPerformanceTest::TestWinIML2_SJIS_ToUnicode(){
 
 UPerfFunction* ConverterPerformanceTest::TestWinANSI_SJIS_FromUnicode(){
     UErrorCode status = U_ZERO_ERROR;
-    UPerfFunction* pf = new WinANSIFromUnicodePerfFunction("sjis",sjis_uniSource, LENGTHOF(sjis_uniSource), status);
+    UPerfFunction* pf = new WinANSIFromUnicodePerfFunction("sjis",sjis_uniSource, UPRV_LENGTHOF(sjis_uniSource), status);
     if(U_FAILURE(status)){
         return NULL;
     }
@@ -413,7 +418,7 @@ UPerfFunction* ConverterPerformanceTest::TestWinANSI_SJIS_FromUnicode(){
 
 UPerfFunction*  ConverterPerformanceTest::TestWinANSI_SJIS_ToUnicode(){
     UErrorCode status = U_ZERO_ERROR;
-    UPerfFunction* pf = new WinANSIToUnicodePerfFunction("sjis",(char*)sjis_encSource, LENGTHOF(sjis_encSource), status);
+    UPerfFunction* pf = new WinANSIToUnicodePerfFunction("sjis",(char*)sjis_encSource, UPRV_LENGTHOF(sjis_encSource), status);
     if(U_FAILURE(status)){
         return NULL;
     }
@@ -426,7 +431,7 @@ UPerfFunction*  ConverterPerformanceTest::TestWinANSI_SJIS_ToUnicode(){
 
 UPerfFunction* ConverterPerformanceTest::TestICU_EUCJP_FromUnicode(){
     UErrorCode status = U_ZERO_ERROR;
-    ICUFromUnicodePerfFunction* pf = new ICUFromUnicodePerfFunction("euc-jp",eucjp_uniSource, LENGTHOF(eucjp_uniSource), status);
+    ICUFromUnicodePerfFunction* pf = new ICUFromUnicodePerfFunction("euc-jp",eucjp_uniSource, UPRV_LENGTHOF(eucjp_uniSource), status);
     if(U_FAILURE(status)){
         return NULL;
     }
@@ -435,7 +440,7 @@ UPerfFunction* ConverterPerformanceTest::TestICU_EUCJP_FromUnicode(){
 
 UPerfFunction*  ConverterPerformanceTest::TestICU_EUCJP_ToUnicode(){
     UErrorCode status = U_ZERO_ERROR;
-    UPerfFunction* pf = new ICUToUnicodePerfFunction("euc-jp",(char*)eucjp_encSource, LENGTHOF(eucjp_encSource), status);
+    UPerfFunction* pf = new ICUToUnicodePerfFunction("euc-jp",(char*)eucjp_encSource, UPRV_LENGTHOF(eucjp_encSource), status);
     if(U_FAILURE(status)){
         return NULL;
     }
@@ -445,7 +450,7 @@ UPerfFunction*  ConverterPerformanceTest::TestICU_EUCJP_ToUnicode(){
 
 UPerfFunction* ConverterPerformanceTest::TestWinIML2_EUCJP_FromUnicode(){
     UErrorCode status = U_ZERO_ERROR;
-    UPerfFunction* pf = new WinIMultiLanguage2FromUnicodePerfFunction("euc-jp",eucjp_uniSource, LENGTHOF(eucjp_uniSource), status);
+    UPerfFunction* pf = new WinIMultiLanguage2FromUnicodePerfFunction("euc-jp",eucjp_uniSource, UPRV_LENGTHOF(eucjp_uniSource), status);
     if(U_FAILURE(status)){
         return NULL;
     }
@@ -454,7 +459,7 @@ UPerfFunction* ConverterPerformanceTest::TestWinIML2_EUCJP_FromUnicode(){
 
 UPerfFunction*  ConverterPerformanceTest::TestWinIML2_EUCJP_ToUnicode(){
     UErrorCode status = U_ZERO_ERROR;
-    UPerfFunction* pf = new WinIMultiLanguage2ToUnicodePerfFunction("euc-jp",(char*)eucjp_encSource, LENGTHOF(eucjp_encSource), status);
+    UPerfFunction* pf = new WinIMultiLanguage2ToUnicodePerfFunction("euc-jp",(char*)eucjp_encSource, UPRV_LENGTHOF(eucjp_encSource), status);
     if(U_FAILURE(status)){
         return NULL;
     }
@@ -463,7 +468,7 @@ UPerfFunction*  ConverterPerformanceTest::TestWinIML2_EUCJP_ToUnicode(){
 
 UPerfFunction* ConverterPerformanceTest::TestWinANSI_EUCJP_FromUnicode(){
     UErrorCode status = U_ZERO_ERROR;
-    UPerfFunction* pf = new WinANSIFromUnicodePerfFunction("euc-jp",eucjp_uniSource, LENGTHOF(eucjp_uniSource), status);
+    UPerfFunction* pf = new WinANSIFromUnicodePerfFunction("euc-jp",eucjp_uniSource, UPRV_LENGTHOF(eucjp_uniSource), status);
     if(U_FAILURE(status)){
         return NULL;
     }
@@ -472,7 +477,7 @@ UPerfFunction* ConverterPerformanceTest::TestWinANSI_EUCJP_FromUnicode(){
 
 UPerfFunction*  ConverterPerformanceTest::TestWinANSI_EUCJP_ToUnicode(){
     UErrorCode status = U_ZERO_ERROR;
-    UPerfFunction* pf = new WinANSIToUnicodePerfFunction("euc-jp",(char*)eucjp_encSource, LENGTHOF(eucjp_encSource), status);
+    UPerfFunction* pf = new WinANSIToUnicodePerfFunction("euc-jp",(char*)eucjp_encSource, UPRV_LENGTHOF(eucjp_encSource), status);
     if(U_FAILURE(status)){
         return NULL;
     }
@@ -485,7 +490,7 @@ UPerfFunction*  ConverterPerformanceTest::TestWinANSI_EUCJP_ToUnicode(){
 
 UPerfFunction* ConverterPerformanceTest::TestICU_GB2312_FromUnicode(){
     UErrorCode status = U_ZERO_ERROR;
-    ICUFromUnicodePerfFunction* pf = new ICUFromUnicodePerfFunction("gb2312",gb2312_uniSource, LENGTHOF(gb2312_uniSource), status);
+    ICUFromUnicodePerfFunction* pf = new ICUFromUnicodePerfFunction("gb2312",gb2312_uniSource, UPRV_LENGTHOF(gb2312_uniSource), status);
     if(U_FAILURE(status)){
         return NULL;
     }
@@ -494,7 +499,7 @@ UPerfFunction* ConverterPerformanceTest::TestICU_GB2312_FromUnicode(){
 
 UPerfFunction*  ConverterPerformanceTest::TestICU_GB2312_ToUnicode(){
     UErrorCode status = U_ZERO_ERROR;
-    UPerfFunction* pf = new ICUToUnicodePerfFunction("gb2312",(char*)gb2312_encSource, LENGTHOF(gb2312_encSource), status);
+    UPerfFunction* pf = new ICUToUnicodePerfFunction("gb2312",(char*)gb2312_encSource, UPRV_LENGTHOF(gb2312_encSource), status);
     if(U_FAILURE(status)){
         return NULL;
     }
@@ -504,7 +509,7 @@ UPerfFunction*  ConverterPerformanceTest::TestICU_GB2312_ToUnicode(){
 
 UPerfFunction* ConverterPerformanceTest::TestWinIML2_GB2312_FromUnicode(){
     UErrorCode status = U_ZERO_ERROR;
-    UPerfFunction* pf = new WinIMultiLanguage2FromUnicodePerfFunction("gb2312",gb2312_uniSource, LENGTHOF(gb2312_uniSource), status);
+    UPerfFunction* pf = new WinIMultiLanguage2FromUnicodePerfFunction("gb2312",gb2312_uniSource, UPRV_LENGTHOF(gb2312_uniSource), status);
     if(U_FAILURE(status)){
         return NULL;
     }
@@ -513,7 +518,7 @@ UPerfFunction* ConverterPerformanceTest::TestWinIML2_GB2312_FromUnicode(){
 
 UPerfFunction*  ConverterPerformanceTest::TestWinIML2_GB2312_ToUnicode(){
     UErrorCode status = U_ZERO_ERROR;
-    UPerfFunction* pf = new WinIMultiLanguage2ToUnicodePerfFunction("gb2312",(char*)gb2312_encSource, LENGTHOF(gb2312_encSource), status);
+    UPerfFunction* pf = new WinIMultiLanguage2ToUnicodePerfFunction("gb2312",(char*)gb2312_encSource, UPRV_LENGTHOF(gb2312_encSource), status);
     if(U_FAILURE(status)){
         return NULL;
     }
@@ -522,7 +527,7 @@ UPerfFunction*  ConverterPerformanceTest::TestWinIML2_GB2312_ToUnicode(){
 
 UPerfFunction* ConverterPerformanceTest::TestWinANSI_GB2312_FromUnicode(){
     UErrorCode status = U_ZERO_ERROR;
-    UPerfFunction* pf = new WinANSIFromUnicodePerfFunction("gb2312",gb2312_uniSource, LENGTHOF(gb2312_uniSource), status);
+    UPerfFunction* pf = new WinANSIFromUnicodePerfFunction("gb2312",gb2312_uniSource, UPRV_LENGTHOF(gb2312_uniSource), status);
     if(U_FAILURE(status)){
         return NULL;
     }
@@ -531,7 +536,7 @@ UPerfFunction* ConverterPerformanceTest::TestWinANSI_GB2312_FromUnicode(){
 
 UPerfFunction*  ConverterPerformanceTest::TestWinANSI_GB2312_ToUnicode(){
     UErrorCode status = U_ZERO_ERROR;
-    UPerfFunction* pf = new WinANSIToUnicodePerfFunction("gb2312",(char*)gb2312_encSource, LENGTHOF(gb2312_encSource), status);
+    UPerfFunction* pf = new WinANSIToUnicodePerfFunction("gb2312",(char*)gb2312_encSource, UPRV_LENGTHOF(gb2312_encSource), status);
     if(U_FAILURE(status)){
         return NULL;
     }
@@ -543,7 +548,7 @@ UPerfFunction*  ConverterPerformanceTest::TestWinANSI_GB2312_ToUnicode(){
 
 UPerfFunction* ConverterPerformanceTest::TestICU_ISO2022KR_FromUnicode(){
     UErrorCode status = U_ZERO_ERROR;
-    ICUFromUnicodePerfFunction* pf = new ICUFromUnicodePerfFunction("iso-2022-kr",iso2022kr_uniSource, LENGTHOF(iso2022kr_uniSource), status);
+    ICUFromUnicodePerfFunction* pf = new ICUFromUnicodePerfFunction("iso-2022-kr",iso2022kr_uniSource, UPRV_LENGTHOF(iso2022kr_uniSource), status);
     if(U_FAILURE(status)){
         return NULL;
     }
@@ -552,7 +557,7 @@ UPerfFunction* ConverterPerformanceTest::TestICU_ISO2022KR_FromUnicode(){
 
 UPerfFunction*  ConverterPerformanceTest::TestICU_ISO2022KR_ToUnicode(){
     UErrorCode status = U_ZERO_ERROR;
-    UPerfFunction* pf = new ICUToUnicodePerfFunction("iso-2022-kr",(char*)iso2022kr_encSource, LENGTHOF(iso2022kr_encSource), status);
+    UPerfFunction* pf = new ICUToUnicodePerfFunction("iso-2022-kr",(char*)iso2022kr_encSource, UPRV_LENGTHOF(iso2022kr_encSource), status);
     if(U_FAILURE(status)){
         return NULL;
     }
@@ -562,7 +567,7 @@ UPerfFunction*  ConverterPerformanceTest::TestICU_ISO2022KR_ToUnicode(){
 
 UPerfFunction* ConverterPerformanceTest::TestWinIML2_ISO2022KR_FromUnicode(){
     UErrorCode status = U_ZERO_ERROR;
-    UPerfFunction* pf = new WinIMultiLanguage2FromUnicodePerfFunction("iso-2022-kr",iso2022kr_uniSource, LENGTHOF(iso2022kr_uniSource), status);
+    UPerfFunction* pf = new WinIMultiLanguage2FromUnicodePerfFunction("iso-2022-kr",iso2022kr_uniSource, UPRV_LENGTHOF(iso2022kr_uniSource), status);
     if(U_FAILURE(status)){
         return NULL;
     }
@@ -571,7 +576,7 @@ UPerfFunction* ConverterPerformanceTest::TestWinIML2_ISO2022KR_FromUnicode(){
 
 UPerfFunction*  ConverterPerformanceTest::TestWinIML2_ISO2022KR_ToUnicode(){
     UErrorCode status = U_ZERO_ERROR;
-    UPerfFunction* pf = new WinIMultiLanguage2ToUnicodePerfFunction("iso-2022-kr",(char*)iso2022kr_encSource, LENGTHOF(iso2022kr_encSource), status);
+    UPerfFunction* pf = new WinIMultiLanguage2ToUnicodePerfFunction("iso-2022-kr",(char*)iso2022kr_encSource, UPRV_LENGTHOF(iso2022kr_encSource), status);
     if(U_FAILURE(status)){
         return NULL;
     }
@@ -580,7 +585,7 @@ UPerfFunction*  ConverterPerformanceTest::TestWinIML2_ISO2022KR_ToUnicode(){
 
 UPerfFunction* ConverterPerformanceTest::TestWinANSI_ISO2022KR_FromUnicode(){
     UErrorCode status = U_ZERO_ERROR;
-    UPerfFunction* pf = new WinANSIFromUnicodePerfFunction("iso-2022-kr",iso2022kr_uniSource, LENGTHOF(iso2022kr_uniSource), status);
+    UPerfFunction* pf = new WinANSIFromUnicodePerfFunction("iso-2022-kr",iso2022kr_uniSource, UPRV_LENGTHOF(iso2022kr_uniSource), status);
     if(U_FAILURE(status)){
         return NULL;
     }
@@ -589,7 +594,7 @@ UPerfFunction* ConverterPerformanceTest::TestWinANSI_ISO2022KR_FromUnicode(){
 
 UPerfFunction*  ConverterPerformanceTest::TestWinANSI_ISO2022KR_ToUnicode(){
     UErrorCode status = U_ZERO_ERROR;
-    UPerfFunction* pf = new WinANSIToUnicodePerfFunction("iso-2022-kr",(char*)iso2022kr_encSource, LENGTHOF(iso2022kr_encSource), status);
+    UPerfFunction* pf = new WinANSIToUnicodePerfFunction("iso-2022-kr",(char*)iso2022kr_encSource, UPRV_LENGTHOF(iso2022kr_encSource), status);
     if(U_FAILURE(status)){
         return NULL;
     }
@@ -600,7 +605,7 @@ UPerfFunction*  ConverterPerformanceTest::TestWinANSI_ISO2022KR_ToUnicode(){
 
 UPerfFunction* ConverterPerformanceTest::TestICU_ISO2022JP_FromUnicode(){
     UErrorCode status = U_ZERO_ERROR;
-    ICUFromUnicodePerfFunction* pf = new ICUFromUnicodePerfFunction("iso-2022-jp",iso2022jp_uniSource, LENGTHOF(iso2022jp_uniSource), status);
+    ICUFromUnicodePerfFunction* pf = new ICUFromUnicodePerfFunction("iso-2022-jp",iso2022jp_uniSource, UPRV_LENGTHOF(iso2022jp_uniSource), status);
     if(U_FAILURE(status)){
         return NULL;
     }
@@ -609,7 +614,7 @@ UPerfFunction* ConverterPerformanceTest::TestICU_ISO2022JP_FromUnicode(){
 
 UPerfFunction*  ConverterPerformanceTest::TestICU_ISO2022JP_ToUnicode(){
     UErrorCode status = U_ZERO_ERROR;
-    UPerfFunction* pf = new ICUToUnicodePerfFunction("iso-2022-jp",(char*)iso2022jp_encSource, LENGTHOF(iso2022jp_encSource), status);
+    UPerfFunction* pf = new ICUToUnicodePerfFunction("iso-2022-jp",(char*)iso2022jp_encSource, UPRV_LENGTHOF(iso2022jp_encSource), status);
     if(U_FAILURE(status)){
         return NULL;
     }
@@ -619,7 +624,7 @@ UPerfFunction*  ConverterPerformanceTest::TestICU_ISO2022JP_ToUnicode(){
 
 UPerfFunction* ConverterPerformanceTest::TestWinIML2_ISO2022JP_FromUnicode(){
     UErrorCode status = U_ZERO_ERROR;
-    UPerfFunction* pf = new WinIMultiLanguage2FromUnicodePerfFunction("iso-2022-jp",iso2022jp_uniSource, LENGTHOF(iso2022jp_uniSource), status);
+    UPerfFunction* pf = new WinIMultiLanguage2FromUnicodePerfFunction("iso-2022-jp",iso2022jp_uniSource, UPRV_LENGTHOF(iso2022jp_uniSource), status);
     if(U_FAILURE(status)){
         return NULL;
     }
@@ -628,7 +633,7 @@ UPerfFunction* ConverterPerformanceTest::TestWinIML2_ISO2022JP_FromUnicode(){
 
 UPerfFunction*  ConverterPerformanceTest::TestWinIML2_ISO2022JP_ToUnicode(){
     UErrorCode status = U_ZERO_ERROR;
-    UPerfFunction* pf = new WinIMultiLanguage2ToUnicodePerfFunction("iso-2022-jp",(char*)iso2022jp_encSource, LENGTHOF(iso2022jp_encSource), status);
+    UPerfFunction* pf = new WinIMultiLanguage2ToUnicodePerfFunction("iso-2022-jp",(char*)iso2022jp_encSource, UPRV_LENGTHOF(iso2022jp_encSource), status);
     if(U_FAILURE(status)){
         return NULL;
     }
@@ -637,7 +642,7 @@ UPerfFunction*  ConverterPerformanceTest::TestWinIML2_ISO2022JP_ToUnicode(){
 
 UPerfFunction* ConverterPerformanceTest::TestWinANSI_ISO2022JP_FromUnicode(){
     UErrorCode status = U_ZERO_ERROR;
-    UPerfFunction* pf = new WinANSIFromUnicodePerfFunction("iso-2022-jp",iso2022jp_uniSource, LENGTHOF(iso2022jp_uniSource), status);
+    UPerfFunction* pf = new WinANSIFromUnicodePerfFunction("iso-2022-jp",iso2022jp_uniSource, UPRV_LENGTHOF(iso2022jp_uniSource), status);
     if(U_FAILURE(status)){
         return NULL;
     }
@@ -646,7 +651,7 @@ UPerfFunction* ConverterPerformanceTest::TestWinANSI_ISO2022JP_FromUnicode(){
 
 UPerfFunction*  ConverterPerformanceTest::TestWinANSI_ISO2022JP_ToUnicode(){
     UErrorCode status = U_ZERO_ERROR;
-    UPerfFunction* pf = new WinANSIToUnicodePerfFunction("iso-2022-jp",(char*)iso2022jp_encSource, LENGTHOF(iso2022jp_encSource), status);
+    UPerfFunction* pf = new WinANSIToUnicodePerfFunction("iso-2022-jp",(char*)iso2022jp_encSource, UPRV_LENGTHOF(iso2022jp_encSource), status);
     if(U_FAILURE(status)){
         return NULL;
     }

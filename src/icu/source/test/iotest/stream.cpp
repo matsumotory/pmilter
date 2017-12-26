@@ -1,10 +1,12 @@
+// © 2016 and later: Unicode, Inc. and others.
+// License & terms of use: http://www.unicode.org/copyright.html
 /*
 **********************************************************************
-*   Copyright (C) 2002-2011, International Business Machines
+*   Copyright (C) 2002-2016, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 **********************************************************************
 *   file name:  iotest.cpp
-*   encoding:   US-ASCII
+*   encoding:   UTF-8
 *   tab size:   8 (not used)
 *   indentation:4
 *
@@ -18,9 +20,9 @@
 #include "unicode/ucnv.h"
 #include "unicode/ustring.h"
 #include "ustr_cnv.h"
+#include "cmemory.h"
 #include "iotest.h"
 
-#if U_IOSTREAM_SOURCE >= 199711
 #if defined(__GNUC__) && __GNUC__ >= 4
 #define USE_SSTREAM 1
 #include <sstream>
@@ -74,7 +76,7 @@ static void U_CALLCONV TestStream(void)
         return;
     }
     ucnv_close(defConv);
-    strncpy(defConvName, ucnv_getDefaultName(), sizeof(defConvName)/sizeof(defConvName[0]));
+    strncpy(defConvName, ucnv_getDefaultName(), UPRV_LENGTHOF(defConvName));
     ucnv_setDefaultName("UTF-8");
 
     static const char * const TESTSTRING = "\x20\x74\x48\x69\x73\xCE\xBC\xE2\x80\x82\x20\x6D\x75\x20\x77\x6F\x72\x6C\x64";
@@ -103,12 +105,12 @@ static void U_CALLCONV TestStream(void)
 
     inTestStream >> inStr >> inStr2;
     if (inStr.compare(thisMu) != 0) {
-        u_austrncpy(inStrC, inStr.getBuffer(), inStr.length());
+        u_austrncpy(inStrC, toUCharPtr(inStr.getBuffer()), inStr.length());
         inStrC[inStr.length()] = 0;
         log_err("Got: \"%s\", Expected: \"tHis\\u03BC\"\n", inStrC);
     }
     if (inStr2.compare(mu) != 0) {
-        u_austrncpy(inStrC, inStr.getBuffer(), inStr.length());
+        u_austrncpy(inStrC, toUCharPtr(inStr.getBuffer()), inStr.length());
         inStrC[inStr.length()] = 0;
         log_err("Got: \"%s\", Expected: \"mu\"\n", inStrC);
     }
@@ -151,7 +153,7 @@ static void U_CALLCONV TestStream(void)
     ostrstream outLargeStream(testLargeStreamBuf, sizeof(testLargeStreamBuf));
 #endif
     UChar large_array[200];
-    int32_t large_array_length = sizeof(large_array)/sizeof(UChar);
+    int32_t large_array_length = UPRV_LENGTHOF(large_array);
     for (int32_t i = 0; i < large_array_length; i++) {
         large_array[i] = 0x41;
     }
@@ -319,4 +321,3 @@ U_CFUNC void addStreamTests(TestNode** root) {
     addTest(root, &TestStream, "stream/TestStream");
     addTest(root, &TestStreamEOF, "stream/TestStreamEOF");
 }
-#endif

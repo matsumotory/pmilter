@@ -1,6 +1,8 @@
+// © 2016 and later: Unicode, Inc. and others.
+// License & terms of use: http://www.unicode.org/copyright.html
 /*
  ****************************************************************************
- * Copyright (c) 1997-2010, International Business Machines Corporation and *
+ * Copyright (c) 1997-2014, International Business Machines Corporation and *
  * others. All Rights Reserved.                                             *
  ****************************************************************************
  */
@@ -13,11 +15,10 @@
 #include "unicode/ucal.h"
 
 #include "cintltst.h"
+#include "cmemory.h"
 
 #include <stdlib.h>
 #include <time.h>
-
-#define LENGTHOF(array) (int32_t)(sizeof(array)/sizeof((array)[0]))
 
 #define LOOP_COUNT 10000
 
@@ -64,7 +65,7 @@ static int64_t ranMax;
 
 static void initRandom(int64_t min, int64_t max)
 {
-    uint64_t interval = max - min;
+    uint64_t interval = (uint64_t)max - (uint64_t)min;
 
     ranMin = min;
     ranMax = max;
@@ -198,6 +199,7 @@ static void TestFromInt64(void)
     UErrorCode status = U_ZERO_ERROR;
 
     result = utmscale_fromInt64(0, -1, &status);
+    (void)result;    /* Suppress set but not used warning. */
     if (status != U_ILLEGAL_ARGUMENT_ERROR) {
         log_err("utmscale_fromInt64(0, -1, status) did not set status to U_ILLEGAL_ARGUMENT_ERROR.\n");
     }
@@ -258,6 +260,7 @@ static void TestToInt64(void)
     UErrorCode status = U_ZERO_ERROR;
 
     result = utmscale_toInt64(0, -1, &status);
+    (void)result;    /* suppress set but not used warning. */
     if (status != U_ILLEGAL_ARGUMENT_ERROR) {
         log_err("utmscale_toInt64(0, -1, &status) did not generate U_ILLEGAL_ARGUMENT_ERROR.\n");
     }
@@ -459,7 +462,7 @@ TestDotNet() {
         ucal_close(cal);
         return;
     }
-    for(i = 0; i < LENGTHOF(dotNetDateTimeTicks); ++i) {
+    for(i = 0; i < UPRV_LENGTHOF(dotNetDateTimeTicks); ++i) {
         /* Test conversion from .Net/Universal time to ICU time. */
         dt = dotNetDateTimeTicks + i;
         millis = utmscale_toInt64(dt->ticks, UDTS_ICU4C_TIME, &errorCode);

@@ -1,8 +1,10 @@
+// © 2016 and later: Unicode, Inc. and others.
+// License & terms of use: http://www.unicode.org/copyright.html
 
 /*
  *******************************************************************************
  *
- *   Copyright (C) 1999-2008, International Business Machines
+ *   Copyright (C) 1999-2015, International Business Machines
  *   Corporation and others.  All Rights Reserved.
  *
  *******************************************************************************
@@ -63,14 +65,15 @@ private:
     CMAPMapper *findUnicodeMapper();
 
 protected:
-    const void *readFontTable(LETag tableTag) const;
+    const void *readFontTable(LETag tableTag) const { size_t ignored; return readFontTable(tableTag, ignored); }
+    const void *readFontTable(LETag tableTag, size_t &length) const;
 
 public:
     PortableFontInstance(const char *fileName, float pointSize, LEErrorCode &status);
 
     virtual ~PortableFontInstance();
 
-    virtual const void *getFontTable(LETag tableTag) const;
+    virtual const void *getFontTable(LETag tableTag, size_t &length) const;
 
     virtual const char *getNameString(le_uint16 nameID, le_uint16 platform, le_uint16 encoding, le_uint16 language) const;
 
@@ -83,6 +86,8 @@ public:
     virtual le_int32 getUnitsPerEM() const;
 
     virtual le_uint32 getFontChecksum() const;
+
+    virtual le_uint32 getRawChecksum() const;
 
     virtual le_int32 getAscent() const;
 

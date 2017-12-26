@@ -1,7 +1,9 @@
+// © 2016 and later: Unicode, Inc. and others.
+// License & terms of use: http://www.unicode.org/copyright.html
 /*
  *******************************************************************************
  *
- *   Copyright (C) 1998-2010, International Business Machines
+ *   Copyright (C) 1998-2014, International Business Machines
  *   Corporation and others.  All Rights Reserved.
  *
  *******************************************************************************
@@ -20,6 +22,11 @@
 #define UFILE_H
 
 #include "unicode/utypes.h"
+
+#if !UCONFIG_NO_CONVERSION
+
+#include <stdio.h>
+
 #include "unicode/ucnv.h"
 #include "unicode/utrans.h"
 #include "locbund.h"
@@ -129,4 +136,5 @@ void
 ufile_flush_io(UFILE *f);
 
 
+#endif
 #endif

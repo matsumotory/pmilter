@@ -1,5 +1,7 @@
+// © 2016 and later: Unicode, Inc. and others.
+// License & terms of use: http://www.unicode.org/copyright.html
 /********************************************************************
- * Copyright (c) 1997-2011, International Business Machines
+ * Copyright (c) 1997-2016, International Business Machines
  * Corporation and others. All Rights Reserved.
  ********************************************************************/
  
@@ -17,8 +19,6 @@
 // *****************************************************************************
 // class TimeZoneRegressionTest
 // *****************************************************************************
-/* length of an array */
-#define ARRAY_LENGTH(array) (sizeof(array)/sizeof(array[0]))
 #define CASE(id,test) case id: name = #test; if (exec) { logln(#test "---"); logln((UnicodeString)""); test(); } break
 
 void 
@@ -413,7 +413,7 @@ TimeZoneRegressionTest::checkCalendar314(GregorianCalendar *testCal, TimeZone *t
     } 
 
     UnicodeString output;
-    FieldPosition pos(0);
+    FieldPosition pos(FieldPosition::DONT_CARE);
     output = testTZ->getID(output) + " " + sdf->format(testDate, output, pos) +
         " Offset(" + tzOffsetFloat + ")" +
         " RawOffset(" + tzRawOffsetFloat + ")" + 
@@ -799,7 +799,7 @@ TimeZoneRegressionTest::Test4154650()
         BAD,  GOOD_ERA, GOOD_YEAR, GOOD_MONTH, GOOD_DAY, GOOD_DOW, 24*3600000,
     };
 
-    int32_t dataLen = (int32_t)(sizeof(DATA) / sizeof(DATA[0]));
+    int32_t dataLen = UPRV_LENGTHOF(DATA);
 
     UErrorCode status = U_ZERO_ERROR;
     TimeZone *tz = TimeZone::createDefault();
@@ -892,7 +892,7 @@ TimeZoneRegressionTest::Test4162593()
         UnicodeString temp;
         logln(tz->getID(temp) + ":");
         for (int32_t i = 0; i < 4; ++i) {
-            FieldPosition pos(0);
+            FieldPosition pos(FieldPosition::DONT_CARE);
             zone[i].remove();
             zone[i] = fmt->format(d+ i*ONE_HOUR, zone[i], pos);
             logln(UnicodeString("") + i + ": " + d + " / " + zone[i]);
@@ -950,28 +950,28 @@ void TimeZoneRegressionTest::Test4176686() {
     UnicodeString a,b,c,d,e,f,g,h,i,j,k,l;
     UnicodeString DATA[] = {
         "z1->getDisplayName(false, SHORT)/std zone",
-        z1->getDisplayName(FALSE, TimeZone::SHORT, a), "GMT+01:30",
+        z1->getDisplayName(FALSE, TimeZone::SHORT, a), "GMT+1:30",
         "z1->getDisplayName(false, LONG)/std zone",
         z1->getDisplayName(FALSE, TimeZone::LONG, b), "GMT+01:30",
         "z1->getDisplayName(true, SHORT)/std zone",
-        z1->getDisplayName(TRUE, TimeZone::SHORT, c), "GMT+01:30",
+        z1->getDisplayName(TRUE, TimeZone::SHORT, c), "GMT+1:30",
         "z1->getDisplayName(true, LONG)/std zone",
         z1->getDisplayName(TRUE, TimeZone::LONG, d ), "GMT+01:30",
         "z2->getDisplayName(false, SHORT)/dst zone",
-        z2->getDisplayName(FALSE, TimeZone::SHORT, e), "GMT+01:30",
+        z2->getDisplayName(FALSE, TimeZone::SHORT, e), "GMT+1:30",
         "z2->getDisplayName(false, LONG)/dst zone",
         z2->getDisplayName(FALSE, TimeZone::LONG, f ), "GMT+01:30",
         "z2->getDisplayName(true, SHORT)/dst zone",
-        z2->getDisplayName(TRUE, TimeZone::SHORT, g), "GMT+02:15",
+        z2->getDisplayName(TRUE, TimeZone::SHORT, g), "GMT+2:15",
         "z2->getDisplayName(true, LONG)/dst zone",
         z2->getDisplayName(TRUE, TimeZone::LONG, h ), "GMT+02:15",
-        "DateFormat.format(std)/std zone", fmt1->format(std, i), "GMT+01:30",
-        "DateFormat.format(dst)/std zone", fmt1->format(dst, j), "GMT+01:30",
-        "DateFormat.format(std)/dst zone", fmt2->format(std, k), "GMT+01:30",
-        "DateFormat.format(dst)/dst zone", fmt2->format(dst, l), "GMT+02:15",
+        "DateFormat.format(std)/std zone", fmt1->format(std, i), "GMT+1:30",
+        "DateFormat.format(dst)/std zone", fmt1->format(dst, j), "GMT+1:30",
+        "DateFormat.format(std)/dst zone", fmt2->format(std, k), "GMT+1:30",
+        "DateFormat.format(dst)/dst zone", fmt2->format(dst, l), "GMT+2:15",
     };
 
-    for (int32_t idx=0; idx<(int32_t)ARRAY_LENGTH(DATA); idx+=3) {
+    for (int32_t idx=0; idx<UPRV_LENGTHOF(DATA); idx+=3) {
         if (DATA[idx+1]!=(DATA[idx+2])) {
             errln("FAIL: " + DATA[idx] + " -> " + DATA[idx+1] + ", exp " + DATA[idx+2]);
         }

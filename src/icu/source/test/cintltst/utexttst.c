@@ -1,6 +1,8 @@
+// © 2016 and later: Unicode, Inc. and others.
+// License & terms of use: http://www.unicode.org/copyright.html
 /********************************************************************
  * COPYRIGHT: 
- * Copyright (c) 2005-2011, International Business Machines Corporation and
+ * Copyright (c) 2005-2013, International Business Machines Corporation and
  * others. All Rights Reserved.
  ********************************************************************/
 /*
@@ -58,6 +60,7 @@ addUTextTest(TestNode** root)
 static void TestAPI(void) {
     UErrorCode      status = U_ZERO_ERROR;
     UBool           gFailed = FALSE;
+    (void)gFailed;   /* Suppress set but not used warning. */
 
     /* Open    */
     {

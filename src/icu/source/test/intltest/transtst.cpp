@@ -1,6 +1,8 @@
+// © 2016 and later: Unicode, Inc. and others.
+// License & terms of use: http://www.unicode.org/copyright.html
 /*
 **********************************************************************
-*   Copyright (C) 1999-2011, International Business Machines
+*   Copyright (C) 1999-2016, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 **********************************************************************
 *   Date        Name        Description
@@ -198,7 +200,6 @@ TransliteratorTest::runIndexedTest(int32_t index, UBool exec,
     }
 }
 
-static const UVersionInfo ICU_39 = {3,9,4,0};
 /**
  * Make sure every system transliterator can be instantiated.
  * 
@@ -242,7 +243,8 @@ void TransliteratorTest::TestInstantiation() {
         if (t == 0) {
 #if UCONFIG_NO_BREAK_ITERATION
             // If UCONFIG_NO_BREAK_ITERATION is on, then only Thai should fail.
-            if (id.compare((UnicodeString)"Thai-Latin") != 0)
+            if (id.compare((UnicodeString)"Thai-Latn") != 0 &&
+                id.compare((UnicodeString)"Thai-Latin") != 0)
 #endif
                 dataerrln(UnicodeString("FAIL: Couldn't create ") + id +
                       /*", parse error " + parseError.code +*/
@@ -410,7 +412,7 @@ void TransliteratorTest::TestRuleBasedInverse(void) {
         "caccb", "xyzzy",
     };
 
-    int32_t DATA_length = (int32_t)(sizeof(DATA) / sizeof(DATA[0]));
+    int32_t DATA_length = UPRV_LENGTHOF(DATA);
 
     UErrorCode status = U_ZERO_ERROR;
     UParseError parseError;
@@ -458,7 +460,7 @@ void TransliteratorTest::TestKeyboard(void) {
         0, "AycAY", // null means finishKeyboardTransliteration
     };
 
-    keyboardAux(*t, DATA, (int32_t)(sizeof(DATA)/sizeof(DATA[0])));
+    keyboardAux(*t, DATA, UPRV_LENGTHOF(DATA));
     delete t;
 }
 
@@ -493,7 +495,7 @@ void TransliteratorTest::TestKeyboard2(void) {
         0, "AycAY", // null means finishKeyboardTransliteration
     };
 
-    keyboardAux(*t, DATA, (int32_t)(sizeof(DATA)/sizeof(DATA[0])));
+    keyboardAux(*t, DATA, UPRV_LENGTHOF(DATA));
     delete t;
 }
 
@@ -527,7 +529,7 @@ void TransliteratorTest::TestKeyboard3(void) {
         errln("FAIL: RBT constructor failed");
         return;
     }
-    keyboardAux(*t, DATA, (int32_t)(sizeof(DATA)/sizeof(DATA[0])));
+    keyboardAux(*t, DATA, UPRV_LENGTHOF(DATA));
     delete t;
 }
 
@@ -878,7 +880,7 @@ void TransliteratorTest::TestJ329(void) {
         { FALSE, "a > b; c > d" },
         { TRUE,  "a > b; no operator; c > d" },
     };
-    int32_t DATA_length = (int32_t)(sizeof(DATA) / sizeof(DATA[0]));
+    int32_t DATA_length = UPRV_LENGTHOF(DATA);
 
     for (int32_t i=0; i<DATA_length; ++i) {
         UErrorCode status = U_ZERO_ERROR;
@@ -922,7 +924,7 @@ void TransliteratorTest::TestSegments(void) {
         "a1 b2",
         "a1.a.1 b2.b.2",
     };
-    int32_t DATA_length = (int32_t)(sizeof(DATA)/sizeof(*DATA));
+    int32_t DATA_length = UPRV_LENGTHOF(DATA);
 
     for (int32_t i=0; i<DATA_length; i+=3) {
         logln("Pattern: " + prettify(DATA[i]));
@@ -954,7 +956,7 @@ void TransliteratorTest::TestCursorOffset(void) {
 
         "prbetaxyz preBETApost",
     };
-    int32_t DATA_length = (int32_t)(sizeof(DATA)/sizeof(*DATA));
+    int32_t DATA_length = UPRV_LENGTHOF(DATA);
 
     for (int32_t i=0; i<DATA_length; i+=3) {
         logln("Pattern: " + prettify(DATA[i]));
@@ -995,7 +997,7 @@ void TransliteratorTest::TestArbitraryVariableValues(void) {
         "ab xYzxyz stY78",
         "ABE ENDEND 1129",
     };
-    int32_t DATA_length = (int32_t)(sizeof(DATA)/sizeof(*DATA));
+    int32_t DATA_length = UPRV_LENGTHOF(DATA);
 
     for (int32_t i=0; i<DATA_length; i+=3) {
         logln("Pattern: " + prettify(DATA[i]));
@@ -1040,7 +1042,7 @@ void TransliteratorTest::TestPositionHandling(void) {
         3, 8, 3, 8,
     };
 
-    int32_t n = (int32_t)(sizeof(DATA) / sizeof(DATA[0])) / 3;
+    int32_t n = UPRV_LENGTHOF(DATA) / 3;
     for (int32_t i=0; i<n; i++) {
         UErrorCode status = U_ZERO_ERROR;
         UParseError parseError;
@@ -1098,7 +1100,7 @@ void TransliteratorTest::TestHiraganaKatakana(void) {
         "\\u307C\\u3051\\u3060\\u3042\\u3093\\u30FC",
         "\\u30DC\\u30F6\\u30C0\\u30FC\\u30F3\\u30FC",
     };
-    int32_t DATA_length = (int32_t)(sizeof(DATA) / sizeof(DATA[0]));
+    int32_t DATA_length = UPRV_LENGTHOF(DATA);
 
     for (int32_t i=0; i<DATA_length; i+=3) {
         UnicodeString h = CharsToUnicodeString(DATA[i+1]);
@@ -1190,7 +1192,7 @@ void TransliteratorTest::TestFilterIDs(void) {
         "xyz",
         "xyz",
     };
-    enum { DATA_length = sizeof(DATA) / sizeof(DATA[0]) };
+    enum { DATA_length = UPRV_LENGTHOF(DATA) };
 
     for (int i=0; i<DATA_length; i+=4) {
         UnicodeString ID(DATA[i], "");
@@ -1314,7 +1316,7 @@ void TransliteratorTest::TestLiberalizedID(void) {
         " Latin[a-z]-Greek  ", "[a-z]Latin-Greek", "inline filter",
         "  null  ; latin-greek  ", NULL /*"Null;Latin-Greek"*/, "compound whitespace",
     };
-    const int32_t DATA_length = sizeof(DATA)/sizeof(DATA[0]);
+    const int32_t DATA_length = UPRV_LENGTHOF(DATA);
     UParseError parseError;
     UErrorCode status= U_ZERO_ERROR;
     for (int32_t i=0; i<DATA_length; i+=3) {
@@ -1478,7 +1480,7 @@ void TransliteratorTest::TestNormalizationTransliterator() {
     Transliterator* NFKD = Transliterator::createInstance("NFKD", UTRANS_FORWARD, parseError, status);
     Transliterator* NFKC = Transliterator::createInstance("NFKC", UTRANS_FORWARD, parseError, status);
     if (!NFKD || !NFKC) {
-        errln("FAIL: createInstance failed");
+        dataerrln("FAIL: createInstance failed");
         delete NFKD;
         delete NFKC;
         return;
@@ -1729,7 +1731,7 @@ void TransliteratorTest::TestToRules(void) {
         "([AEIOUYaeiouy]\\u0304[[:M:]-[\\u0304\\u0345]]*)i > | $1 \\u0345;",
         "([AEIOUYaeiouy]\\u0304[[:M:]-[\\u0304\\u0345]]*)i > | $1 \\u0345;",
     };
-    static const int32_t DATA_length = (int32_t)(sizeof(DATA) / sizeof(DATA[0]));
+    static const int32_t DATA_length = UPRV_LENGTHOF(DATA);
 
     for (int32_t d=0; d < DATA_length; d+=3) {
         if (DATA[d] == RBT) {
@@ -2787,7 +2789,7 @@ void TransliteratorTest::TestCompoundLatinRT(){
         "kimakurvata",
         "san\\u0304java"
     };
-    const int MAX_LEN = sizeof(source)/sizeof(source[0]);
+    const int MAX_LEN = UPRV_LENGTHOF(source);
     const char* const expected[MAX_LEN] = {
         "\\u0930\\u094D\\u092E\\u094D\\u0915\\u094D\\u0937\\u0947\\u0924\\u094D",
         "\\u0936\\u094d\\u0930\\u0940\\u092e\\u0926\\u094d",
@@ -2807,7 +2809,7 @@ void TransliteratorTest::TestCompoundLatinRT(){
         "\\u0915\\u093f\\u092e\\u0915\\u0941\\u0930\\u094d\\u0935\\u0924",
         "\\u0938\\u0902\\u091c\\u0935"
     };
-    if(MAX_LEN != sizeof(expected)/sizeof(expected[0])) {
+    if(MAX_LEN != UPRV_LENGTHOF(expected)) {
         errln("error in TestCompoundLatinRT: source[] and expected[] have different lengths!");
         return;
     }
@@ -2933,7 +2935,7 @@ void TransliteratorTest::TestLocaleResource() {
         "el-Latin",              "\\u03B2",         "v",
         "Greek-Latin",           "\\u03B2",         "b",
     };
-    const int32_t DATA_length = sizeof(DATA) / sizeof(DATA[0]);
+    const int32_t DATA_length = UPRV_LENGTHOF(DATA);
     for (int32_t i=0; i<DATA_length; i+=3) {
         UParseError pe;
         UErrorCode ec = U_ZERO_ERROR;
@@ -3073,7 +3075,7 @@ void TransliteratorTest::TestIDForms() {
         "-", NULL, NULL,
         "/", NULL, NULL,
     };
-    const int32_t DATA_length = sizeof(DATA)/sizeof(DATA[0]);
+    const int32_t DATA_length = UPRV_LENGTHOF(DATA);
     
     for (int32_t i=0; i<DATA_length; i+=3) {
         const char* ID = DATA[i];
@@ -3289,7 +3291,7 @@ void TransliteratorTest::TestDisplayName() {
         "NFC", "Any to NFC", "Any to NFD",
     };
 
-    int32_t DATA_length = sizeof(DATA) / sizeof(DATA[0]);
+    int32_t DATA_length = UPRV_LENGTHOF(DATA);
     
     Locale US("en", "US");
     
@@ -3573,12 +3575,24 @@ void TransliteratorTest::TestIncrementalProgress(void) {
                 _trans(*t, test, rev);
                 Transliterator *inv = t->createInverse(status);
                 if (U_FAILURE(status)) {
+                    // The following are forward-only, it is OK that creating an inverse will not work:
+                    // 1. Devanagari-Arabic
+                    // 2. Any-*/BGN
+                    // 2a. Any-*/BGN_1981
+                    // 3. Any-*/UNGEGN
+                    // 4. Any-*/MNS
+                    // If UCONFIG_NO_BREAK_ITERATION is on, Latin-Thai is also not expected to work.
+                    if (    id.compare((UnicodeString)"Devanagari-Arabic/") != 0
+                         && !(id.startsWith((UnicodeString)"Any-") &&
+                                (id.endsWith((UnicodeString)"/BGN") || id.endsWith((UnicodeString)"/BGN_1981") || id.endsWith((UnicodeString)"/UNGEGN") || id.endsWith((UnicodeString)"/MNS"))
+                             )
 #if UCONFIG_NO_BREAK_ITERATION
-                    // If UCONFIG_NO_BREAK_ITERATION is on, then only Thai should fail.
-                    if (id.compare((UnicodeString)"Latin-Thai/") != 0)
+                         && id.compare((UnicodeString)"Latin-Thai/") != 0
 #endif
+                       )
+                    {
                         errln((UnicodeString)"FAIL: Could not create inverse of " + id);
-
+                    }
                     delete t;
                     delete inv;
                     continue;
@@ -3608,6 +3622,7 @@ void TransliteratorTest::CheckIncrementalAux(const Transliterator* t,
         return;
     }
     UBool gotError = FALSE;
+    (void)gotError;    // Suppress set but not used warning.
 
     // we have a few special cases. Any-Remove (pos.start = 0, but also = limit) and U+XXXXX?X?
 
@@ -4282,7 +4297,6 @@ static const char* BEGIN_END_RULES[] = {
     "::Upper(Lower);"
     "::([XYZ]);"
 };
-static const int32_t BEGIN_END_RULES_length = (int32_t)(sizeof(BEGIN_END_RULES) / sizeof(BEGIN_END_RULES[0]));
 
 /*
 (This entire test is commented out below and will need some heavy revision when we re-add
@@ -4306,7 +4320,7 @@ static const char* BOGUS_BEGIN_END_RULES[] = {
     "::Upper;"
     "::END;"
 };
-static const int32_t BOGUS_BEGIN_END_RULES_length = (int32_t)(sizeof(BOGUS_BEGIN_END_RULES) / sizeof(BOGUS_BEGIN_END_RULES[0]));
+static const int32_t BOGUS_BEGIN_END_RULES_length = UPRV_LENGTHOF(BOGUS_BEGIN_END_RULES);
 */
 
 static const char* BEGIN_END_TEST_CASES[] = {
@@ -4336,7 +4350,7 @@ static const char* BEGIN_END_TEST_CASES[] = {
 //    BEGIN_END_RULES[16], "abc xy ababc xyz aba", "XY xy ABXY xyz YZ",
     BEGIN_END_RULES[17], "abc xy ababc xyz aba", "XY xy ABXY xyz YZ"
 };
-static const int32_t BEGIN_END_TEST_CASES_length = (int32_t)(sizeof(BEGIN_END_TEST_CASES) / sizeof(BEGIN_END_TEST_CASES[0]));
+static const int32_t BEGIN_END_TEST_CASES_length = UPRV_LENGTHOF(BEGIN_END_TEST_CASES);
 
 void TransliteratorTest::TestBeginEnd() {
     // run through the list of test cases above
@@ -4523,9 +4537,9 @@ void TransliteratorTest::TestRuleStripping() {
     static const UChar expectedRule[] = {
         0xE001,0x003E,0x0C01,0x003B,0
     };
-    UChar result[sizeof(rule)/sizeof(rule[0])];
+    UChar result[UPRV_LENGTHOF(rule)];
     UErrorCode status = U_ZERO_ERROR;
-    int32_t len = utrans_stripRules(rule, (int32_t)(sizeof(rule)/sizeof(rule[0])), result, &status);
+    int32_t len = utrans_stripRules(rule, UPRV_LENGTHOF(rule), result, &status);
     if (len != u_strlen(expectedRule)) {
         errln("utrans_stripRules return len = %d", len);
     }
@@ -4559,7 +4573,7 @@ void TransliteratorTest::TestHalfwidthFullwidth(void) {
         "\\uFFE9\\uFFEA\\uFFEB\\uFFEC\\u0061\\uFF71\\u00AF\\u0020",
         "\\u2190\\u2191\\u2192\\u2193\\uFF41\\u30A2\\uFFE3\\u3000",
     };
-    int32_t DATA_length = (int32_t)(sizeof(DATA) / sizeof(DATA[0]));
+    int32_t DATA_length = UPRV_LENGTHOF(DATA);
 
     for (int32_t i=0; i<DATA_length; i+=3) {
         UnicodeString h = CharsToUnicodeString(DATA[i+1]);

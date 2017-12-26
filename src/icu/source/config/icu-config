@@ -2,13 +2,17 @@
 ## -*-sh-*-
 #set -x
 # BEGIN of icu-config-top
+# Copyright (C) 2016 and later: Unicode, Inc. and others.
+# License & terms of use: http://www.unicode.org/copyright.html
 #******************************************************************************
-#   Copyright (C) 1999-2004, International Business Machines
+#   Copyright (C) 1999-2013, International Business Machines
 #   Corporation and others.  All Rights Reserved.
 #******************************************************************************
 # This script is designed to aid configuration of ICU.
 # rpath links a library search path right into the binaries.
-
+#
+# Note: it's preferred to use the .pc files rather than icu-config.
+#
 
 ### END of icu-config-top
 
@@ -20,10 +24,12 @@ prefix=
 loaddefs()
 {
 
-# Following from ./config/mh-linux
+# Following from icu/icu4c/source/config/Makefile.inc
+# Copyright (C) 2016 and later: Unicode, Inc. and others.
+# License & terms of use: http://www.unicode.org/copyright.html
 ## -*-makefile-*-
 #******************************************************************************
-#   Copyright (C) 1999-2012, International Business Machines
+#   Copyright (C) 1999-2014, International Business Machines
 #   Corporation and others.  All Rights Reserved.
 #******************************************************************************
 # This Makefile.inc is designed to be included into projects which make use
@@ -47,7 +53,7 @@ loaddefs()
 # etc.  If ICU is not installed in this directory, you must change the
 # following line.  There should exist ${prefix}/include/unicode/utypes.h
 # for example.
-default_prefix="/home/ubuntu/pmilter/build"
+default_prefix="/home/ubuntu/DEV/pmilter/build"
 if [ "x${prefix}" = "x" ]; then prefix="$default_prefix"; fi
 exec_prefix="${prefix}"
 libdir="${exec_prefix}/lib"
@@ -58,8 +64,8 @@ datadir="${datarootdir}"
 sbindir="${exec_prefix}/sbin"
 
 # about the ICU version
-VERSION="50.1"
-UNICODE_VERSION="6.2"
+VERSION="60.2"
+UNICODE_VERSION="10.0"
 
 # The prefix for ICU libraries, normally 'icu'
 ICUPREFIX="icu"
@@ -112,7 +118,6 @@ esac
 DATA_STUBNAME="data"
 COMMON_STUBNAME="uc"
 I18N_STUBNAME="i18n"
-LAYOUT_STUBNAME="le"
 LAYOUTEX_STUBNAME="lx"
 IO_STUBNAME="io"
 TOOLUTIL_STUBNAME="tu"
@@ -124,7 +129,6 @@ CTESTFW_STUBNAME="test"
 # 2. link with ${ICULIBS}
 # 3. optionally, add one or more of:
 #    - ${ICULIBS_I18N}    - i18n library, formatting, etc.
-#    - ${ICULIBS_LAYOUT}  - ICU layout library. 
 #    - ${ICULIBS_ICUIO}   - ICU stdio equivalent library
 
 ICULIBS_COMMON="-l${ICUPREFIX}uc${ICULIBSUFFIX}${ICULIBSUFFIX_VERSION}"
@@ -134,9 +138,8 @@ ICULIBS_TOOLUTIL="-l${ICUPREFIX}tu${ICULIBSUFFIX}${ICULIBSUFFIX_VERSION}"
 ICULIBS_CTESTFW="-l${ICUPREFIX}ctestfw${ICULIBSUFFIX}${ICULIBSUFFIX_VERSION}"
 ICULIBS_ICUIO="-l${ICUPREFIX}io${ICULIBSUFFIX}${ICULIBSUFFIX_VERSION}"
 ICULIBS_OBSOLETE="-l${ICUPREFIX}obsolete${ICULIBSUFFIX}${ICULIBSUFFIX_VERSION}"
-ICULIBS_LAYOUT="-l${ICUPREFIX}le${ICULIBSUFFIX}${ICULIBSUFFIX_VERSION}"
 ICULIBS_LAYOUTEX="-l${ICUPREFIX}lx${ICULIBSUFFIX}${ICULIBSUFFIX_VERSION}"
-ICULIBS_BASE="${LIBS} -L${libdir}"
+ICULIBS_BASE="-L${libdir}"
 
 # for icu-config to test with
 ICULIBS_COMMON_LIB_NAME="${LIBICU}${COMMON_STUBNAME}${ICULIBSUFFIX}${ICULIBSUFFIX_VERSION}.${SO}"
@@ -202,25 +205,24 @@ platform="U_LINUX"
 AR="ar"
 # initial tab keeps it out of the shell version.
 ARFLAGS=" ${ARFLAGS}"
-CC="gcc"
-CFLAGS="-O2 -Wall -std=c99 -pedantic -Wshadow -Wpointer-arith -Wmissing-prototypes -Wwrite-strings ${THREADSCFLAGS} "
-CPP="gcc -E"
-CPPFLAGS="-ffunction-sections -fdata-sections ${THREADSCPPFLAGS}   ${LIBCPPFLAGS} -I${prefix}/include"
-CXX="g++"
-CXXFLAGS="-O2 -W -Wall -pedantic -Wpointer-arith -Wwrite-strings -Wno-long-long -std=c++11 ${THREADSCXXFLAGS} "
-DEFAULT_MODE="static"
-DEFS="-DPACKAGE_NAME=\"\" -DPACKAGE_TARNAME=\"\" -DPACKAGE_VERSION=\"\" -DPACKAGE_STRING=\"\" -DPACKAGE_BUGREPORT=\"\" -DPACKAGE_URL=\"\" -DSTDC_HEADERS=1 -DHAVE_SYS_TYPES_H=1 -DHAVE_SYS_STAT_H=1 -DHAVE_STDLIB_H=1 -DHAVE_STRING_H=1 -DHAVE_MEMORY_H=1 -DHAVE_STRINGS_H=1 -DHAVE_INTTYPES_H=1 -DHAVE_STDINT_H=1 -DHAVE_UNISTD_H=1 -DSIZEOF_VOID_P=8 -DHAVE_LIBM=1 -DHAVE_DLFCN_H=1 -DHAVE_DLOPEN=1 -DHAVE_GETTIMEOFDAY=1 -DHAVE_LIBPTHREAD=1 -DHAVE_INTTYPES_H=1 -DHAVE_DIRENT_H=1 -DHAVE_WCHAR_H=1 -DSIZEOF_WCHAR_T=4 "
-FFLAGS="@FFLAGS@"
+CC="clang"
+CPP="clang -E"
+CFLAGS=""
+CPPFLAGS="-I${prefix}/include"
+CXXFLAGS="-std=c++11"
+CXX="clang++"
+DEFAULT_MODE="dll"
+DEFS="-DPACKAGE_NAME=\"ICU\" -DPACKAGE_TARNAME=\"International\ Components\ for\ Unicode\" -DPACKAGE_VERSION=\"60.1\" -DPACKAGE_STRING=\"ICU\ 60.1\" -DPACKAGE_BUGREPORT=\"http://icu-project.org/bugs\" -DPACKAGE_URL=\"http://icu-project.org\" -DSTDC_HEADERS=1 -DHAVE_SYS_TYPES_H=1 -DHAVE_SYS_STAT_H=1 -DHAVE_STDLIB_H=1 -DHAVE_STRING_H=1 -DHAVE_MEMORY_H=1 -DHAVE_STRINGS_H=1 -DHAVE_INTTYPES_H=1 -DHAVE_STDINT_H=1 -DHAVE_UNISTD_H=1 -DSIZEOF_VOID_P=8 -DHAVE_LIBM=1 -DHAVE_ELF_H=1 -DHAVE_DLFCN_H=1 -DHAVE_DLOPEN=1 -DHAVE_GETTIMEOFDAY=1 -DHAVE_LIBPTHREAD=1 -DHAVE_INTTYPES_H=1 -DHAVE_DIRENT_H=1 -DHAVE_WCHAR_H=1 -DSIZEOF_WCHAR_T=4 "
 # use a consistent INSTALL 
 INSTALL="${SHELL} ${pkgdatadir}/install-sh -c"
 INSTALL_DATA="${INSTALL} -m 644"
 INSTALL_PROGRAM="${INSTALL}"
 INSTALL_SCRIPT="${INSTALL}"
-LDFLAGS="-Wl,--gc-sections ${RPATHLDFLAGS}"
+LDFLAGS="${RPATHLDFLAGS}"
 LIBS="-lpthread -ldl -lm  "
 LIB_M=""
-LIB_VERSION="50.1"
-LIB_VERSION_MAJOR="50"
+LIB_VERSION="60.2"
+LIB_VERSION_MAJOR="60"
 MKINSTALLDIRS="${SHELL} ${pkgdatadir}/mkinstalldirs"
 RANLIB="ranlib"
 RMV="rm -rf"
@@ -248,14 +250,14 @@ INSTALL_L="${INSTALL_DATA}"
 
 # The basename of the ICU data file (i.e. icudt21b )
 ICUDATA_CHAR="l"
-ICUDATA_NAME="icudt50l"
+ICUDATA_NAME="icudt60l"
 
 # Defaults for pkgdata's mode and directories
 # The default data dir changes depending on what packaging mode 
 # is being used
 if [ "x$PKGDATA_MODE" = "x" ];
 then
-PKGDATA_MODE="static"
+PKGDATA_MODE="dll"
 fi
 
 case "$PKGDATA_MODE" in
@@ -287,14 +289,17 @@ GENCCODE_ASSEMBLY="-a gcc"
 # The selfcheck is just a sanity check that this makefile is
 # parseable. The mh fragment is only included if this does not occur.
 
+# Following from ./config/mh-linux
 ## -*-makefile-*-
+## Copyright (C) 2016 and later: Unicode, Inc. and others.
+## License & terms of use: http://www.unicode.org/copyright.html
 ## Linux-specific setup
-## Copyright (c) 1999-2012, International Business Machines Corporation and
+## Copyright (c) 1999-2013, International Business Machines Corporation and
 ## others. All Rights Reserved.
 
 ## Commands to generate dependency files
 GEN_DEPS_c="${CC} -E -MM ${DEFS} ${CPPFLAGS}"
-GEN_DEPS_cc="${CXX} -E -MM ${DEFS} ${CPPFLAGS}"
+GEN_DEPS_cc="${CXX} -E -MM ${DEFS} ${CPPFLAGS} ${CXXFLAGS}"
 
 ## Flags for position independent code
 SHAREDLIBCFLAGS="-fPIC"
@@ -347,12 +352,14 @@ STATIC_PREFIX=""
 
 ## -*-sh-*-
 ## BEGIN of icu-config-bottom.
-## Copyright (c) 2002-2011, International Business Machines Corporation and
+## Copyright (C) 2016 and later: Unicode, Inc. and others.
+## License & terms of use: http://www.unicode.org/copyright.html
+## Copyright (c) 2002-2013, International Business Machines Corporation and
 ## others. All Rights Reserved.
 
 ICUUC_FILE="${libdir}/${ICULIBS_COMMON_LIB_NAME}"
 ICUUC_FILE_A="${libdir}/${ICULIBS_COMMON_LIB_NAME_A}"
-    
+
 #  echo ENABLE RPATH $ENABLE_RPATH and RPATHLDFLAGS=${RPATH_LDFLAGS}
 if [ "x$PKGDATA_MODE" = "x" ]; then
     PKGDATA_MODE=dll
@@ -389,9 +396,8 @@ allflags()
     echo "  --icudata-mode         Print default ICU pkgdata mode (dll) - use as --mode option to pkgdata(1)."
     echo "  --icudatadir           Print path to packaged archive data. Can set as [ICU_DATA]"
     echo "  --invoke               Print commands to invoke an ICU program"
-    echo "  --invoke=<prog>        Print commands to invoke an ICU program named <prog> (ex: genrb)" 
+    echo "  --invoke=<prog>        Print commands to invoke an ICU program named <prog> (ex: genrb)"
     echo "  --ldflags              Print -L search path and -l libraries to link with ICU [LDFLAGS].  This is for the data, uc (common), and i18n libraries only.  "
-    echo "  --ldflags-layout       Print ICU layout engine link directive. Use in addition to --ldflags"
     echo "  --ldflags-libsonly     Same as --ldflags, but only the -l directives"
     echo "  --ldflags-searchpath   Print only -L (search path) directive"
     echo "  --ldflags-system       Print only system libs ICU links with (-lpthread, -lm)"
@@ -432,10 +438,13 @@ usage()
     echo "Usage:"
     allflags
 
-    echo 
+    echo
     echo " [Brackets] show MAKE variable equivalents,  (parenthesis) show example output"
     echo
-    echo "Copyright (c) 2002, International Business Machines Corporation and others. All Rights Reserved."
+    echo "Copyright (c) 2002-2013, International Business Machines Corporation and others. All Rights Reserved."
+    echo
+    echo "NOTE: Please consider using the pkg-config (.pc) files instead of icu-config."
+    echo " See: <http://userguide.icu-project.org/howtouseicu#TOC-pkg-config> "
 }
 
 ## Check the sanity of current variables
@@ -472,7 +481,7 @@ case "$1" in
     ;;
 esac
 
-case "$1" in 
+case "$1" in
 *prefix*)
     IGNORE_ICUUC_FILE_CHECK="yes"
     ;;
@@ -486,7 +495,7 @@ loaddefs
 if [ $# -gt 0 -a $1 = "--selfcheck" ];
 then
 	echo "passed"
-	exit 
+	exit
 	# EXIT for self check
 fi
 
@@ -503,12 +512,12 @@ do
         --debug)
 	    set -x
 	    ;;
-        
+
         --noverify)
             echo "### $ME: Error: --noverify must be the first argument." 1>&2
             exit 1
             ;;
-            
+
     --so)
         echo $SO
         ;;
@@ -541,8 +550,8 @@ do
 	    QUOT="\""
             CMD="${var}"
 
-            # If it's not a locally executable command (1st choice) then 
-            # search for it in the ICU directories. 
+            # If it's not a locally executable command (1st choice) then
+            # search for it in the ICU directories.
             if [ ! -x ${CMD} ]; then
                 if [ -x ${bindir}/${var} ]; then
                     CMD="${bindir}/${var}"
@@ -563,11 +572,11 @@ do
 	--cflags)
 	    echo $ECHO_N "${CFLAGS} ${ECHO_C}"
 	    ;;
-	    
+
 	--cc)
 	    echo $ECHO_N "${CC} ${ECHO_C}"
 	    ;;
-	    
+
 	--cxx)
 	    echo $ECHO_N "${CXX} ${ECHO_C}"
 	    ;;
@@ -602,7 +611,7 @@ do
 	    ;;
 
 	--ldflags)
-	    echo $ECHO_N "${LDFLAGS} ${ICULIBS} ${LIBS} ${ECHO_C}"
+	    echo $ECHO_N "${LDFLAGS} ${ICULIBS} ${ECHO_C}"
 # $RPATH_LDFLAGS
 	    ;;
 
@@ -623,7 +632,8 @@ do
 	    ;;
 
 	--ldflags-layout)
-	    echo $ECHO_N "${ICULIBS_LAYOUT} ${ICULIBS_LAYOUTEX} ${ECHO_C}"
+            echo ${ME}: ERROR: the old layout engine has been removed. use HarfBuzz.
+            exit 1
 	    ;;
 
 	--ldflags-searchpath)
@@ -685,7 +695,7 @@ do
 	--icudata-install-dir)
         echo $ECHO_N "${ICUPKGDATA_DIR} ${ECHO_C}"
 	    ;;
-	    
+
 	--icudatadir)
 	    echo $ECHO_N "${ICUDATA_DIR} ${ECHO_C}"
 	    ;;
@@ -705,7 +715,7 @@ do
 	--unicode-version)
 	    echo $ECHO_N $UNICODE_VERSION
 	    ;;
-	
+
 	--host)
 	    echo $host
 	    exit 0
@@ -740,7 +750,7 @@ do
             ;;
     esac
     shift
-    
+
     # Reset the ignore icuuc file check flag
     if [ $IGNORE_ICUUC_FILE_CHECK = "yes" ]; then
         IGNORE_ICUUC_FILE_CHECK="no"
@@ -753,5 +763,3 @@ sanity
 ## END of icu-config-bottom
 
 exit 0
-
-# Rebuilt on Wed Nov 2 19:46:38 JST 2016

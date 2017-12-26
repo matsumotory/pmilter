@@ -1,6 +1,8 @@
+// © 2016 and later: Unicode, Inc. and others.
+// License & terms of use: http://www.unicode.org/copyright.html
 /********************************************************************
  * COPYRIGHT:
- * Copyright (c) 1997-2012, International Business Machines Corporation and
+ * Copyright (c) 1997-2015, International Business Machines Corporation and
  * others. All Rights Reserved.
  ********************************************************************/
 /********************************************************************************
@@ -22,7 +24,6 @@
 #include "unicode/putil.h"
 #include "cstring.h"
 #include "cintltst.h"
-#include "umutex.h"
 #include "uassert.h"
 #include "cmemory.h"
 #include "unicode/uchar.h"
@@ -73,6 +74,10 @@ void ctest_setICU_DATA(void);
 
 static int gOrigArgc;
 static const char* const * gOrigArgv;
+
+#ifdef UNISTR_COUNT_FINAL_STRING_LENGTHS
+U_CAPI void unistr_printLengths();
+#endif
 
 int main(int argc, const char* const argv[])
 {
@@ -234,10 +239,10 @@ int main(int argc, const char* const argv[])
 
     }  /* End of loop that repeats the entire test, if requested.  (Normally doesn't loop)  */
 
-    if (ALLOCATION_COUNT > 0) {
-        fprintf(stderr, "There were %d blocks leaked!\n", ALLOCATION_COUNT);
-        nerrors++;
-    }
+#ifdef UNISTR_COUNT_FINAL_STRING_LENGTHS
+    unistr_printLengths();
+#endif
+
     endTime = uprv_getRawUTCtime();
     diffTime = (int32_t)(endTime - startTime);
     printf("Elapsed Time: %02d:%02d:%02d.%03d\n",
@@ -657,13 +662,22 @@ static void ctst_freeAll() {
 
 #define VERBOSE_ASSERTIONS
 
-U_CFUNC UBool assertSuccess(const char* msg, UErrorCode* ec) {
+U_CFUNC UBool assertSuccessCheck(const char* msg, UErrorCode* ec, UBool possibleDataError) {
     U_ASSERT(ec!=NULL);
     if (U_FAILURE(*ec)) {
-        log_err_status(*ec, "FAIL: %s (%s)\n", msg, u_errorName(*ec));
+        if (possibleDataError) {
+            log_data_err("FAIL: %s (%s)\n", msg, u_errorName(*ec));
+        } else {
+            log_err_status(*ec, "FAIL: %s (%s)\n", msg, u_errorName(*ec));
+        }
         return FALSE;
     }
     return TRUE;
+}
+
+U_CFUNC UBool assertSuccess(const char* msg, UErrorCode* ec) {
+    U_ASSERT(ec!=NULL);
+    return assertSuccessCheck(msg, ec, FALSE);
 }
 
 /* if 'condition' is a UBool, the compiler complains bitterly about
@@ -693,26 +707,6 @@ U_CFUNC UBool assertEquals(const char* message, const char* expected,
     }
 #endif
     return TRUE;
-}
-/*--------------------------------------------------------------------
- * Time bomb - allows temporary behavior that expires at a given
- *             release
- *--------------------------------------------------------------------
- */
-
-U_CFUNC UBool isICUVersionBefore(int major, int minor, int milli) {
-    UVersionInfo iv;
-    UVersionInfo ov;
-    ov[0] = (uint8_t)major;
-    ov[1] = (uint8_t)minor;
-    ov[2] = (uint8_t)milli;
-    ov[3] = 0;
-    u_getVersion(iv);
-    return uprv_memcmp(iv, ov, U_MAX_VERSION_LENGTH) < 0;
-}
-
-U_CFUNC UBool isICUVersionAtLeast(int major, int minor, int milli) {
-    return !isICUVersionBefore(major, minor, milli);
 }
 
 #endif

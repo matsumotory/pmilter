@@ -1,6 +1,8 @@
+// © 2016 and later: Unicode, Inc. and others.
+// License & terms of use: http://www.unicode.org/copyright.html
 /*
 ********************************************************************************
-*   Copyright (C) 2005-2011, International Business Machines
+*   Copyright (C) 2005-2016, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 ********************************************************************************
 *
@@ -15,6 +17,7 @@
 
 #if !UCONFIG_NO_FORMATTING
 
+#include "cmemory.h"
 #include "winutil.h"
 #include "locmap.h"
 #include "unicode/uloc.h"
@@ -33,9 +36,11 @@ static Win32Utilities::LCIDRecord *lcidRecords = NULL;
 static int32_t lcidCount  = 0;
 static int32_t lcidMax = 0;
 
+// TODO: Note that this test will skip locale names and only hit locales with assigned LCIDs
 BOOL CALLBACK EnumLocalesProc(LPSTR lpLocaleString)
 {
-    const char* localeID = NULL;
+    char localeID[ULOC_FULLNAME_CAPACITY];
+	int32_t localeIDLen;
     UErrorCode status = U_ZERO_ERROR;
 
     if (lcidCount >= lcidMax) {
@@ -52,17 +57,21 @@ BOOL CALLBACK EnumLocalesProc(LPSTR lpLocaleString)
 
     sscanf(lpLocaleString, "%8x", &lcidRecords[lcidCount].lcid);
 
-    localeID = uprv_convertToPosix(lcidRecords[lcidCount].lcid, &status);
-
-    lcidRecords[lcidCount].localeID = new char[strlen(localeID)];
-
-    strcpy(lcidRecords[lcidCount].localeID, localeID);
+    localeIDLen = uprv_convertToPosix(lcidRecords[lcidCount].lcid, localeID, UPRV_LENGTHOF(localeID), &status);
+    if (U_SUCCESS(status)) {
+        lcidRecords[lcidCount].localeID = new char[localeIDLen + 1];
+        memcpy(lcidRecords[lcidCount].localeID, localeID, localeIDLen);
+        lcidRecords[lcidCount].localeID[localeIDLen] = 0;
+    } else {
+        lcidRecords[lcidCount].localeID = NULL;
+    }
 
     lcidCount += 1;
 
     return TRUE;
 }
 
+// TODO: Note that this test will skip locale names and only hit locales with assigned LCIDs
 Win32Utilities::LCIDRecord *Win32Utilities::getLocales(int32_t &localeCount)
 {
     LCIDRecord *result;

@@ -1,6 +1,8 @@
+// © 2016 and later: Unicode, Inc. and others.
+// License & terms of use: http://www.unicode.org/copyright.html
 /***********************************************************************
  * COPYRIGHT: 
- * Copyright (c) 1997-2012, International Business Machines Corporation
+ * Copyright (c) 1997-2013, International Business Machines Corporation
  * and others. All Rights Reserved.
  ***********************************************************************/
 
@@ -92,7 +94,9 @@ public:
     void TestJ691(void);
     void Test8199(void);
     void Test9109(void);
-
+    void Test9780(void);
+    void Test9677(void);
+    void Test10361(void);
 protected:
     UBool failure(UErrorCode status, const UnicodeString& msg, UBool possibleDataError=FALSE);
     UBool failure(UErrorCode status, const UnicodeString& msg, const char *l, UBool possibleDataError=FALSE);

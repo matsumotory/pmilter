@@ -1,12 +1,14 @@
+// © 2016 and later: Unicode, Inc. and others.
+// License & terms of use: http://www.unicode.org/copyright.html
 /*
  *******************************************************************************
  *
- *   Copyright (C) 2003-2007, International Business Machines
+ *   Copyright (C) 2003-2014, International Business Machines
  *   Corporation and others.  All Rights Reserved.
  *
  *******************************************************************************
  *   file name:  convtest.h
- *   encoding:   US-ASCII
+ *   encoding:   UTF-8
  *   tab size:   8 (not used)
  *   indentation:4
  *
@@ -73,6 +75,8 @@ public:
     void TestFromUnicode();
     void TestGetUnicodeSet();
     void TestGetUnicodeSet2();
+    void TestDefaultIgnorableCallback();
+    void TestUTF8ToUTF8Overflow();
 
 private:
     UBool

@@ -1,6 +1,7 @@
+// © 2016 and later: Unicode, Inc. and others.
+// License & terms of use: http://www.unicode.org/copyright.html
 /********************************************************************
- * COPYRIGHT: 
- * Copyright (c) 1997-2011, International Business Machines Corporation and
+ * Copyright (c) 1997-2016, International Business Machines Corporation and
  * others. All Rights Reserved.
  ********************************************************************/
 
@@ -8,14 +9,13 @@
 #include "unicode/uchar.h"
 #include "unicode/uniset.h"
 #include "unicode/putil.h"
+#include "unicode/uscript.h"
 #include "cstring.h"
 #include "hash.h"
 #include "patternprops.h"
 #include "normalizer2impl.h"
 #include "uparse.h"
 #include "ucdtest.h"
-
-#define LENGTHOF(array) (int32_t)(sizeof(array)/sizeof(array[0]))
 
 static const char *ignorePropNames[]={
     "FC_NFKC",
@@ -39,7 +39,7 @@ UnicodeTest::UnicodeTest()
         unknownPropertyNames=NULL;
     }
     // Ignore some property names altogether.
-    for(int32_t i=0; i<LENGTHOF(ignorePropNames); ++i) {
+    for(int32_t i=0; i<UPRV_LENGTHOF(ignorePropNames); ++i) {
         unknownPropertyNames->puti(UnicodeString(ignorePropNames[i], -1, US_INV), 1, errorCode);
     }
 }
@@ -59,6 +59,10 @@ void UnicodeTest::runIndexedTest( int32_t index, UBool exec, const char* &name, 
     TESTCASE_AUTO(TestBinaryValues);
     TESTCASE_AUTO(TestConsistency);
     TESTCASE_AUTO(TestPatternProperties);
+    TESTCASE_AUTO(TestScriptMetadata);
+    TESTCASE_AUTO(TestBidiPairedBracketType);
+    TESTCASE_AUTO(TestEmojiProperties);
+    TESTCASE_AUTO(TestDefaultScriptExtensions);
     TESTCASE_AUTO_END;
 }
 
@@ -147,7 +151,7 @@ derivedPropsIndex[]={
     UCHAR_CHANGES_WHEN_NFKC_CASEFOLDED
 };
 
-static int32_t numErrors[LENGTHOF(derivedPropsIndex)]={ 0 };
+static int32_t numErrors[UPRV_LENGTHOF(derivedPropsIndex)]={ 0 };
 
 enum { MAX_ERRORS=50 };
 
@@ -167,7 +171,7 @@ derivedPropsLineFn(void *context,
     }
 
     /* parse derived binary property name, ignore unknown names */
-    i=getTokenIndex(derivedPropsNames, LENGTHOF(derivedPropsNames), fields[1][0]);
+    i=getTokenIndex(derivedPropsNames, UPRV_LENGTHOF(derivedPropsNames), fields[1][0]);
     if(i<0) {
         UnicodeString propName(fields[1][0], (int32_t)(fields[1][1]-fields[1][0]));
         propName.trim();
@@ -185,49 +189,32 @@ derivedPropsLineFn(void *context,
 void UnicodeTest::TestAdditionalProperties() {
 #if !UCONFIG_NO_NORMALIZATION
     // test DerivedCoreProperties.txt and DerivedNormalizationProps.txt
-    if(LENGTHOF(derivedProps)<LENGTHOF(derivedPropsNames)) {
+    if(UPRV_LENGTHOF(derivedProps)<UPRV_LENGTHOF(derivedPropsNames)) {
         errln("error: UnicodeTest::derivedProps[] too short, need at least %d UnicodeSets\n",
-              LENGTHOF(derivedPropsNames));
+              UPRV_LENGTHOF(derivedPropsNames));
         return;
     }
-    if(LENGTHOF(derivedPropsIndex)!=LENGTHOF(derivedPropsNames)) {
-        errln("error in ucdtest.cpp: LENGTHOF(derivedPropsIndex)!=LENGTHOF(derivedPropsNames)\n");
+    if(UPRV_LENGTHOF(derivedPropsIndex)!=UPRV_LENGTHOF(derivedPropsNames)) {
+        errln("error in ucdtest.cpp: UPRV_LENGTHOF(derivedPropsIndex)!=UPRV_LENGTHOF(derivedPropsNames)\n");
         return;
     }
 
-    char newPath[256];
-    char backupPath[256];
+    char path[500];
+    if(getUnidataPath(path) == NULL) {
+        errln("unable to find path to source/data/unidata/");
+        return;
+    }
+    char *basename=strchr(path, 0);
+    strcpy(basename, "DerivedCoreProperties.txt");
+
     char *fields[2][2];
     UErrorCode errorCode=U_ZERO_ERROR;
-
-    /* Look inside ICU_DATA first */
-    strcpy(newPath, pathToDataDirectory());
-    strcat(newPath, "unidata" U_FILE_SEP_STRING "DerivedCoreProperties.txt");
-
-    // As a fallback, try to guess where the source data was located
-    // at the time ICU was built, and look there.
-#   ifdef U_TOPSRCDIR
-        strcpy(backupPath, U_TOPSRCDIR  U_FILE_SEP_STRING "data");
-#   else
-        strcpy(backupPath, loadTestData(errorCode));
-        strcat(backupPath, U_FILE_SEP_STRING ".." U_FILE_SEP_STRING ".." U_FILE_SEP_STRING ".." U_FILE_SEP_STRING ".." U_FILE_SEP_STRING "data");
-#   endif
-    strcat(backupPath, U_FILE_SEP_STRING);
-    strcat(backupPath, "unidata" U_FILE_SEP_STRING "DerivedCoreProperties.txt");
-
-    char *path=newPath;
-    u_parseDelimitedFile(newPath, ';', fields, 2, derivedPropsLineFn, this, &errorCode);
-
-    if(errorCode==U_FILE_ACCESS_ERROR) {
-        errorCode=U_ZERO_ERROR;
-        path=backupPath;
-        u_parseDelimitedFile(backupPath, ';', fields, 2, derivedPropsLineFn, this, &errorCode);
-    }
+    u_parseDelimitedFile(path, ';', fields, 2, derivedPropsLineFn, this, &errorCode);
     if(U_FAILURE(errorCode)) {
         errln("error parsing DerivedCoreProperties.txt: %s\n", u_errorName(errorCode));
         return;
     }
-    char *basename=path+strlen(path)-strlen("DerivedCoreProperties.txt");
+
     strcpy(basename, "DerivedNormalizationProps.txt");
     u_parseDelimitedFile(path, ';', fields, 2, derivedPropsLineFn, this, &errorCode);
     if(U_FAILURE(errorCode)) {
@@ -242,7 +229,7 @@ void UnicodeTest::TestAdditionalProperties() {
     UChar32 start, end;
 
     // test all TRUE properties
-    for(i=0; i<LENGTHOF(derivedPropsNames); ++i) {
+    for(i=0; i<UPRV_LENGTHOF(derivedPropsNames); ++i) {
         rangeCount=derivedProps[i].getRangeCount();
         for(range=0; range<rangeCount && numErrors[i]<MAX_ERRORS; ++range) {
             start=derivedProps[i].getRangeStart(range);
@@ -260,12 +247,12 @@ void UnicodeTest::TestAdditionalProperties() {
     }
 
     // invert all properties
-    for(i=0; i<LENGTHOF(derivedPropsNames); ++i) {
+    for(i=0; i<UPRV_LENGTHOF(derivedPropsNames); ++i) {
         derivedProps[i].complement();
     }
 
     // test all FALSE properties
-    for(i=0; i<LENGTHOF(derivedPropsNames); ++i) {
+    for(i=0; i<UPRV_LENGTHOF(derivedPropsNames); ++i) {
         rangeCount=derivedProps[i].getRangeCount();
         for(range=0; range<rangeCount && numErrors[i]<MAX_ERRORS; ++range) {
             start=derivedProps[i].getRangeStart(range);
@@ -299,7 +286,7 @@ void UnicodeTest::TestBinaryValues() {
     static const char *const falseValues[]={ "N", "No", "F", "False" };
     static const char *const trueValues[]={ "Y", "Yes", "T", "True" };
     int32_t i;
-    for(i=0; i<LENGTHOF(falseValues); ++i) {
+    for(i=0; i<UPRV_LENGTHOF(falseValues); ++i) {
         UnicodeString pattern=UNICODE_STRING_SIMPLE("[:Alphabetic=:]");
         pattern.insert(pattern.length()-2, UnicodeString(falseValues[i], -1, US_INV));
         errorCode=U_ZERO_ERROR;
@@ -313,7 +300,7 @@ void UnicodeTest::TestBinaryValues() {
             errln("UnicodeSet([:Alphabetic=%s:]).complement()!=UnicodeSet([:Alphabetic:])\n", falseValues[i]);
         }
     }
-    for(i=0; i<LENGTHOF(trueValues); ++i) {
+    for(i=0; i<UPRV_LENGTHOF(trueValues); ++i) {
         UnicodeString pattern=UNICODE_STRING_SIMPLE("[:Alphabetic=:]");
         pattern.insert(pattern.length()-2, UnicodeString(trueValues[i], -1, US_INV));
         errorCode=U_ZERO_ERROR;
@@ -425,4 +412,137 @@ UnicodeTest::compareUSets(const UnicodeSet &a, const UnicodeSet &b,
         errln("Sets are different: %s vs. %s\n", a_name, b_name);
     }
     return same;
+}
+
+namespace {
+
+/**
+ * Maps a special script code to the most common script of its encoded characters.
+ */
+UScriptCode getCharScript(UScriptCode script) {
+    switch(script) {
+    case USCRIPT_HAN_WITH_BOPOMOFO:
+    case USCRIPT_SIMPLIFIED_HAN:
+    case USCRIPT_TRADITIONAL_HAN:
+        return USCRIPT_HAN;
+    case USCRIPT_JAPANESE:
+        return USCRIPT_HIRAGANA;
+    case USCRIPT_JAMO:
+    case USCRIPT_KOREAN:
+        return USCRIPT_HANGUL;
+    case USCRIPT_SYMBOLS_EMOJI:
+        return USCRIPT_SYMBOLS;
+    default:
+        return script;
+    }
+}
+
+}  // namespace
+
+void UnicodeTest::TestScriptMetadata() {
+    IcuTestErrorCode errorCode(*this, "TestScriptMetadata()");
+    UnicodeSet rtl("[[:bc=R:][:bc=AL:]-[:Cn:]-[:sc=Common:]]", errorCode);
+    // So far, sample characters are uppercase.
+    // Georgian is special.
+    UnicodeSet cased("[[:Lu:]-[:sc=Common:]-[:sc=Geor:]]", errorCode);
+    for(int32_t sci = 0; sci < USCRIPT_CODE_LIMIT; ++sci) {
+        UScriptCode sc = (UScriptCode)sci;
+        // Run the test with -v to see which script has failures:
+        // .../intltest$ make && ./intltest utility/UnicodeTest/TestScriptMetadata -v | grep -C 6 FAIL
+        logln(uscript_getShortName(sc));
+        UScriptUsage usage = uscript_getUsage(sc);
+        UnicodeString sample = uscript_getSampleUnicodeString(sc);
+        UnicodeSet scriptSet;
+        scriptSet.applyIntPropertyValue(UCHAR_SCRIPT, sc, errorCode);
+        if(usage == USCRIPT_USAGE_NOT_ENCODED) {
+            assertTrue("not encoded, no sample", sample.isEmpty());
+            assertFalse("not encoded, not RTL", uscript_isRightToLeft(sc));
+            assertFalse("not encoded, not LB letters", uscript_breaksBetweenLetters(sc));
+            assertFalse("not encoded, not cased", uscript_isCased(sc));
+            assertTrue("not encoded, no characters", scriptSet.isEmpty());
+        } else {
+            assertFalse("encoded, has a sample character", sample.isEmpty());
+            UChar32 firstChar = sample.char32At(0);
+            UScriptCode charScript = getCharScript(sc);
+            assertEquals("script(sample(script))",
+                         (int32_t)charScript, (int32_t)uscript_getScript(firstChar, errorCode));
+            assertEquals("RTL vs. set", (UBool)rtl.contains(firstChar), (UBool)uscript_isRightToLeft(sc));
+            assertEquals("cased vs. set", (UBool)cased.contains(firstChar), (UBool)uscript_isCased(sc));
+            assertEquals("encoded, has characters", (UBool)(sc == charScript), (UBool)(!scriptSet.isEmpty()));
+            if(uscript_isRightToLeft(sc)) {
+                rtl.removeAll(scriptSet);
+            }
+            if(uscript_isCased(sc)) {
+                cased.removeAll(scriptSet);
+            }
+        }
+    }
+    UnicodeString pattern;
+    assertEquals("no remaining RTL characters",
+                 UnicodeString("[]"), rtl.toPattern(pattern));
+    assertEquals("no remaining cased characters",
+                 UnicodeString("[]"), cased.toPattern(pattern));
+
+    assertTrue("Hani breaks between letters", uscript_breaksBetweenLetters(USCRIPT_HAN));
+    assertTrue("Thai breaks between letters", uscript_breaksBetweenLetters(USCRIPT_THAI));
+    assertFalse("Latn does not break between letters", uscript_breaksBetweenLetters(USCRIPT_LATIN));
+}
+
+void UnicodeTest::TestBidiPairedBracketType() {
+    // BidiBrackets-6.3.0.txt says:
+    //
+    // The set of code points listed in this file was originally derived
+    // using the character properties General_Category (gc), Bidi_Class (bc),
+    // Bidi_Mirrored (Bidi_M), and Bidi_Mirroring_Glyph (bmg), as follows:
+    // two characters, A and B, form a pair if A has gc=Ps and B has gc=Pe,
+    // both have bc=ON and Bidi_M=Y, and bmg of A is B. Bidi_Paired_Bracket
+    // maps A to B and vice versa, and their Bidi_Paired_Bracket_Type
+    // property values are Open and Close, respectively.
+    IcuTestErrorCode errorCode(*this, "TestBidiPairedBracketType()");
+    UnicodeSet bpt("[:^bpt=n:]", errorCode);
+    assertTrue("bpt!=None is not empty", !bpt.isEmpty());
+    // The following should always be true.
+    UnicodeSet mirrored("[:Bidi_M:]", errorCode);
+    UnicodeSet other_neutral("[:bc=ON:]", errorCode);
+    assertTrue("bpt!=None is a subset of Bidi_M", mirrored.containsAll(bpt));
+    assertTrue("bpt!=None is a subset of bc=ON", other_neutral.containsAll(bpt));
+    // The following are true at least initially in Unicode 6.3.
+    UnicodeSet bpt_open("[:bpt=o:]", errorCode);
+    UnicodeSet bpt_close("[:bpt=c:]", errorCode);
+    UnicodeSet ps("[:Ps:]", errorCode);
+    UnicodeSet pe("[:Pe:]", errorCode);
+    assertTrue("bpt=Open is a subset of Ps", ps.containsAll(bpt_open));
+    assertTrue("bpt=Close is a subset of Pe", pe.containsAll(bpt_close));
+}
+
+void UnicodeTest::TestEmojiProperties() {
+    assertFalse("space is not Emoji", u_hasBinaryProperty(0x20, UCHAR_EMOJI));
+    assertTrue("shooting star is Emoji", u_hasBinaryProperty(0x1F320, UCHAR_EMOJI));
+    IcuTestErrorCode errorCode(*this, "TestEmojiProperties()");
+    UnicodeSet emoji("[:Emoji:]", errorCode);
+    assertTrue("lots of Emoji", emoji.size() > 700);
+
+    assertTrue("shooting star is Emoji_Presentation",
+               u_hasBinaryProperty(0x1F320, UCHAR_EMOJI_PRESENTATION));
+    assertTrue("Fitzpatrick 6 is Emoji_Modifier",
+               u_hasBinaryProperty(0x1F3FF, UCHAR_EMOJI_MODIFIER));
+    assertTrue("happy person is Emoji_Modifier_Base",
+               u_hasBinaryProperty(0x1F64B, UCHAR_EMOJI_MODIFIER_BASE));
+    assertTrue("asterisk is Emoji_Component",
+               u_hasBinaryProperty(0x2A, UCHAR_EMOJI_COMPONENT));
+}
+
+void UnicodeTest::TestDefaultScriptExtensions() {
+    // Block 3000..303F CJK Symbols and Punctuation defaults to scx=Bopo Hang Hani Hira Kana Yiii
+    // but some of its characters revert to scx=<script> which is usually Common.
+    IcuTestErrorCode errorCode(*this, "TestDefaultScriptExtensions()");
+    UScriptCode scx[20];
+    scx[0] = USCRIPT_INVALID_CODE;
+    assertEquals("U+3000 num scx", 1,  // IDEOGRAPHIC SPACE
+                 uscript_getScriptExtensions(0x3000, scx, UPRV_LENGTHOF(scx), errorCode));
+    assertEquals("U+3000 num scx[0]", USCRIPT_COMMON, scx[0]);
+    scx[0] = USCRIPT_INVALID_CODE;
+    assertEquals("U+3012 num scx", 1,  // POSTAL MARK
+                 uscript_getScriptExtensions(0x3012, scx, UPRV_LENGTHOF(scx), errorCode));
+    assertEquals("U+3012 num scx[0]", USCRIPT_COMMON, scx[0]);
 }

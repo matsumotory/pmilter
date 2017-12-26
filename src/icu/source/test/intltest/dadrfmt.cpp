@@ -1,6 +1,8 @@
+// © 2016 and later: Unicode, Inc. and others.
+// License & terms of use: http://www.unicode.org/copyright.html
 /********************************************************************
  * COPYRIGHT: 
- * Copyright (c) 1997-2010,2012, International Business Machines Corporation and
+ * Copyright (c) 1997-2013 International Business Machines Corporation and
  * others. All Rights Reserved.
  ********************************************************************/
 
@@ -114,6 +116,7 @@ void DataDrivenFormatTest::testConvertDate(TestData *testData,
         DateTimeStyleSet styleSet;
         UnicodeString pattern;
         UBool usePattern = FALSE;
+        (void)usePattern;   // Suppress unused warning.
         CalendarFieldsSet fromSet;
         UDate fromDate = 0;
         UBool useDate = FALSE;

@@ -1,6 +1,8 @@
+// © 2016 and later: Unicode, Inc. and others.
+// License & terms of use: http://www.unicode.org/copyright.html
 /********************************************************************
  * COPYRIGHT: 
- * Copyright (c) 1997-2012, International Business Machines Corporation and
+ * Copyright (c) 1997-2016, International Business Machines Corporation and
  * others. All Rights Reserved.
  ********************************************************************/
 /********************************************************************************
@@ -8,7 +10,7 @@
 * File CBIAPTS.C
 *
 * Modification History:
-*        Name                     Description            
+*        Name                     Description
 *     Madhu Katragadda              Creation
 *********************************************************************************/
 /*C API TEST FOR BREAKITERATOR */
@@ -31,6 +33,7 @@
 #include "unicode/utext.h"
 #include "cintltst.h"
 #include "cbiapts.h"
+#include "cmemory.h"
 
 #define TEST_ASSERT_SUCCESS(status) {if (U_FAILURE(status)) { \
 log_data_err("Failure at file %s, line %d, error = %s (Are you missing data?)\n", __FILE__, __LINE__, u_errorName(status));}}
@@ -47,6 +50,8 @@ static void TestBreakIteratorStatusVec(void);
 static void TestBreakIteratorUText(void);
 static void TestBreakIteratorTailoring(void);
 static void TestBreakIteratorRefresh(void);
+static void TestBug11665(void);
+static void TestBreakIteratorSuppressions(void);
 
 void addBrkIterAPITest(TestNode** root);
 
@@ -62,6 +67,10 @@ void addBrkIterAPITest(TestNode** root)
     addTest(root, &TestBreakIteratorStatusVec, "tstxtbd/cbiapts/TestBreakIteratorStatusVec");
     addTest(root, &TestBreakIteratorTailoring, "tstxtbd/cbiapts/TestBreakIteratorTailoring");
     addTest(root, &TestBreakIteratorRefresh, "tstxtbd/cbiapts/TestBreakIteratorRefresh");
+    addTest(root, &TestBug11665, "tstxtbd/cbiapts/TestBug11665");
+#if !UCONFIG_NO_FILTERED_BREAK_ITERATION
+    addTest(root, &TestBreakIteratorSuppressions, "tstxtbd/cbiapts/TestBreakIteratorSuppressions");
+#endif
 }
 
 #define CLONETEST_ITERATOR_COUNT 2
@@ -121,7 +130,7 @@ static UChar* toUChar(const char *src, void **freeHook) {
     if (dest == NULL) {
         return NULL;
     }
-    
+
     dest->link = (StringStruct*)(*freeHook);
     *freeHook = dest;
     return dest->str;
@@ -157,7 +166,7 @@ static void TestBreakIteratorCAPI()
 
 /*test ubrk_open()*/
     log_verbose("\nTesting BreakIterator open functions\n");
-                                            
+
     /* Use french for fun */
     word         = ubrk_open(UBRK_WORD, "en_US", text, u_strlen(text), &status);
     if(status == U_FILE_ACCESS_ERROR) {
@@ -169,7 +178,7 @@ static void TestBreakIteratorCAPI()
     else{
         log_verbose("PASS: Successfully opened  word breakiterator\n");
     }
-    
+
     sentence     = ubrk_open(UBRK_SENTENCE, "en_US", text, u_strlen(text), &status);
     if(U_FAILURE(status)){
         log_err_status(status, "FAIL: Error in ubrk_open() for sentence breakiterator: %s\n", myErrorName(status));
@@ -178,7 +187,7 @@ static void TestBreakIteratorCAPI()
     else{
         log_verbose("PASS: Successfully opened  sentence breakiterator\n");
     }
-    
+
     line         = ubrk_open(UBRK_LINE, "en_US", text, u_strlen(text), &status);
     if(U_FAILURE(status)){
         log_err("FAIL: Error in ubrk_open() for line breakiterator: %s\n", myErrorName(status));
@@ -187,7 +196,7 @@ static void TestBreakIteratorCAPI()
     else{
         log_verbose("PASS: Successfully opened  line breakiterator\n");
     }
-    
+
     character     = ubrk_open(UBRK_CHARACTER, "en_US", text, u_strlen(text), &status);
     if(U_FAILURE(status)){
         log_err("FAIL: Error in ubrk_open() for character breakiterator: %s\n", myErrorName(status));
@@ -198,6 +207,9 @@ static void TestBreakIteratorCAPI()
     }
     /*trying to open an illegal iterator*/
     bogus     = ubrk_open((UBreakIteratorType)5, "en_US", text, u_strlen(text), &status);
+    if(bogus != NULL) {
+        log_err("FAIL: expected NULL from opening an invalid break iterator.\n");
+    }
     if(U_SUCCESS(status)){
         log_err("FAIL: Error in ubrk_open() for BOGUS breakiterator. Expected U_ILLEGAL_ARGUMENT_ERROR\n");
     }
@@ -222,10 +234,10 @@ static void TestBreakIteratorCAPI()
     }
     for(i=0;i<count;i++)
     {
-        log_verbose("%s\n", ubrk_getAvailable(i)); 
+        log_verbose("%s\n", ubrk_getAvailable(i));
         if (ubrk_getAvailable(i) == 0)
             log_err("No locale for which breakiterator is applicable\n");
-        else 
+        else
             log_verbose("A locale %s for which breakiterator is applicable\n",ubrk_getAvailable(i));
     }
 
@@ -248,10 +260,10 @@ static void TestBreakIteratorCAPI()
     if(end!=49)
         log_err("error ubrk_last(word) did not return 49\n");
     log_verbose("last (word = %d\n", (int32_t)end);
-    
+
     pos=ubrk_previous(word);
     log_verbose("%d   %d\n", end, pos);
-     
+
     pos=ubrk_previous(word);
     log_verbose("%d \n", pos);
 
@@ -267,7 +279,7 @@ static void TestBreakIteratorCAPI()
     }
 
 
-    
+
     log_verbose("\nTesting the functions for character\n");
     ubrk_first(character);
     pos = ubrk_following(character, 5);
@@ -282,7 +294,7 @@ static void TestBreakIteratorCAPI()
     if(pos!=21)
        log_err("error ubrk_preceding(character,22) did not return 21\n");
     log_verbose("preceding(character,22) = %d\n", (int32_t)pos);
-    
+
 
     log_verbose("\nTesting the functions for line\n");
     pos=ubrk_first(line);
@@ -294,7 +306,7 @@ static void TestBreakIteratorCAPI()
         log_err("error ubrk_following(line) did not return 22\n");
     log_verbose("following (line) = %d\n", (int32_t)pos);
 
-    
+
     log_verbose("\nTesting the functions for sentence\n");
     ubrk_first(sentence);
     pos = ubrk_current(sentence);
@@ -311,8 +323,8 @@ static void TestBreakIteratorCAPI()
     if (ubrk_first(sentence)!=ubrk_current(sentence)) {
         log_err("error in ubrk_first() or ubrk_current()\n");
     }
-    
- 
+
+
     /*---- */
     /*Testing ubrk_open and ubrk_close()*/
    log_verbose("\nTesting open and close for us locale\n");
@@ -358,7 +370,7 @@ static void TestBreakIteratorCAPI()
 static void TestBreakIteratorSafeClone(void)
 {
     UChar text[51];     /* Keep this odd to test for 64-bit memory alignment */
-                        /*  NOTE:  This doesn't reliably force mis-alignment of following items. */ 
+                        /*  NOTE:  This doesn't reliably force mis-alignment of following items. */
     uint8_t buffer [CLONETEST_ITERATOR_COUNT] [U_BRK_SAFECLONE_BUFFERSIZE];
     int32_t bufferSize = U_BRK_SAFECLONE_BUFFERSIZE;
 
@@ -398,28 +410,30 @@ static void TestBreakIteratorSafeClone(void)
         /* Check the various error & informational states */
 
         /* Null status - just returns NULL */
-        if (0 != ubrk_safeClone(someIterators[i], buffer[i], &bufferSize, 0))
+        if (NULL != ubrk_safeClone(someIterators[i], buffer[i], &bufferSize, NULL))
         {
             log_err("FAIL: Cloned Iterator failed to deal correctly with null status\n");
         }
         /* error status - should return 0 & keep error the same */
         status = U_MEMORY_ALLOCATION_ERROR;
-        if (0 != ubrk_safeClone(someIterators[i], buffer[i], &bufferSize, &status) || status != U_MEMORY_ALLOCATION_ERROR)
+        if (NULL != ubrk_safeClone(someIterators[i], buffer[i], &bufferSize, &status) || status != U_MEMORY_ALLOCATION_ERROR)
         {
             log_err("FAIL: Cloned Iterator failed to deal correctly with incoming error status\n");
         }
         status = U_ZERO_ERROR;
 
-        /* Null buffer size pointer - just returns NULL & set error to U_ILLEGAL_ARGUMENT_ERROR*/
-        if (0 != ubrk_safeClone(someIterators[i], buffer[i], 0, &status) || status != U_ILLEGAL_ARGUMENT_ERROR)
+        /* Null buffer size pointer is ok */
+        if (NULL == (brk = ubrk_safeClone(someIterators[i], buffer[i], NULL, &status)) || U_FAILURE(status))
         {
             log_err("FAIL: Cloned Iterator failed to deal correctly with null bufferSize pointer\n");
         }
+        ubrk_close(brk);
         status = U_ZERO_ERROR;
-    
+
         /* buffer size pointer is 0 - fill in pbufferSize with a size */
         bufferSize = 0;
-        if (0 != ubrk_safeClone(someIterators[i], buffer[i], &bufferSize, &status) || U_FAILURE(status) || bufferSize <= 0)
+        if (NULL != ubrk_safeClone(someIterators[i], buffer[i], &bufferSize, &status) ||
+                U_FAILURE(status) || bufferSize <= 0)
         {
             log_err("FAIL: Cloned Iterator failed a sizing request ('preflighting')\n");
         }
@@ -429,15 +443,17 @@ static void TestBreakIteratorSafeClone(void)
           log_err("FAIL: Pre-calculated buffer size is too small - %d but needed %d\n", U_BRK_SAFECLONE_BUFFERSIZE, bufferSize);
         }
         /* Verify we can use this run-time calculated size */
-        if (0 == (brk = ubrk_safeClone(someIterators[i], buffer[i], &bufferSize, &status)) || U_FAILURE(status))
+        if (NULL == (brk = ubrk_safeClone(someIterators[i], buffer[i], &bufferSize, &status)) || U_FAILURE(status))
         {
             log_err("FAIL: Iterator can't be cloned with run-time size\n");
         }
         if (brk)
             ubrk_close(brk);
         /* size one byte too small - should allocate & let us know */
-        --bufferSize;
-        if (0 == (brk = ubrk_safeClone(someIterators[i], 0, &bufferSize, &status)) || status != U_SAFECLONE_ALLOCATED_WARNING)
+        if (bufferSize > 1) {
+            --bufferSize;
+        }
+        if (NULL == (brk = ubrk_safeClone(someIterators[i], NULL, &bufferSize, &status)) || status != U_SAFECLONE_ALLOCATED_WARNING)
         {
             log_err("FAIL: Cloned Iterator failed to deal correctly with too-small buffer size\n");
         }
@@ -447,7 +463,7 @@ static void TestBreakIteratorSafeClone(void)
         bufferSize = U_BRK_SAFECLONE_BUFFERSIZE;
 
         /* Null buffer pointer - return Iterator & set error to U_SAFECLONE_ALLOCATED_ERROR */
-        if (0 == (brk = ubrk_safeClone(someIterators[i], 0, &bufferSize, &status)) || status != U_SAFECLONE_ALLOCATED_WARNING)
+        if (NULL == (brk = ubrk_safeClone(someIterators[i], NULL, &bufferSize, &status)) || status != U_SAFECLONE_ALLOCATED_WARNING)
         {
             log_err("FAIL: Cloned Iterator failed to deal correctly with null buffer pointer\n");
         }
@@ -458,22 +474,13 @@ static void TestBreakIteratorSafeClone(void)
         /* Mis-aligned buffer pointer. */
         {
             char  stackBuf[U_BRK_SAFECLONE_BUFFERSIZE+sizeof(void *)];
-            void  *p;
-            int32_t offset;
 
             brk = ubrk_safeClone(someIterators[i], &stackBuf[1], &bufferSize, &status);
-            if (U_FAILURE(status) || brk == 0) {
+            if (U_FAILURE(status) || brk == NULL) {
                 log_err("FAIL: Cloned Iterator failed with misaligned buffer pointer\n");
             }
             if (status == U_SAFECLONE_ALLOCATED_WARNING) {
-                log_err("FAIL: Cloned Iterator allocated when using a mis-aligned buffer.\n");
-            }
-            offset = (int32_t)((char *)&p-(char*)brk);
-            if (offset < 0) {
-                offset = -offset;
-            }
-            if (offset % sizeof(void *) != 0) {
-                log_err("FAIL: Cloned Iterator failed to align correctly with misaligned buffer pointer\n");
+                log_verbose("Cloned Iterator allocated when using a mis-aligned buffer.\n");
             }
             if (brk)
                 ubrk_close(brk);
@@ -481,7 +488,7 @@ static void TestBreakIteratorSafeClone(void)
 
 
         /* Null Iterator - return NULL & set U_ILLEGAL_ARGUMENT_ERROR */
-        if (0 != ubrk_safeClone(0, buffer[i], &bufferSize, &status) || status != U_ILLEGAL_ARGUMENT_ERROR)
+        if (NULL != ubrk_safeClone(NULL, buffer[i], &bufferSize, &status) || status != U_ILLEGAL_ARGUMENT_ERROR)
         {
             log_err("FAIL: Cloned Iterator failed to deal correctly with null Iterator pointer\n");
         }
@@ -521,7 +528,7 @@ static UBreakIterator * testOpenRules(char *rules) {
     bi = ubrk_openRules(ruleSourceU,  -1,     /*  The rules  */
                         NULL,  -1,            /*  The text to be iterated over. */
                         &parseErr, &status);
-    
+
     if (U_FAILURE(status)) {
         log_data_err("FAIL: ubrk_openRules: ICU Error \"%s\" (Are you missing data?)\n", u_errorName(status));
         bi = 0;
@@ -540,7 +547,7 @@ static void TestBreakIteratorRules() {
      *             keep together 'abc', but only when followed by 'def', OTHERWISE
      *             just return one char at a time.
      */
-    char         rules[]  = "abc{666}/def;\n   [\\p{L} - [a]]* {2};  . {1};";
+    char         rules[]  = "abc/def{666};\n   [\\p{L} - [a]]* {2};  . {1};";
     /*                        0123456789012345678 */
     char         data[]   =  "abcdex abcdefgh-def";     /* the test data string                     */
     char         breaks[] =  "**    **  *    **  *";    /*  * the expected break positions          */
@@ -578,6 +585,43 @@ static void TestBreakIteratorRules() {
                 break;
             }
             pos = ubrk_next(bi);
+        }
+    }
+
+    /* #12914 add basic sanity test for ubrk_getBinaryRules, ubrk_openBinaryRules */
+    /* Underlying functionality checked in C++ rbbiapts.cpp TestRoundtripRules */
+    status = U_ZERO_ERROR;
+    int32_t rulesLength = ubrk_getBinaryRules(bi, NULL, 0, &status); /* preflight */
+    if (U_FAILURE(status)) {
+        log_err("FAIL: ubrk_getBinaryRules preflight err: %s", u_errorName(status));
+    } else {
+        uint8_t* binaryRules = (uint8_t*)uprv_malloc(rulesLength);
+        if (binaryRules == NULL) {
+            log_err("FAIL: unable to malloc rules buffer, size %u", rulesLength);
+        } else {
+            rulesLength = ubrk_getBinaryRules(bi, binaryRules, rulesLength, &status);
+            if (U_FAILURE(status)) {
+                log_err("FAIL: ubrk_getBinaryRules err: %s", u_errorName(status));
+            } else {
+                UBreakIterator* bi2 = ubrk_openBinaryRules(binaryRules, rulesLength, uData, -1, &status);
+                if (U_FAILURE(status)) {
+                    log_err("FAIL: ubrk_openBinaryRules err: %s", u_errorName(status));
+                } else {
+                    int32_t maxCount = sizeof(breaks); /* fail-safe test limit */
+                    int32_t pos2 = ubrk_first(bi2);
+                    pos = ubrk_first(bi);
+                    do {
+                        if (pos2 != pos) {
+                            log_err("FAIL: interator from ubrk_openBinaryRules does not match original, get pos = %d instead of %d", pos2, pos);
+                        }
+                        pos2 = ubrk_next(bi2);
+                        pos = ubrk_next(bi);
+                    } while ((pos != UBRK_DONE || pos2 != UBRK_DONE) && maxCount-- > 0);
+                    
+                    ubrk_close(bi2);
+                }
+            }
+            uprv_free(binaryRules);
         }
     }
 
@@ -771,13 +815,13 @@ typedef struct {
 } RBBITailoringTest;
 
 static const RBBITailoringTest tailoringTests[] = {
-    { "en", UBRK_CHARACTER, thTest, thTestOffs_thFwd, thTestOffs_thRev, sizeof(thTestOffs_thFwd)/sizeof(thTestOffs_thFwd[0]) },
-    { "en_US_POSIX", UBRK_CHARACTER, thTest, thTestOffs_thFwd, thTestOffs_thRev, sizeof(thTestOffs_thFwd)/sizeof(thTestOffs_thFwd[0]) },
-    { "en", UBRK_LINE,      heTest, heTestOffs_heFwd, heTestOffs_heRev, sizeof(heTestOffs_heFwd)/sizeof(heTestOffs_heFwd[0]) },
-    { "he", UBRK_LINE,      heTest, heTestOffs_heFwd, heTestOffs_heRev, sizeof(heTestOffs_heFwd)/sizeof(heTestOffs_heFwd[0]) },
-    { "en", UBRK_LINE,      fiTest, fiTestOffs_enFwd, fiTestOffs_enRev, sizeof(fiTestOffs_enFwd)/sizeof(fiTestOffs_enFwd[0]) },
-    { "fi", UBRK_LINE,      fiTest, fiTestOffs_fiFwd, fiTestOffs_fiRev, sizeof(fiTestOffs_fiFwd)/sizeof(fiTestOffs_fiFwd[0]) },
-    { "km", UBRK_WORD,      kmTest, kmTestOffs_kmFwd, kmTestOffs_kmRev, sizeof(kmTestOffs_kmFwd)/sizeof(kmTestOffs_kmFwd[0]) },
+    { "en", UBRK_CHARACTER, thTest, thTestOffs_thFwd, thTestOffs_thRev, UPRV_LENGTHOF(thTestOffs_thFwd) },
+    { "en_US_POSIX", UBRK_CHARACTER, thTest, thTestOffs_thFwd, thTestOffs_thRev, UPRV_LENGTHOF(thTestOffs_thFwd) },
+    { "en", UBRK_LINE,      heTest, heTestOffs_heFwd, heTestOffs_heRev, UPRV_LENGTHOF(heTestOffs_heFwd) },
+    { "he", UBRK_LINE,      heTest, heTestOffs_heFwd, heTestOffs_heRev, UPRV_LENGTHOF(heTestOffs_heFwd) },
+    { "en", UBRK_LINE,      fiTest, fiTestOffs_enFwd, fiTestOffs_enRev, UPRV_LENGTHOF(fiTestOffs_enFwd) },
+    { "fi", UBRK_LINE,      fiTest, fiTestOffs_fiFwd, fiTestOffs_fiRev, UPRV_LENGTHOF(fiTestOffs_fiFwd) },
+    { "km", UBRK_WORD,      kmTest, kmTestOffs_kmFwd, kmTestOffs_kmRev, UPRV_LENGTHOF(kmTestOffs_kmFwd) },
     { NULL, 0, NULL, NULL, NULL, 0 },
 };
 
@@ -804,7 +848,7 @@ static void TestBreakIteratorTailoring(void) {
             }
             if (!foundError && offsindx < testPtr->numOffsets) {
                 log_err("FAIL: locale %s, break type %d, ubrk_next expected %d, got UBRK_DONE\n",
-                    	testPtr->locale, testPtr->type, testPtr->offsFwd[offsindx]);
+                        testPtr->locale, testPtr->type, testPtr->offsFwd[offsindx]);
             }
 
             foundError = FALSE;
@@ -821,7 +865,7 @@ static void TestBreakIteratorTailoring(void) {
             }
             if (!foundError && offsindx < testPtr->numOffsets) {
                 log_err("FAIL: locale %s, break type %d, ubrk_previous expected %d, got UBRK_DONE\n",
-                    	testPtr->locale, testPtr->type, testPtr->offsRev[offsindx]);
+                        testPtr->locale, testPtr->type, testPtr->offsRev[offsindx]);
             }
 
             ubrk_close(ubrkiter);
@@ -846,9 +890,12 @@ static void TestBreakIteratorRefresh(void) {
     UBreakIterator *bi;
     UText ut1 = UTEXT_INITIALIZER;
     UText ut2 = UTEXT_INITIALIZER;
-    
+
     bi = ubrk_open(UBRK_LINE, "en_US", NULL, 0, &status);
     TEST_ASSERT_SUCCESS(status);
+    if (U_FAILURE(status)) {
+        return;
+    }
 
     utext_openUChars(&ut1, testStr, -1, &status);
     TEST_ASSERT_SUCCESS(status);
@@ -867,7 +914,7 @@ static void TestBreakIteratorRefresh(void) {
         TEST_ASSERT_SUCCESS(status);
         ubrk_refreshUText(bi, &ut2, &status);
         TEST_ASSERT_SUCCESS(status);
-    
+
         /* Find the following matches, now working in the moved string. */
         TEST_ASSERT(5 == ubrk_next(bi));
         TEST_ASSERT(7 == ubrk_next(bi));
@@ -880,5 +927,184 @@ static void TestBreakIteratorRefresh(void) {
     }
     ubrk_close(bi);
 }
+
+
+static void TestBug11665(void) {
+    // The problem was with the incorrect breaking of Japanese text beginning
+    // with Katakana characters when no prior Japanese or Chinese text had been
+    // encountered.
+    //
+    // Tested here in cintltst, rather than in intltest, because only cintltst
+    // tests have the ability to reset ICU, which is needed to get the bug
+    // to manifest itself.
+
+    static UChar japaneseText[] = {0x30A2, 0x30EC, 0x30EB, 0x30AE, 0x30FC, 0x6027, 0x7D50, 0x819C, 0x708E};
+    int32_t boundaries[10] = {0};
+    UBreakIterator *bi = NULL;
+    int32_t brk;
+    int32_t brkIdx = 0;
+    int32_t totalBreaks = 0;
+    UErrorCode status = U_ZERO_ERROR;
+
+    ctest_resetICU();
+    bi = ubrk_open(UBRK_WORD, "en_US", japaneseText, UPRV_LENGTHOF(japaneseText), &status);
+    TEST_ASSERT_SUCCESS(status);
+    if (!bi) {
+        return;
+    }
+    for (brk=ubrk_first(bi); brk != UBRK_DONE; brk=ubrk_next(bi)) {
+        boundaries[brkIdx] = brk;
+        if (++brkIdx >= UPRV_LENGTHOF(boundaries) - 1) {
+            break;
+        }
+    }
+    if (brkIdx <= 2 || brkIdx >= UPRV_LENGTHOF(boundaries)) {
+        log_err("%s:%d too few or many breaks found.\n", __FILE__, __LINE__);
+    } else {
+        totalBreaks = brkIdx;
+        brkIdx = 0;
+        for (brk=ubrk_first(bi); brk != UBRK_DONE; brk=ubrk_next(bi)) {
+            if (brk != boundaries[brkIdx]) {
+                log_err("%s:%d Break #%d differs between first and second iteration.\n", __FILE__, __LINE__, brkIdx);
+                break;
+            }
+            if (++brkIdx >= UPRV_LENGTHOF(boundaries) - 1) {
+                log_err("%s:%d Too many breaks.\n", __FILE__, __LINE__);
+                break;
+            }
+        }
+        if (totalBreaks != brkIdx) {
+            log_err("%s:%d Number of breaks differ between first and second iteration.\n", __FILE__, __LINE__);
+        }
+    }
+    ubrk_close(bi);
+}
+
+/*
+ * expOffset is the set of expected offsets, ending with '-1'.
+ * "Expected expOffset -1" means "expected the end of the offsets"
+ */
+
+static const char testSentenceSuppressionsEn[]  = "Mr. Jones comes home. Dr. Smith Ph.D. is out. In the U.S.A. it is hot.";
+static const int32_t testSentSuppFwdOffsetsEn[] = { 22, 26, 46, 70, -1 };     /* With suppressions, currently not handling Dr. */
+static const int32_t testSentFwdOffsetsEn[]     = {  4, 22, 26, 46, 70, -1 }; /* Without suppressions */
+static const int32_t testSentSuppRevOffsetsEn[] = { 46, 26, 22,  0, -1 };     /* With suppressions, currently not handling Dr.  */
+static const int32_t testSentRevOffsetsEn[]     = { 46, 26, 22,  4,  0, -1 }; /* Without suppressions */
+
+static const char testSentenceSuppressionsDe[]  = "Wenn ich schon h\\u00F6re zu Guttenberg kommt evtl. zur\\u00FCck.";
+static const int32_t testSentSuppFwdOffsetsDe[] = { 53, -1 };       /* With suppressions */
+static const int32_t testSentFwdOffsetsDe[]     = { 53, -1 };       /* Without suppressions; no break in evtl. zur due to casing */
+static const int32_t testSentSuppRevOffsetsDe[] = {  0, -1 };       /* With suppressions */
+static const int32_t testSentRevOffsetsDe[]     = {  0, -1 };       /* Without suppressions */
+
+static const char testSentenceSuppressionsEs[]  = "Te esperamos todos los miercoles en Bravo 416, Col. El Pueblo a las 7 PM.";
+static const int32_t testSentSuppFwdOffsetsEs[] = { 73, -1 };       /* With suppressions */
+static const int32_t testSentFwdOffsetsEs[]     = { 52, 73, -1 };   /* Without suppressions */
+static const int32_t testSentSuppRevOffsetsEs[] = {  0, -1 };       /* With suppressions */
+static const int32_t testSentRevOffsetsEs[]     = { 52,  0, -1 };   /* Without suppressions */
+
+enum { kTextULenMax = 128 };
+
+typedef struct {
+    const char * locale;
+    const char * text;
+    const int32_t * expFwdOffsets;
+    const int32_t * expRevOffsets;
+} TestBISuppressionsItem;
+
+static const TestBISuppressionsItem testBISuppressionsItems[] = {
+    { "en@ss=standard", testSentenceSuppressionsEn, testSentSuppFwdOffsetsEn, testSentSuppRevOffsetsEn },
+    { "en",             testSentenceSuppressionsEn, testSentFwdOffsetsEn,     testSentRevOffsetsEn     },
+    { "en_CA",             testSentenceSuppressionsEn, testSentFwdOffsetsEn,     testSentRevOffsetsEn     },
+    { "en_CA@ss=standard", testSentenceSuppressionsEn, testSentSuppFwdOffsetsEn, testSentSuppRevOffsetsEn },
+    { "fr@ss=standard", testSentenceSuppressionsEn, testSentFwdOffsetsEn,     testSentRevOffsetsEn     },
+    { "af@ss=standard", testSentenceSuppressionsEn, testSentFwdOffsetsEn,     testSentRevOffsetsEn     }, /* no brkiter data => nosuppressions? */
+    { "af_ZA@ss=standard", testSentenceSuppressionsEn, testSentFwdOffsetsEn,     testSentRevOffsetsEn     }, /* no brkiter data => nosuppressions? */
+    { "zh@ss=standard", testSentenceSuppressionsEn, testSentFwdOffsetsEn,     testSentRevOffsetsEn     }, /* brkiter data, no suppressions data => no suppressions */
+    { "zh_Hant@ss=standard", testSentenceSuppressionsEn, testSentFwdOffsetsEn, testSentRevOffsetsEn    }, /* brkiter data, no suppressions data => no suppressions */
+    { "fi@ss=standard", testSentenceSuppressionsEn, testSentFwdOffsetsEn,     testSentRevOffsetsEn     }, /* brkiter data, no suppressions data => no suppressions */
+    { "ja@ss=standard", testSentenceSuppressionsEn, testSentFwdOffsetsEn,     testSentRevOffsetsEn     }, /* brkiter data, no suppressions data => no suppressions */
+    { "de@ss=standard", testSentenceSuppressionsDe, testSentSuppFwdOffsetsDe, testSentSuppRevOffsetsDe },
+    { "de",             testSentenceSuppressionsDe, testSentFwdOffsetsDe,     testSentRevOffsetsDe     },
+    { "es@ss=standard", testSentenceSuppressionsEs, testSentSuppFwdOffsetsEs, testSentSuppRevOffsetsEs },
+    { "es",             testSentenceSuppressionsEs, testSentFwdOffsetsEs,     testSentRevOffsetsEs     },
+    { NULL, NULL, NULL }
+};
+
+static void TestBreakIteratorSuppressions(void) {
+    const TestBISuppressionsItem * itemPtr;
+
+    for (itemPtr = testBISuppressionsItems; itemPtr->locale != NULL; itemPtr++) {
+        UChar textU[kTextULenMax];
+        int32_t textULen = u_unescape(itemPtr->text, textU, kTextULenMax);
+        UErrorCode status = U_ZERO_ERROR;
+        UBreakIterator *bi = ubrk_open(UBRK_SENTENCE, itemPtr->locale, textU, textULen, &status);
+        log_verbose("#%d: %s\n", (itemPtr-testBISuppressionsItems), itemPtr->locale);
+        if (U_SUCCESS(status)) {
+            int32_t offset, start;
+            const int32_t * expOffsetPtr;
+            const int32_t * expOffsetStart;
+
+            expOffsetStart = expOffsetPtr = itemPtr->expFwdOffsets;
+            ubrk_first(bi);
+            for (; (offset = ubrk_next(bi)) != UBRK_DONE && *expOffsetPtr >= 0; expOffsetPtr++) {
+                if (offset != *expOffsetPtr) {
+                    log_err("FAIL: ubrk_next loc \"%s\", expected %d, got %d\n", itemPtr->locale, *expOffsetPtr, offset);
+                }
+            }
+            if (offset != UBRK_DONE || *expOffsetPtr >= 0) {
+                log_err("FAIL: ubrk_next loc \"%s\", expected UBRK_DONE & expOffset -1, got %d and %d\n", itemPtr->locale, offset, *expOffsetPtr);
+            }
+
+            expOffsetStart = expOffsetPtr = itemPtr->expFwdOffsets;
+            start = ubrk_first(bi) + 1;
+            for (; (offset = ubrk_following(bi, start)) != UBRK_DONE && *expOffsetPtr >= 0; expOffsetPtr++) {
+                if (offset != *expOffsetPtr) {
+                    log_err("FAIL: ubrk_following(%d) loc \"%s\", expected %d, got %d\n", start, itemPtr->locale, *expOffsetPtr, offset);
+                }
+                start = *expOffsetPtr + 1;
+            }
+            if (offset != UBRK_DONE || *expOffsetPtr >= 0) {
+                log_err("FAIL: ubrk_following(%d) loc \"%s\", expected UBRK_DONE & expOffset -1, got %d and %d\n", start, itemPtr->locale, offset, *expOffsetPtr);
+            }
+
+            expOffsetStart = expOffsetPtr = itemPtr->expRevOffsets;
+            offset = ubrk_last(bi);
+            log_verbose("___ @%d ubrk_last\n", offset);
+            if(offset == 0) {
+              log_err("FAIL: ubrk_last loc \"%s\" unexpected %d\n", itemPtr->locale, offset);
+            }
+            for (; (offset = ubrk_previous(bi)) != UBRK_DONE && *expOffsetPtr >= 0; expOffsetPtr++) {
+                if (offset != *expOffsetPtr) {
+                    log_err("FAIL: ubrk_previous loc \"%s\", expected %d, got %d\n", itemPtr->locale, *expOffsetPtr, offset);
+                } else {
+                    log_verbose("[%d] @%d ubrk_previous()\n", (expOffsetPtr - expOffsetStart), offset);
+                }
+            }
+            if (offset != UBRK_DONE || *expOffsetPtr >= 0) {
+                log_err("FAIL: ubrk_previous loc \"%s\", expected UBRK_DONE & expOffset[%d] -1, got %d and %d\n", itemPtr->locale,
+                        expOffsetPtr - expOffsetStart,
+                        offset, *expOffsetPtr);
+            }
+
+            expOffsetStart = expOffsetPtr = itemPtr->expRevOffsets;
+            start = ubrk_last(bi) - 1;
+            for (; (offset = ubrk_preceding(bi, start)) != UBRK_DONE && *expOffsetPtr >= 0; expOffsetPtr++) {
+                if (offset != *expOffsetPtr) {
+                    log_err("FAIL: ubrk_preceding(%d) loc \"%s\", expected %d, got %d\n", start, itemPtr->locale, *expOffsetPtr, offset);
+                }
+                start = *expOffsetPtr - 1;
+            }
+            if (start >=0 && (offset != UBRK_DONE || *expOffsetPtr >= 0)) {
+                log_err("FAIL: ubrk_preceding loc(%d) \"%s\", expected UBRK_DONE & expOffset -1, got %d and %d\n", start, itemPtr->locale, offset, *expOffsetPtr);
+            }
+
+            ubrk_close(bi);
+        } else {
+            log_data_err("FAIL: ubrk_open(UBRK_SENTENCE, \"%s\", ...) status %s (Are you missing data?)\n", itemPtr->locale, u_errorName(status));
+        }
+    }
+}
+
 
 #endif /* #if !UCONFIG_NO_BREAK_ITERATION */

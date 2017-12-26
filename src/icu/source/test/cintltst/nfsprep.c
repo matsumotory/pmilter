@@ -1,12 +1,14 @@
+// © 2016 and later: Unicode, Inc. and others.
+// License & terms of use: http://www.unicode.org/copyright.html
 /*
  *******************************************************************************
  *
- *   Copyright (C) 2003-2007, International Business Machines
+ *   Copyright (C) 2003-2014, International Business Machines
  *   Corporation and others.  All Rights Reserved.
  *
  *******************************************************************************
  *   file name:  nfsprep.c
- *   encoding:   US-ASCII
+ *   encoding:   UTF-8
  *   tab size:   8 (not used)
  *   indentation:4
  *
@@ -21,8 +23,8 @@
 #include "nfsprep.h"
 #include "ustr_imp.h"
 #include "cintltst.h"
+#include "cmemory.h"
 
-#define LENGTHOF(array) (int32_t)(sizeof(array)/sizeof((array)[0]))
 #define NFS4_MAX_BUFFER_SIZE 1000
 #define PREFIX_SUFFIX_SEPARATOR 0x0040 /* '@' */
 
@@ -195,7 +197,7 @@ getPrefixSuffix(const char *src, int32_t srcLength,
     *prefixLen = i;
     *suffixLen = srcLength - i;
     /* special prefixes must not be followed by suffixes! */
-    if((findStringIndex(special_prefixes,LENGTHOF(special_prefixes), *prefix, *prefixLen-1) != -1) && (*suffix != NULL)){
+    if((findStringIndex(special_prefixes,UPRV_LENGTHOF(special_prefixes), *prefix, *prefixLen-1) != -1) && (*suffix != NULL)){
         *status = U_PARSE_ERROR;
         return;
     }

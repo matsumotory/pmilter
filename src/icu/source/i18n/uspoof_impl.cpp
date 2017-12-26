@@ -1,23 +1,25 @@
+// © 2016 and later: Unicode, Inc. and others.
+// License & terms of use: http://www.unicode.org/copyright.html
 /*
 **********************************************************************
-*   Copyright (C) 2008-2011, International Business Machines
+*   Copyright (C) 2008-2016, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 **********************************************************************
 */
 
 #include "unicode/utypes.h"
 #include "unicode/uspoof.h"
-#include "unicode/unorm.h"
 #include "unicode/uchar.h"
 #include "unicode/uniset.h"
 #include "unicode/utf16.h"
 #include "utrie2.h"
 #include "cmemory.h"
 #include "cstring.h"
-#include "udatamem.h"
+#include "scriptset.h"
 #include "umutex.h"
 #include "udataswp.h"
 #include "uassert.h"
+#include "ucln_in.h"
 #include "uspoof_impl.h"
 
 #if !UCONFIG_NO_NORMALIZATION
@@ -27,38 +29,53 @@ U_NAMESPACE_BEGIN
 
 UOBJECT_DEFINE_RTTI_IMPLEMENTATION(SpoofImpl)
 
-SpoofImpl::SpoofImpl(SpoofData *data, UErrorCode &status) :
-    fMagic(0), fSpoofData(NULL), fAllowedCharsSet(NULL) , fAllowedLocales(uprv_strdup("")) {
-    if (U_FAILURE(status)) {
-        return;
-    }
-    fMagic = USPOOF_MAGIC;
+SpoofImpl::SpoofImpl(SpoofData *data, UErrorCode& status) {
+    construct(status);
     fSpoofData = data;
+}
+
+SpoofImpl::SpoofImpl(UErrorCode& status) {
+    construct(status);
+
+    // TODO: Call this method where it is actually needed, instead of in the
+    // constructor, to allow for lazy data loading.  See #12696.
+    fSpoofData = SpoofData::getDefault(status);
+}
+
+SpoofImpl::SpoofImpl() {
+    UErrorCode status = U_ZERO_ERROR;
+    construct(status);
+
+    // TODO: Call this method where it is actually needed, instead of in the
+    // constructor, to allow for lazy data loading.  See #12696.
+    fSpoofData = SpoofData::getDefault(status);
+}
+
+void SpoofImpl::construct(UErrorCode& status) {
+    fMagic = USPOOF_MAGIC;
     fChecks = USPOOF_ALL_CHECKS;
+    fSpoofData = NULL;
+    fAllowedCharsSet = NULL;
+    fAllowedLocales = NULL;
+    fRestrictionLevel = USPOOF_HIGHLY_RESTRICTIVE;
+
+    if (U_FAILURE(status)) { return; }
+
     UnicodeSet *allowedCharsSet = new UnicodeSet(0, 0x10ffff);
-    if (allowedCharsSet == NULL || fAllowedLocales == NULL) {
+    fAllowedCharsSet = allowedCharsSet;
+    fAllowedLocales  = uprv_strdup("");
+    if (fAllowedCharsSet == NULL || fAllowedLocales == NULL) {
         status = U_MEMORY_ALLOCATION_ERROR;
         return;
     }
     allowedCharsSet->freeze();
-    fAllowedCharsSet = allowedCharsSet;
-}
-
-
-SpoofImpl::SpoofImpl() {
-    fMagic = USPOOF_MAGIC;
-    fSpoofData = NULL;
-    fChecks = USPOOF_ALL_CHECKS;
-    UnicodeSet *allowedCharsSet = new UnicodeSet(0, 0x10ffff);
-    allowedCharsSet->freeze();
-    fAllowedCharsSet = allowedCharsSet;
-    fAllowedLocales  = uprv_strdup("");
 }
 
 
 // Copy Constructor, used by the user level clone() function.
 SpoofImpl::SpoofImpl(const SpoofImpl &src, UErrorCode &status)  :
-    fMagic(0), fSpoofData(NULL), fAllowedCharsSet(NULL) {
+        fMagic(0), fChecks(USPOOF_ALL_CHECKS), fSpoofData(NULL), fAllowedCharsSet(NULL) , 
+        fAllowedLocales(NULL) {
     if (U_FAILURE(status)) {
         return;
     }
@@ -68,10 +85,11 @@ SpoofImpl::SpoofImpl(const SpoofImpl &src, UErrorCode &status)  :
         fSpoofData = src.fSpoofData->addReference();
     }
     fAllowedCharsSet = static_cast<const UnicodeSet *>(src.fAllowedCharsSet->clone());
-    if (fAllowedCharsSet == NULL) {
+    fAllowedLocales = uprv_strdup(src.fAllowedLocales);
+    if (fAllowedCharsSet == NULL || fAllowedLocales == NULL) {
         status = U_MEMORY_ALLOCATION_ERROR;
     }
-    fAllowedLocales = uprv_strdup(src.fAllowedLocales);
+    fRestrictionLevel = src.fRestrictionLevel;
 }
 
 SpoofImpl::~SpoofImpl() {
@@ -82,6 +100,11 @@ SpoofImpl::~SpoofImpl() {
     }
     delete fAllowedCharsSet;
     uprv_free((void *)fAllowedLocales);
+}
+
+//  Cast this instance as a USpoofChecker for the C API.
+USpoofChecker *SpoofImpl::asUSpoofChecker() {
+    return reinterpret_cast<USpoofChecker*>(this);
 }
 
 //
@@ -95,14 +118,13 @@ const SpoofImpl *SpoofImpl::validateThis(const USpoofChecker *sc, UErrorCode &st
     if (sc == NULL) {
         status = U_ILLEGAL_ARGUMENT_ERROR;
         return NULL;
-    };
+    }
     SpoofImpl *This = (SpoofImpl *)sc;
-    if (This->fMagic != USPOOF_MAGIC ||
-        This->fSpoofData == NULL) {
+    if (This->fMagic != USPOOF_MAGIC) {
         status = U_INVALID_FORMAT_ERROR;
         return NULL;
     }
-    if (!SpoofData::validateDataVersion(This->fSpoofData->fRawData, status)) {
+    if (This->fSpoofData != NULL && !This->fSpoofData->validateDataVersion(status)) {
         return NULL;
     }
     return This;
@@ -111,151 +133,6 @@ const SpoofImpl *SpoofImpl::validateThis(const USpoofChecker *sc, UErrorCode &st
 SpoofImpl *SpoofImpl::validateThis(USpoofChecker *sc, UErrorCode &status) {
     return const_cast<SpoofImpl *>
         (SpoofImpl::validateThis(const_cast<const USpoofChecker *>(sc), status));
-}
-
-
-
-//--------------------------------------------------------------------------------------
-//
-//  confusableLookup()    This is the heart of the confusable skeleton generation
-//                        implementation.
-//
-//                        Given a source character, produce the corresponding
-//                        replacement character(s)
-//
-//---------------------------------------------------------------------------------------
-int32_t SpoofImpl::confusableLookup(UChar32 inChar, int32_t tableMask, UChar *destBuf) const {
-
-    // Binary search the spoof data key table for the inChar
-    int32_t  *low   = fSpoofData->fCFUKeys;
-    int32_t  *mid   = NULL;
-    int32_t  *limit = low + fSpoofData->fRawData->fCFUKeysSize;
-    UChar32   midc;
-    do {
-        int32_t delta = ((int32_t)(limit-low))/2;
-        mid = low + delta;
-        midc = *mid & 0x1fffff;
-        if (inChar == midc) {
-            goto foundChar;
-        } else if (inChar < midc) {
-            limit = mid;
-        } else {
-            low = mid;
-        }
-    } while (low < limit-1);
-    mid = low;
-    midc = *mid & 0x1fffff;
-    if (inChar != midc) {
-        // Char not found.  It maps to itself.
-        int i = 0;
-        U16_APPEND_UNSAFE(destBuf, i, inChar)
-        return i;
-    } 
-  foundChar:
-    int32_t keyFlags = *mid & 0xff000000;
-    if ((keyFlags & tableMask) == 0) {
-        // We found the right key char, but the entry doesn't pertain to the
-        //  table we need.  See if there is an adjacent key that does
-        if (keyFlags & USPOOF_KEY_MULTIPLE_VALUES) {
-            int32_t *altMid;
-            for (altMid = mid-1; (*altMid&0x00ffffff) == inChar; altMid--) {
-                keyFlags = *altMid & 0xff000000;
-                if (keyFlags & tableMask) {
-                    mid = altMid;
-                    goto foundKey;
-                }
-            }
-            for (altMid = mid+1; (*altMid&0x00ffffff) == inChar; altMid++) {
-                keyFlags = *altMid & 0xff000000;
-                if (keyFlags & tableMask) {
-                    mid = altMid;
-                    goto foundKey;
-                }
-            }
-        }
-        // No key entry for this char & table.
-        // The input char maps to itself.
-        int i = 0;
-        U16_APPEND_UNSAFE(destBuf, i, inChar)
-        return i;
-    }
-
-  foundKey:
-    int32_t  stringLen = USPOOF_KEY_LENGTH_FIELD(keyFlags) + 1;
-    int32_t keyTableIndex = (int32_t)(mid - fSpoofData->fCFUKeys);
-
-    // Value is either a UChar  (for strings of length 1) or
-    //                 an index into the string table (for longer strings)
-    uint16_t value = fSpoofData->fCFUValues[keyTableIndex];
-    if (stringLen == 1) {
-        destBuf[0] = value;
-        return 1;
-    }
-
-    // String length of 4 from the above lookup is used for all strings of length >= 4.
-    // For these, get the real length from the string lengths table,
-    //   which maps string table indexes to lengths.
-    //   All strings of the same length are stored contiguously in the string table.
-    //   'value' from the lookup above is the starting index for the desired string.
-
-    int32_t ix;
-    if (stringLen == 4) {
-        int32_t stringLengthsLimit = fSpoofData->fRawData->fCFUStringLengthsSize;
-        for (ix = 0; ix < stringLengthsLimit; ix++) {
-            if (fSpoofData->fCFUStringLengths[ix].fLastString >= value) {
-                stringLen = fSpoofData->fCFUStringLengths[ix].fStrLength;
-                break;
-            }
-        }
-        U_ASSERT(ix < stringLengthsLimit);
-    }
-
-    U_ASSERT(value + stringLen <= fSpoofData->fRawData->fCFUStringTableLen);
-    UChar *src = &fSpoofData->fCFUStrings[value];
-    for (ix=0; ix<stringLen; ix++) {
-        destBuf[ix] = src[ix];
-    }
-    return stringLen;
-}
-
-
-//---------------------------------------------------------------------------------------
-//
-//  wholeScriptCheck()
-//
-//      Input text is already normalized to NFD
-//      Return the set of scripts, each of which can represent something that is
-//             confusable with the input text.  The script of the input text
-//             is included; input consisting of characters from a single script will
-//             always produce a result consisting of a set containing that script.
-//
-//---------------------------------------------------------------------------------------
-void SpoofImpl::wholeScriptCheck(
-    const UChar *text, int32_t length, ScriptSet *result, UErrorCode &status) const {
-
-    int32_t       inputIdx = 0;
-    UChar32       c;
-
-    UTrie2 *table =
-        (fChecks & USPOOF_ANY_CASE) ? fSpoofData->fAnyCaseTrie : fSpoofData->fLowerCaseTrie;
-    result->setAll();
-    while (inputIdx < length) {
-        U16_NEXT(text, inputIdx, length, c);
-        uint32_t index = utrie2_get32(table, c);
-        if (index == 0) {
-            // No confusables in another script for this char.
-            // TODO:  we should change the data to have sets with just the single script
-            //        bit for the script of this char.  Gets rid of this special case.
-            //        Until then, grab the script from the char and intersect it with the set.
-            UScriptCode cpScript = uscript_getScript(c, &status);
-            U_ASSERT(cpScript > USCRIPT_INHERITED);
-            result->intersect(cpScript);
-        } else if (index == 1) {
-            // Script == Common or Inherited.  Nothing to do.
-        } else {
-            result->intersect(fSpoofData->fScriptSets[index]);
-        }
-    }
 }
 
 
@@ -354,7 +231,7 @@ const char * SpoofImpl::getAllowedLocales(UErrorCode &/*status*/) {
 void SpoofImpl::addScriptChars(const char *locale, UnicodeSet *allowedChars, UErrorCode &status) {
     UScriptCode scripts[30];
 
-    int32_t numScripts = uscript_getCode(locale, scripts, sizeof(scripts)/sizeof(UScriptCode), &status);
+    int32_t numScripts = uscript_getCode(locale, scripts, UPRV_LENGTHOF(scripts), &status);
     if (U_FAILURE(status)) {
         return;
     }
@@ -370,46 +247,136 @@ void SpoofImpl::addScriptChars(const char *locale, UnicodeSet *allowedChars, UEr
     }
 }
 
+// Computes the augmented script set for a code point, according to UTS 39 section 5.1.
+void SpoofImpl::getAugmentedScriptSet(UChar32 codePoint, ScriptSet& result, UErrorCode& status) {
+    result.resetAll();
+    result.setScriptExtensions(codePoint, status);
+    if (U_FAILURE(status)) { return; }
 
-int32_t SpoofImpl::scriptScan
-        (const UChar *text, int32_t length, int32_t &pos, UErrorCode &status) const {
-    if (U_FAILURE(status)) {
-        return 0;
+    // Section 5.1 step 1
+    if (result.test(USCRIPT_HAN, status)) {
+        result.set(USCRIPT_HAN_WITH_BOPOMOFO, status);
+        result.set(USCRIPT_JAPANESE, status);
+        result.set(USCRIPT_KOREAN, status);
     }
-    int32_t       inputIdx = 0;
-    UChar32       c;
-    int32_t       scriptCount = 0;
-    UScriptCode   lastScript = USCRIPT_INVALID_CODE;
-    UScriptCode   sc = USCRIPT_INVALID_CODE;
-    while ((inputIdx < length || length == -1) && scriptCount < 2) {
-        U16_NEXT(text, inputIdx, length, c);
-        if (c == 0 && length == -1) {
+    if (result.test(USCRIPT_HIRAGANA, status)) {
+        result.set(USCRIPT_JAPANESE, status);
+    }
+    if (result.test(USCRIPT_KATAKANA, status)) {
+        result.set(USCRIPT_JAPANESE, status);
+    }
+    if (result.test(USCRIPT_HANGUL, status)) {
+        result.set(USCRIPT_KOREAN, status);
+    }
+    if (result.test(USCRIPT_BOPOMOFO, status)) {
+        result.set(USCRIPT_HAN_WITH_BOPOMOFO, status);
+    }
+
+    // Section 5.1 step 2
+    if (result.test(USCRIPT_COMMON, status) || result.test(USCRIPT_INHERITED, status)) {
+        result.setAll();
+    }
+}
+
+// Computes the resolved script set for a string, according to UTS 39 section 5.1.
+void SpoofImpl::getResolvedScriptSet(const UnicodeString& input, ScriptSet& result, UErrorCode& status) const {
+    getResolvedScriptSetWithout(input, USCRIPT_CODE_LIMIT, result, status);
+}
+
+// Computes the resolved script set for a string, omitting characters having the specified script.
+// If USCRIPT_CODE_LIMIT is passed as the second argument, all characters are included.
+void SpoofImpl::getResolvedScriptSetWithout(const UnicodeString& input, UScriptCode script, ScriptSet& result, UErrorCode& status) const {
+    result.setAll();
+
+    ScriptSet temp;
+    UChar32 codePoint;
+    for (int32_t i = 0; i < input.length(); i += U16_LENGTH(codePoint)) {
+        codePoint = input.char32At(i);
+
+        // Compute the augmented script set for the character
+        getAugmentedScriptSet(codePoint, temp, status);
+        if (U_FAILURE(status)) { return; }
+
+        // Intersect the augmented script set with the resolved script set, but only if the character doesn't
+        // have the script specified in the function call
+        if (script == USCRIPT_CODE_LIMIT || !temp.test(script, status)) {
+            result.intersect(temp);
+        }
+    }
+}
+
+// Computes the set of numerics for a string, according to UTS 39 section 5.3.
+void SpoofImpl::getNumerics(const UnicodeString& input, UnicodeSet& result, UErrorCode& /*status*/) const {
+    result.clear();
+
+    UChar32 codePoint;
+    for (int32_t i = 0; i < input.length(); i += U16_LENGTH(codePoint)) {
+        codePoint = input.char32At(i);
+
+        // Store a representative character for each kind of decimal digit
+        if (u_charType(codePoint) == U_DECIMAL_DIGIT_NUMBER) {
+            // Store the zero character as a representative for comparison.
+            // Unicode guarantees it is codePoint - value
+            result.add(codePoint - (UChar32)u_getNumericValue(codePoint));
+        }
+    }
+}
+
+// Computes the restriction level of a string, according to UTS 39 section 5.2.
+URestrictionLevel SpoofImpl::getRestrictionLevel(const UnicodeString& input, UErrorCode& status) const {
+    // Section 5.2 step 1:
+    if (!fAllowedCharsSet->containsAll(input)) {
+        return USPOOF_UNRESTRICTIVE;
+    }
+
+    // Section 5.2 step 2
+    // Java use a static UnicodeSet for this test.  In C++, avoid the static variable
+    // and just do a simple for loop.
+    UBool allASCII = TRUE;
+    for (int32_t i=0, length=input.length(); i<length; i++) {
+        if (input.charAt(i) > 0x7f) {
+            allASCII = FALSE;
             break;
         }
-        sc = uscript_getScript(c, &status);
-        if (sc == USCRIPT_COMMON || sc == USCRIPT_INHERITED || sc == USCRIPT_UNKNOWN) {
-            continue;
-        }
-
-        // Temporary fix: fold Japanese Hiragana and Katakana into Han.
-        //   Names are allowed to mix these scripts.
-        //   A more general solution will follow later for characters that are
-        //   used with multiple scripts.
-
-        if (sc == USCRIPT_HIRAGANA || sc == USCRIPT_KATAKANA || sc == USCRIPT_HANGUL) {
-            sc = USCRIPT_HAN;
-        }
-
-        if (sc != lastScript) {
-           scriptCount++;
-           lastScript = sc;
-        }
     }
-    if (scriptCount == 2) {
-        pos = inputIdx;
+    if (allASCII) {
+        return USPOOF_ASCII;
     }
-    return scriptCount;
+
+    // Section 5.2 steps 3:
+    ScriptSet resolvedScriptSet;
+    getResolvedScriptSet(input, resolvedScriptSet, status);
+    if (U_FAILURE(status)) { return USPOOF_UNRESTRICTIVE; }
+
+    // Section 5.2 step 4:
+    if (!resolvedScriptSet.isEmpty()) {
+        return USPOOF_SINGLE_SCRIPT_RESTRICTIVE;
+    }
+
+    // Section 5.2 step 5:
+    ScriptSet resolvedNoLatn;
+    getResolvedScriptSetWithout(input, USCRIPT_LATIN, resolvedNoLatn, status);
+    if (U_FAILURE(status)) { return USPOOF_UNRESTRICTIVE; }
+
+    // Section 5.2 step 6:
+    if (resolvedNoLatn.test(USCRIPT_HAN_WITH_BOPOMOFO, status)
+            || resolvedNoLatn.test(USCRIPT_JAPANESE, status)
+            || resolvedNoLatn.test(USCRIPT_KOREAN, status)) {
+        return USPOOF_HIGHLY_RESTRICTIVE;
+    }
+
+    // Section 5.2 step 7:
+    if (!resolvedNoLatn.isEmpty()
+            && !resolvedNoLatn.test(USCRIPT_CYRILLIC, status)
+            && !resolvedNoLatn.test(USCRIPT_GREEK, status)
+            && !resolvedNoLatn.test(USCRIPT_CHEROKEE, status)) {
+        return USPOOF_MODERATELY_RESTRICTIVE;
+    }
+
+    // Section 5.2 step 8:
+    return USPOOF_MINIMALLY_RESTRICTIVE;
 }
+
 
 
 // Convert a text format hex number.  Utility function used by builder code.  Static.
@@ -444,6 +411,59 @@ UChar32 SpoofImpl::ScanHex(const UChar *s, int32_t start, int32_t limit, UErrorC
 }
 
 
+//-----------------------------------------
+//
+//   class CheckResult Implementation
+//
+//-----------------------------------------
+
+CheckResult::CheckResult() : fMagic(USPOOF_CHECK_MAGIC) {
+    clear();
+}
+
+USpoofCheckResult* CheckResult::asUSpoofCheckResult() {
+    return reinterpret_cast<USpoofCheckResult*>(this);
+}
+
+//
+//  Incoming parameter check on Status and the CheckResult object
+//    received from the C API.
+//
+const CheckResult* CheckResult::validateThis(const USpoofCheckResult *ptr, UErrorCode &status) {
+    if (U_FAILURE(status)) { return NULL; }
+    if (ptr == NULL) {
+        status = U_ILLEGAL_ARGUMENT_ERROR;
+        return NULL;
+    }
+    CheckResult *This = (CheckResult*) ptr;
+    if (This->fMagic != USPOOF_CHECK_MAGIC) {
+        status = U_INVALID_FORMAT_ERROR;
+        return NULL;
+    }
+    return This;
+}
+
+CheckResult* CheckResult::validateThis(USpoofCheckResult *ptr, UErrorCode &status) {
+    return const_cast<CheckResult *>
+        (CheckResult::validateThis(const_cast<const USpoofCheckResult*>(ptr), status));
+}
+
+void CheckResult::clear() {
+    fChecks = 0;
+    fNumerics.clear();
+    fRestrictionLevel = USPOOF_UNDEFINED_RESTRICTIVE;
+}
+
+int32_t CheckResult::toCombinedBitmask(int32_t enabledChecks) {
+    if ((enabledChecks & USPOOF_AUX_INFO) != 0 && fRestrictionLevel != USPOOF_UNDEFINED_RESTRICTIVE) {
+        return fChecks | fRestrictionLevel;
+    } else {
+        return fChecks;
+    }
+}
+
+CheckResult::~CheckResult() {
+}
 
 //----------------------------------------------------------------------------------------------
 //
@@ -452,39 +472,97 @@ UChar32 SpoofImpl::ScanHex(const UChar *s, int32_t start, int32_t limit, UErrorC
 //----------------------------------------------------------------------------------------------
 
 
-UBool SpoofData::validateDataVersion(const SpoofDataHeader *rawData, UErrorCode &status) {
+UBool SpoofData::validateDataVersion(UErrorCode &status) const {
     if (U_FAILURE(status) ||
-        rawData == NULL ||
-        rawData->fMagic != USPOOF_MAGIC ||
-        rawData->fFormatVersion[0] > 1 ||
-        rawData->fFormatVersion[1] > 0) {
+        fRawData == NULL ||
+        fRawData->fMagic != USPOOF_MAGIC ||
+        fRawData->fFormatVersion[0] != USPOOF_CONFUSABLE_DATA_FORMAT_VERSION ||
+        fRawData->fFormatVersion[1] != 0 ||
+        fRawData->fFormatVersion[2] != 0 ||
+        fRawData->fFormatVersion[3] != 0) {
             status = U_INVALID_FORMAT_ERROR;
             return FALSE;
     }
     return TRUE;
 }
 
-//
-//  SpoofData::getDefault() - return a wrapper around the spoof data that is
-//                           baked into the default ICU data.
-//
-SpoofData *SpoofData::getDefault(UErrorCode &status) {
-    // TODO:  Cache it.  Lazy create, keep until cleanup.
-
-    UDataMemory *udm = udata_open(NULL, "cfu", "confusables", &status);
-    if (U_FAILURE(status)) {
-        return NULL;
+static UBool U_CALLCONV
+spoofDataIsAcceptable(void *context,
+                        const char * /* type */, const char * /*name*/,
+                        const UDataInfo *pInfo) {
+    if(
+        pInfo->size >= 20 &&
+        pInfo->isBigEndian == U_IS_BIG_ENDIAN &&
+        pInfo->charsetFamily == U_CHARSET_FAMILY &&
+        pInfo->dataFormat[0] == 0x43 &&  // dataFormat="Cfu "
+        pInfo->dataFormat[1] == 0x66 &&
+        pInfo->dataFormat[2] == 0x75 &&
+        pInfo->dataFormat[3] == 0x20 &&
+        pInfo->formatVersion[0] == USPOOF_CONFUSABLE_DATA_FORMAT_VERSION
+    ) {
+        UVersionInfo *version = static_cast<UVersionInfo *>(context);
+        if(version != NULL) {
+            uprv_memcpy(version, pInfo->dataVersion, 4);
+        }
+        return TRUE;
+    } else {
+        return FALSE;
     }
-    SpoofData *This = new SpoofData(udm, status);
-    if (U_FAILURE(status)) {
-        delete This;
-        return NULL;
-    }
-    if (This == NULL) {
-        status = U_MEMORY_ALLOCATION_ERROR;
-    }
-    return This;
 }
+
+//  Methods for the loading of the default confusables data file.  The confusable
+//  data is loaded only when it is needed.
+//
+//  SpoofData::getDefault() - Return the default confusables data, and call the
+//                            initOnce() if it is not available.  Adds a reference
+//                            to the SpoofData that the caller is responsible for
+//                            decrementing when they are done with the data.
+//
+//  uspoof_loadDefaultData - Called once, from initOnce().  The resulting SpoofData
+//                           is shared by all spoof checkers using the default data.
+//
+//  uspoof_cleanupDefaultData - Called during cleanup.
+//
+
+static UInitOnce gSpoofInitDefaultOnce = U_INITONCE_INITIALIZER;
+static SpoofData* gDefaultSpoofData;
+
+static UBool U_CALLCONV
+uspoof_cleanupDefaultData(void) {
+    if (gDefaultSpoofData) {
+        // Will delete, assuming all user-level spoof checkers were closed.
+        gDefaultSpoofData->removeReference();
+        gDefaultSpoofData = NULL;
+        gSpoofInitDefaultOnce.reset();
+    }
+    return TRUE;
+}
+
+static void U_CALLCONV uspoof_loadDefaultData(UErrorCode& status) {
+    UDataMemory *udm = udata_openChoice(NULL, "cfu", "confusables",
+                                        spoofDataIsAcceptable, 
+                                        NULL,       // context, would receive dataVersion if supplied.
+                                        &status);
+    if (U_FAILURE(status)) { return; }
+    gDefaultSpoofData = new SpoofData(udm, status);
+    if (U_FAILURE(status)) {
+        delete gDefaultSpoofData;
+        return;
+    }
+    if (gDefaultSpoofData == NULL) {
+        status = U_MEMORY_ALLOCATION_ERROR;
+        return;
+    }
+    ucln_i18n_registerCleanup(UCLN_I18N_SPOOFDATA, uspoof_cleanupDefaultData);
+}
+
+SpoofData* SpoofData::getDefault(UErrorCode& status) {
+    umtx_initOnce(gSpoofInitDefaultOnce, &uspoof_loadDefaultData, status);
+    if (U_FAILURE(status)) { return NULL; }
+    gDefaultSpoofData->addReference();
+    return gDefaultSpoofData;
+}
+
 
 
 SpoofData::SpoofData(UDataMemory *udm, UErrorCode &status)
@@ -493,10 +571,11 @@ SpoofData::SpoofData(UDataMemory *udm, UErrorCode &status)
     if (U_FAILURE(status)) {
         return;
     }
-    fRawData = reinterpret_cast<SpoofDataHeader *>
-                   ((char *)(udm->pHeader) + udm->pHeader->dataHeader.headerSize);
     fUDM = udm;
-    validateDataVersion(fRawData, status);
+    // fRawData is non-const because it may be constructed by the data builder.
+    fRawData = reinterpret_cast<SpoofDataHeader *>(
+            const_cast<void *>(udata_getMemory(udm)));
+    validateDataVersion(status);
     initPtrs(status);
 }
 
@@ -517,7 +596,7 @@ SpoofData::SpoofData(const void *data, int32_t length, UErrorCode &status)
         status = U_INVALID_FORMAT_ERROR;
         return;
     }
-    validateDataVersion(fRawData, status);
+    validateDataVersion(status);
     initPtrs(status);
 }
 
@@ -530,7 +609,6 @@ SpoofData::SpoofData(UErrorCode &status) {
         return;
     }
     fDataOwned = true;
-    fRefCount = 1;
 
     // The spoof header should already be sized to be a multiple of 16 bytes.
     // Just in case it's not, round it up.
@@ -546,7 +624,7 @@ SpoofData::SpoofData(UErrorCode &status) {
     uprv_memset(fRawData, 0, initialSize);
 
     fRawData->fMagic = USPOOF_MAGIC;
-    fRawData->fFormatVersion[0] = 1;
+    fRawData->fFormatVersion[0] = USPOOF_CONFUSABLE_DATA_FORMAT_VERSION;
     fRawData->fFormatVersion[1] = 0;
     fRawData->fFormatVersion[2] = 0;
     fRawData->fFormatVersion[3] = 0;
@@ -564,11 +642,7 @@ void SpoofData::reset() {
    fRefCount = 1;
    fCFUKeys = NULL;
    fCFUValues = NULL;
-   fCFUStringLengths = NULL;
    fCFUStrings = NULL;
-   fAnyCaseTrie = NULL;
-   fLowerCaseTrie = NULL;
-   fScriptSets = NULL;
 }
 
 
@@ -590,7 +664,6 @@ void SpoofData::reset() {
 void SpoofData::initPtrs(UErrorCode &status) {
     fCFUKeys = NULL;
     fCFUValues = NULL;
-    fCFUStringLengths = NULL;
     fCFUStrings = NULL;
     if (U_FAILURE(status)) {
         return;
@@ -601,33 +674,13 @@ void SpoofData::initPtrs(UErrorCode &status) {
     if (fRawData->fCFUStringIndex != 0) {
         fCFUValues = (uint16_t *)((char *)fRawData + fRawData->fCFUStringIndex);
     }
-    if (fRawData->fCFUStringLengths != 0) {
-        fCFUStringLengths = (SpoofStringLengthsElement *)((char *)fRawData + fRawData->fCFUStringLengths);
-    }
     if (fRawData->fCFUStringTable != 0) {
         fCFUStrings = (UChar *)((char *)fRawData + fRawData->fCFUStringTable);
-    }
-
-    if (fAnyCaseTrie ==  NULL && fRawData->fAnyCaseTrie != 0) {
-        fAnyCaseTrie = utrie2_openFromSerialized(UTRIE2_16_VALUE_BITS,
-            (char *)fRawData + fRawData->fAnyCaseTrie, fRawData->fAnyCaseTrieLength, NULL, &status);
-    }
-    if (fLowerCaseTrie ==  NULL && fRawData->fLowerCaseTrie != 0) {
-        fLowerCaseTrie = utrie2_openFromSerialized(UTRIE2_16_VALUE_BITS,
-            (char *)fRawData + fRawData->fLowerCaseTrie, fRawData->fLowerCaseTrieLength, NULL, &status);
-    }
-    
-    if (fRawData->fScriptSets != 0) {
-        fScriptSets = (ScriptSet *)((char *)fRawData + fRawData->fScriptSets);
     }
 }
 
 
 SpoofData::~SpoofData() {
-    utrie2_close(fAnyCaseTrie);
-    fAnyCaseTrie = NULL;
-    utrie2_close(fLowerCaseTrie);
-    fLowerCaseTrie = NULL;
     if (fDataOwned) {
         uprv_free(fRawData);
     }
@@ -672,148 +725,77 @@ void *SpoofData::reserveSpace(int32_t numBytes,  UErrorCode &status) {
     return (char *)fRawData + returnOffset;
 }
 
+int32_t SpoofData::serialize(void *buf, int32_t capacity, UErrorCode &status) const {
+    int32_t dataSize = fRawData->fLength;
+    if (capacity < dataSize) {
+        status = U_BUFFER_OVERFLOW_ERROR;
+        return dataSize;
+    }
+    uprv_memcpy(buf, fRawData, dataSize);
+    return dataSize;
+}
 
-//----------------------------------------------------------------------------
+int32_t SpoofData::size() const {
+    return fRawData->fLength;
+}
+
+//-------------------------------
 //
-//  ScriptSet implementation
+// Front-end APIs for SpoofData
 //
-//----------------------------------------------------------------------------
-ScriptSet::ScriptSet() {
-    for (uint32_t i=0; i<sizeof(bits)/sizeof(uint32_t); i++) {
-        bits[i] = 0;
-    }
-}
+//-------------------------------
 
-ScriptSet::~ScriptSet() {
-}
-
-UBool ScriptSet::operator == (const ScriptSet &other) {
-    for (uint32_t i=0; i<sizeof(bits)/sizeof(uint32_t); i++) {
-        if (bits[i] != other.bits[i]) {
-            return FALSE;
-        }
-    }
-    return TRUE;
-}
-
-void ScriptSet::Union(UScriptCode script) {
-    uint32_t index = script / 32;
-    uint32_t bit   = 1 << (script & 31);
-    U_ASSERT(index < sizeof(bits)*4);
-    bits[index] |= bit;
-}
-
-
-void ScriptSet::Union(const ScriptSet &other) {
-    for (uint32_t i=0; i<sizeof(bits)/sizeof(uint32_t); i++) {
-        bits[i] |= other.bits[i];
-    }
-}
-
-void ScriptSet::intersect(const ScriptSet &other) {
-    for (uint32_t i=0; i<sizeof(bits)/sizeof(uint32_t); i++) {
-        bits[i] &= other.bits[i];
-    }
-}
-
-void ScriptSet::intersect(UScriptCode script) {
-    uint32_t index = script / 32;
-    uint32_t bit   = 1 << (script & 31);
-    U_ASSERT(index < sizeof(bits)*4);
-    uint32_t i;
-    for (i=0; i<index; i++) {
-        bits[i] = 0;
-    }
-    bits[index] &= bit;
-    for (i=index+1; i<sizeof(bits)/sizeof(uint32_t); i++) {
-        bits[i] = 0;
-    }
-}
-
-
-ScriptSet & ScriptSet::operator =(const ScriptSet &other) {
-    for (uint32_t i=0; i<sizeof(bits)/sizeof(uint32_t); i++) {
-        bits[i] = other.bits[i];
-    }
-    return *this;
-}
-
-
-void ScriptSet::setAll() {
-    for (uint32_t i=0; i<sizeof(bits)/sizeof(uint32_t); i++) {
-        bits[i] = 0xffffffffu;
-    }
-}
-
-
-void ScriptSet::resetAll() {
-    for (uint32_t i=0; i<sizeof(bits)/sizeof(uint32_t); i++) {
-        bits[i] = 0;
-    }
-}
-
-int32_t ScriptSet::countMembers() {
-    // This bit counter is good for sparse numbers of '1's, which is
-    //  very much the case that we will usually have.
-    int32_t count = 0;
-    for (uint32_t i=0; i<sizeof(bits)/sizeof(uint32_t); i++) {
-        uint32_t x = bits[i];
-        while (x > 0) {
-            count++;
-            x &= (x - 1);    // and off the least significant one bit.
-        }
-    }
-    return count;
-}
-
-
-
-//-----------------------------------------------------------------------------
-//
-//  NFDBuffer Implementation.
-//
-//-----------------------------------------------------------------------------
-
-NFDBuffer::NFDBuffer(const UChar *text, int32_t length, UErrorCode &status) {
-    fNormalizedText = NULL;
-    fNormalizedTextLength = 0;
-    fOriginalText = text;
-    if (U_FAILURE(status)) {
-        return;
-    }
-    fNormalizedText = fSmallBuf;
-    fNormalizedTextLength = unorm_normalize(
-        text, length, UNORM_NFD, 0, fNormalizedText, USPOOF_STACK_BUFFER_SIZE, &status);
-    if (status == U_BUFFER_OVERFLOW_ERROR) {
-        status = U_ZERO_ERROR;
-        fNormalizedText = (UChar *)uprv_malloc((fNormalizedTextLength+1)*sizeof(UChar));
-        if (fNormalizedText == NULL) {
-            status = U_MEMORY_ALLOCATION_ERROR;
+int32_t SpoofData::confusableLookup(UChar32 inChar, UnicodeString &dest) const {
+    // Perform a binary search.
+    // [lo, hi), i.e lo is inclusive, hi is exclusive.
+    // The result after the loop will be in lo.
+    int32_t lo = 0;
+    int32_t hi = length();
+    do {
+        int32_t mid = (lo + hi) / 2;
+        if (codePointAt(mid) > inChar) {
+            hi = mid;
+        } else if (codePointAt(mid) < inChar) {
+            lo = mid;
         } else {
-            fNormalizedTextLength = unorm_normalize(text, length, UNORM_NFD, 0,
-                                        fNormalizedText, fNormalizedTextLength+1, &status);
+            // Found result.  Break early.
+            lo = mid;
+            break;
         }
+    } while (hi - lo > 1);
+
+    // Did we find an entry?  If not, the char maps to itself.
+    if (codePointAt(lo) != inChar) {
+        dest.append(inChar);
+        return 1;
     }
+
+    // Add the element to the string builder and return.
+    return appendValueTo(lo, dest);
 }
 
+int32_t SpoofData::length() const {
+    return fRawData->fCFUKeysSize;
+}
 
-NFDBuffer::~NFDBuffer() {
-    if (fNormalizedText != fSmallBuf) {
-        uprv_free(fNormalizedText);
+UChar32 SpoofData::codePointAt(int32_t index) const {
+    return ConfusableDataUtils::keyToCodePoint(fCFUKeys[index]);
+}
+
+int32_t SpoofData::appendValueTo(int32_t index, UnicodeString& dest) const {
+    int32_t stringLength = ConfusableDataUtils::keyToLength(fCFUKeys[index]);
+
+    // Value is either a char (for strings of length 1) or
+    // an index into the string table (for longer strings)
+    uint16_t value = fCFUValues[index];
+    if (stringLength == 1) {
+        dest.append((UChar)value);
+    } else {
+        dest.append(fCFUStrings + value, stringLength);
     }
-    fNormalizedText = 0;
+
+    return stringLength;
 }
-
-const UChar *NFDBuffer::getBuffer() {
-    return fNormalizedText;
-}
-
-int32_t NFDBuffer::getLength() {
-    return fNormalizedTextLength;
-}
-
-
-
 
 
 U_NAMESPACE_END
@@ -846,7 +828,10 @@ uspoof_swap(const UDataSwapper *ds, const void *inData, int32_t length, void *ou
            pInfo->dataFormat[1]==0x66 &&
            pInfo->dataFormat[2]==0x75 &&
            pInfo->dataFormat[3]==0x20 &&
-           pInfo->formatVersion[0]==1  )) {
+           pInfo->formatVersion[0]==USPOOF_CONFUSABLE_DATA_FORMAT_VERSION &&
+           pInfo->formatVersion[1]==0 &&
+           pInfo->formatVersion[2]==0 &&
+           pInfo->formatVersion[3]==0  )) {
         udata_printError(ds, "uspoof_swap(): data format %02x.%02x.%02x.%02x "
                              "(format version %02x %02x %02x %02x) is not recognized\n",
                          pInfo->dataFormat[0], pInfo->dataFormat[1],
@@ -934,26 +919,6 @@ uspoof_swap(const UDataSwapper *ds, const void *inData, int32_t length, void *ou
     sectionStart  = ds->readUInt32(spoofDH->fCFUStringTable);
     sectionLength = ds->readUInt32(spoofDH->fCFUStringTableLen) * 2;
     ds->swapArray16(ds, inBytes+sectionStart, sectionLength, outBytes+sectionStart, status);
-
-    // String Lengths Section
-    sectionStart  = ds->readUInt32(spoofDH->fCFUStringLengths);
-    sectionLength = ds->readUInt32(spoofDH->fCFUStringLengthsSize) * 4;
-    ds->swapArray16(ds, inBytes+sectionStart, sectionLength, outBytes+sectionStart, status);
-
-    // Any Case Trie
-    sectionStart  = ds->readUInt32(spoofDH->fAnyCaseTrie);
-    sectionLength = ds->readUInt32(spoofDH->fAnyCaseTrieLength);
-    utrie2_swap(ds, inBytes+sectionStart, sectionLength, outBytes+sectionStart, status);
-
-    // Lower Case Trie
-    sectionStart  = ds->readUInt32(spoofDH->fLowerCaseTrie);
-    sectionLength = ds->readUInt32(spoofDH->fLowerCaseTrieLength);
-    utrie2_swap(ds, inBytes+sectionStart, sectionLength, outBytes+sectionStart, status);
-
-    // Script Sets.  The data is an array of int32_t
-    sectionStart  = ds->readUInt32(spoofDH->fScriptSets);
-    sectionLength = ds->readUInt32(spoofDH->fScriptSetsLength) * sizeof(ScriptSet);
-    ds->swapArray32(ds, inBytes+sectionStart, sectionLength, outBytes+sectionStart, status);
 
     // And, last, swap the header itself.
     //   int32_t   fMagic             // swap this

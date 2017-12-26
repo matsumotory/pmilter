@@ -1,6 +1,8 @@
+// © 2016 and later: Unicode, Inc. and others.
+// License & terms of use: http://www.unicode.org/copyright.html
 /**
  *******************************************************************************
- * Copyright (C) 2006,2012, International Business Machines Corporation        *
+ * Copyright (C) 2006-2014, International Business Machines Corporation   *
  * and others. All Rights Reserved.                                            *
  *******************************************************************************
  */
@@ -13,10 +15,12 @@
 #include "unicode/utext.h"
 
 #include "brkeng.h"
+#include "uvectr32.h"
 
 U_NAMESPACE_BEGIN
 
 class DictionaryMatcher;
+class Normalizer2;
 
 /*******************************************************************
  * DictionaryBreakEngine
@@ -81,21 +85,18 @@ class DictionaryBreakEngine : public LanguageBreakEngine {
    *
    * @param text A UText representing the text. The iterator is left at
    * the end of the run of characters which the engine is capable of handling 
-   * that starts from the first (or last) character in the range.
+   * that starts from the first character in the range.
    * @param startPos The start of the run within the supplied text.
    * @param endPos The end of the run within the supplied text.
-   * @param reverse Whether the caller is looking for breaks in a reverse
-   * direction.
    * @param breakType The type of break desired, or -1.
-   * @param foundBreaks An allocated C array of the breaks found, if any
+   * @param foundBreaks vector of int32_t to receive the break positions
    * @return The number of breaks found.
    */
   virtual int32_t findBreaks( UText *text,
                               int32_t startPos,
                               int32_t endPos,
-                              UBool reverse,
                               int32_t breakType,
-                              UStack &foundBreaks ) const;
+                              UVector32 &foundBreaks ) const;
 
  protected:
 
@@ -125,7 +126,7 @@ class DictionaryBreakEngine : public LanguageBreakEngine {
   virtual int32_t divideUpDictionaryRange( UText *text,
                                            int32_t rangeStart,
                                            int32_t rangeEnd,
-                                           UStack &foundBreaks ) const = 0;
+                                           UVector32 &foundBreaks ) const = 0;
 
 };
 
@@ -182,75 +183,122 @@ class ThaiBreakEngine : public DictionaryBreakEngine {
   virtual int32_t divideUpDictionaryRange( UText *text,
                                            int32_t rangeStart,
                                            int32_t rangeEnd,
-                                           UStack &foundBreaks ) const;
+                                           UVector32 &foundBreaks ) const;
 
 };
-
-#if !UCONFIG_NO_NORMALIZATION
 
 /*******************************************************************
- * CjkBreakEngine
+ * LaoBreakEngine
  */
-
-//indicates language/script that the CjkBreakEngine will handle
-enum LanguageType {
-    kKorean,
-    kChineseJapanese
-};
 
 /**
- * <p>CjkBreakEngine is a kind of DictionaryBreakEngine that uses a
- * dictionary with costs associated with each word and
- * Viterbi decoding to determine CJK-specific breaks.</p>
+ * <p>LaoBreakEngine is a kind of DictionaryBreakEngine that uses a
+ * dictionary and heuristics to determine Lao-specific breaks.</p>
+ *
+ * <p>After it is constructed a LaoBreakEngine may be shared between
+ * threads without synchronization.</p>
  */
-class CjkBreakEngine : public DictionaryBreakEngine {
- protected:
+class LaoBreakEngine : public DictionaryBreakEngine {
+ private:
     /**
      * The set of characters handled by this engine
      * @internal
      */
-  UnicodeSet                fHangulWordSet;
-  UnicodeSet                fHanWordSet;
-  UnicodeSet                fKatakanaWordSet;
-  UnicodeSet                fHiraganaWordSet;
 
+  UnicodeSet                fLaoWordSet;
+  UnicodeSet                fEndWordSet;
+  UnicodeSet                fBeginWordSet;
+  UnicodeSet                fMarkSet;
   DictionaryMatcher  *fDictionary;
 
  public:
 
-    /**
-     * <p>Default constructor.</p>
-     *
-     * @param adoptDictionary A DictionaryMatcher to adopt. Deleted when the
-     * engine is deleted. The DictionaryMatcher must contain costs for each word
-     * in order for the dictionary to work properly.
-     */
-  CjkBreakEngine(DictionaryMatcher *adoptDictionary, LanguageType type, UErrorCode &status);
+  /**
+   * <p>Default constructor.</p>
+   *
+   * @param adoptDictionary A DictionaryMatcher to adopt. Deleted when the
+   * engine is deleted.
+   */
+  LaoBreakEngine(DictionaryMatcher *adoptDictionary, UErrorCode &status);
 
-    /**
-     * <p>Virtual destructor.</p>
-     */
-  virtual ~CjkBreakEngine();
+  /**
+   * <p>Virtual destructor.</p>
+   */
+  virtual ~LaoBreakEngine();
 
  protected:
-    /**
-     * <p>Divide up a range of known dictionary characters handled by this break engine.</p>
-     *
-     * @param text A UText representing the text
-     * @param rangeStart The start of the range of dictionary characters
-     * @param rangeEnd The end of the range of dictionary characters
-     * @param foundBreaks Output of C array of int32_t break positions, or 0
-     * @return The number of breaks found
-     */
+ /**
+  * <p>Divide up a range of known dictionary characters handled by this break engine.</p>
+  *
+  * @param text A UText representing the text
+  * @param rangeStart The start of the range of dictionary characters
+  * @param rangeEnd The end of the range of dictionary characters
+  * @param foundBreaks Output of C array of int32_t break positions, or 0
+  * @return The number of breaks found
+  */
   virtual int32_t divideUpDictionaryRange( UText *text,
-          int32_t rangeStart,
-          int32_t rangeEnd,
-          UStack &foundBreaks ) const;
+                                           int32_t rangeStart,
+                                           int32_t rangeEnd,
+                                           UVector32 &foundBreaks ) const;
 
 };
 
-#endif
-
+/******************************************************************* 
+ * BurmeseBreakEngine 
+ */ 
+ 
+/** 
+ * <p>BurmeseBreakEngine is a kind of DictionaryBreakEngine that uses a 
+ * DictionaryMatcher and heuristics to determine Burmese-specific breaks.</p> 
+ * 
+ * <p>After it is constructed a BurmeseBreakEngine may be shared between 
+ * threads without synchronization.</p> 
+ */ 
+class BurmeseBreakEngine : public DictionaryBreakEngine { 
+ private: 
+    /** 
+     * The set of characters handled by this engine 
+     * @internal 
+     */ 
+ 
+  UnicodeSet                fBurmeseWordSet; 
+  UnicodeSet                fEndWordSet; 
+  UnicodeSet                fBeginWordSet; 
+  UnicodeSet                fMarkSet; 
+  DictionaryMatcher  *fDictionary; 
+ 
+ public: 
+ 
+  /** 
+   * <p>Default constructor.</p> 
+   * 
+   * @param adoptDictionary A DictionaryMatcher to adopt. Deleted when the 
+   * engine is deleted. 
+   */ 
+  BurmeseBreakEngine(DictionaryMatcher *adoptDictionary, UErrorCode &status); 
+ 
+  /** 
+   * <p>Virtual destructor.</p> 
+   */ 
+  virtual ~BurmeseBreakEngine(); 
+ 
+ protected: 
+ /** 
+  * <p>Divide up a range of known dictionary characters.</p> 
+  * 
+  * @param text A UText representing the text 
+  * @param rangeStart The start of the range of dictionary characters 
+  * @param rangeEnd The end of the range of dictionary characters 
+  * @param foundBreaks Output of C array of int32_t break positions, or 0 
+  * @return The number of breaks found 
+  */ 
+  virtual int32_t divideUpDictionaryRange( UText *text, 
+                                           int32_t rangeStart, 
+                                           int32_t rangeEnd, 
+                                           UVector32 &foundBreaks ) const; 
+ 
+}; 
+ 
 /******************************************************************* 
  * KhmerBreakEngine 
  */ 
@@ -303,11 +351,76 @@ class KhmerBreakEngine : public DictionaryBreakEngine {
   virtual int32_t divideUpDictionaryRange( UText *text, 
                                            int32_t rangeStart, 
                                            int32_t rangeEnd, 
-                                           UStack &foundBreaks ) const; 
+                                           UVector32 &foundBreaks ) const; 
  
 }; 
  
- 
+#if !UCONFIG_NO_NORMALIZATION
+
+/*******************************************************************
+ * CjkBreakEngine
+ */
+
+//indicates language/script that the CjkBreakEngine will handle
+enum LanguageType {
+    kKorean,
+    kChineseJapanese
+};
+
+/**
+ * <p>CjkBreakEngine is a kind of DictionaryBreakEngine that uses a
+ * dictionary with costs associated with each word and
+ * Viterbi decoding to determine CJK-specific breaks.</p>
+ */
+class CjkBreakEngine : public DictionaryBreakEngine {
+ protected:
+    /**
+     * The set of characters handled by this engine
+     * @internal
+     */
+  UnicodeSet                fHangulWordSet;
+  UnicodeSet                fHanWordSet;
+  UnicodeSet                fKatakanaWordSet;
+  UnicodeSet                fHiraganaWordSet;
+
+  DictionaryMatcher        *fDictionary;
+  const Normalizer2        *nfkcNorm2;
+
+ public:
+
+    /**
+     * <p>Default constructor.</p>
+     *
+     * @param adoptDictionary A DictionaryMatcher to adopt. Deleted when the
+     * engine is deleted. The DictionaryMatcher must contain costs for each word
+     * in order for the dictionary to work properly.
+     */
+  CjkBreakEngine(DictionaryMatcher *adoptDictionary, LanguageType type, UErrorCode &status);
+
+    /**
+     * <p>Virtual destructor.</p>
+     */
+  virtual ~CjkBreakEngine();
+
+ protected:
+    /**
+     * <p>Divide up a range of known dictionary characters handled by this break engine.</p>
+     *
+     * @param text A UText representing the text
+     * @param rangeStart The start of the range of dictionary characters
+     * @param rangeEnd The end of the range of dictionary characters
+     * @param foundBreaks Output of C array of int32_t break positions, or 0
+     * @return The number of breaks found
+     */
+  virtual int32_t divideUpDictionaryRange( UText *text,
+          int32_t rangeStart,
+          int32_t rangeEnd,
+          UVector32 &foundBreaks ) const;
+
+};
+
+#endif
+
 U_NAMESPACE_END
 
     /* DICTBE_H */

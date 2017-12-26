@@ -1,7 +1,9 @@
+// © 2016 and later: Unicode, Inc. and others.
+// License & terms of use: http://www.unicode.org/copyright.html
 /*
 ******************************************************************************
 *
-*   Copyright (C) 1996-2012, International Business Machines
+*   Copyright (C) 1996-2015, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 *
 ******************************************************************************
@@ -31,10 +33,8 @@
 
 #include "unicode/utypes.h"
 #include "unicode/uobject.h"
-#include "unicode/unistr.h"
 #include "unicode/putil.h"
 #include "unicode/uloc.h"
-#include "unicode/strenum.h"
 
 /**
  * \file
@@ -42,6 +42,12 @@
  */
 
 U_NAMESPACE_BEGIN
+
+// Forward Declarations
+void U_CALLCONV locale_available_init(); /**< @internal */
+
+class StringEnumeration;
+class UnicodeString;
 
 /**
  * A <code>Locale</code> object represents a specific geographical, political,
@@ -82,7 +88,7 @@ U_NAMESPACE_BEGIN
  * <P>
  * The third constructor requires a third argument--the <STRONG>Variant.</STRONG>
  * The Variant codes are vendor and browser-specific.
- * For example, use REVISED for a langauge's revised script orthography, and POSIX for POSIX.
+ * For example, use REVISED for a language's revised script orthography, and POSIX for POSIX.
  * Where there are two variants, separate them with an underscore, and
  * put the most important one first. For
  * example, a Traditional Spanish collation might be referenced, with
@@ -418,7 +424,7 @@ public:
     inline const char * getName() const;
 
     /**
-     * Returns the programmatic name of the entire locale as getName would return,
+     * Returns the programmatic name of the entire locale as getName() would return,
      * but without keywords.
      * @return      A pointer to "name".
      * @see getName
@@ -450,9 +456,11 @@ public:
      */
     int32_t getKeywordValue(const char* keywordName, char *buffer, int32_t bufferCapacity, UErrorCode &status) const;
 
-#ifndef U_HIDE_DRAFT_API
     /**
-     * Sets the value for a keyword.
+     * Sets or removes the value for a keyword.
+     *
+     * For removing all keywords, use getBaseName(),
+     * and construct a new Locale if it differs from getName().
      *
      * @param keywordName name of the keyword to be set. Case insensitive.
      * @param keywordValue value of the keyword to be set. If 0-length or
@@ -460,10 +468,9 @@ public:
      *  that keyword does not exist.
      * @param status Returns any error information while performing this operation.
      *
-     * @draft ICU 49
+     * @stable ICU 49
      */
     void setKeywordValue(const char* keywordName, const char* keywordValue, UErrorCode &status);
-#endif  /* U_HIDE_DRAFT_API */
 
     /**
      * returns the locale's three-letter language code, as specified
@@ -488,6 +495,21 @@ public:
      * @stable ICU 2.0
      */
     uint32_t        getLCID(void) const;
+
+    /**
+     * Returns whether this locale's script is written right-to-left.
+     * If there is no script subtag, then the likely script is used, see uloc_addLikelySubtags().
+     * If no likely script is known, then FALSE is returned.
+     *
+     * A script is right-to-left according to the CLDR script metadata
+     * which corresponds to whether the script's letters have Bidi_Class=R or AL.
+     *
+     * Returns TRUE for "ar" and "en-Hebr", FALSE for "zh" and "fa-Cyrl".
+     *
+     * @return TRUE if the locale's script is written right-to-left
+     * @stable ICU 54
+     */
+    UBool isRightToLeft() const;
 
     /**
      * Fills in "dispLang" with the name of this locale's language in a format suitable for
@@ -729,7 +751,7 @@ private:
     char fullNameBuffer[ULOC_FULLNAME_CAPACITY];
     // name without keywords
     char* baseName;
-    char baseNameBuffer[ULOC_FULLNAME_CAPACITY];
+    void initBaseName(UErrorCode& status);
 
     UBool fIsBogus;
 
@@ -739,7 +761,12 @@ private:
      * A friend to allow the default locale to be set by either the C or C++ API.
      * @internal
      */
-    friend void locale_set_default_internal(const char *);
+    friend Locale *locale_set_default_internal(const char *, UErrorCode& status);
+
+    /**
+     * @internal
+     */
+    friend void U_CALLCONV locale_available_init();
 };
 
 inline UBool
@@ -769,7 +796,6 @@ Locale::getScript() const
 inline const char *
 Locale::getVariant() const
 {
-    getBaseName(); // lazy init
     return &baseName[variantBegin];
 }
 

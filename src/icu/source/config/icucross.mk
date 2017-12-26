@@ -1,4 +1,4 @@
-CROSS_ICU_VERSION=50.1
+CROSS_ICU_VERSION=60.2
 TOOLEXEEXT=
 TOOLBINDIR=$(cross_buildroot)/bin
 TOOLLIBDIR=$(cross_buildroot)/lib

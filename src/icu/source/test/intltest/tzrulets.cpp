@@ -1,7 +1,9 @@
+// © 2016 and later: Unicode, Inc. and others.
+// License & terms of use: http://www.unicode.org/copyright.html
 /*
 *******************************************************************************
-* Copyright (C) 2007-2012, International Business Machines Corporation and    *
-* others. All Rights Reserved.                                                *
+* Copyright (C) 2007-2016, International Business Machines Corporation and
+* others. All Rights Reserved.
 *******************************************************************************
 */
 
@@ -16,6 +18,7 @@
 #include "unicode/tzrule.h"
 #include "unicode/calendar.h"
 #include "unicode/gregocal.h"
+#include "unicode/strenum.h"
 #include "unicode/ucal.h"
 #include "unicode/unistr.h"
 #include "unicode/ustring.h"
@@ -29,8 +32,6 @@
 
 #define CASE(id,test) case id: name = #test; if (exec) { logln(#test "---"); logln((UnicodeString)""); test(); } break
 #define HOUR (60*60*1000)
-
-static const UVersionInfo ICU_453 = {4,5,3,0};
 
 static const char *const TESTZIDS[] = {
         "AGT",
@@ -86,7 +87,7 @@ TestZIDEnumeration::TestZIDEnumeration(UBool all)
         len = tzenum->count(status);
     } else {
         tzenum = NULL;
-        len = (int32_t)sizeof(TESTZIDS)/sizeof(TESTZIDS[0]);
+        len = UPRV_LENGTHOF(TESTZIDS);
     }
 }
 
@@ -1113,7 +1114,7 @@ TimeZoneRuleTest::TestGetSimpleRules(void) {
         getUTCMillis(2005, UCAL_JULY, 1),
         getUTCMillis(2010, UCAL_NOVEMBER, 1),        
     };
-    int32_t numTimes = sizeof(testTimes)/sizeof(UDate);
+    int32_t numTimes = UPRV_LENGTHOF(testTimes);
     UErrorCode status = U_ZERO_ERROR;
     TestZIDEnumeration tzenum(!quick);
     InitialTimeZoneRule *initial;
@@ -2106,7 +2107,7 @@ TimeZoneRuleTest::TestT6216(void) {
     int32_t i, j;
 
     // Get test times
-    UDate times[sizeof(TestDates) / (3 * sizeof(int32_t))];
+    UDate times[UPRV_LENGTHOF(TestDates)];
     int32_t numTimes;
 
     UErrorCode status = U_ZERO_ERROR;

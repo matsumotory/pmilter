@@ -1,7 +1,9 @@
+// © 2016 and later: Unicode, Inc. and others.
+// License & terms of use: http://www.unicode.org/copyright.html
 /*
  *******************************************************************************
  *
- *   Copyright (C) 1999-2007, International Business Machines
+ *   Copyright (C) 1999-2014, International Business Machines
  *   Corporation and others.  All Rights Reserved.
  *
  *******************************************************************************
@@ -174,7 +176,7 @@ void readTestFile(const char *testFilePath, TestCaseCallback callback)
             const UXMLElement *element;
             int32_t ec = 0;
             int32_t charCount = 0;
-            int32_t typoFlags = 3; // kerning + ligatures...
+            // int32_t typoFlags = 3; // kerning + ligatures...
             UScriptCode scriptCode;
             le_int32 languageCode = -1;
             UnicodeString text, glyphs, indices, positions;

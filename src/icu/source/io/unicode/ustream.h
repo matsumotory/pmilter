@@ -1,6 +1,8 @@
+// © 2016 and later: Unicode, Inc. and others.
+// License & terms of use: http://www.unicode.org/copyright.html
 /*
 **********************************************************************
-*   Copyright (C) 2001-2011 International Business Machines
+*   Copyright (C) 2001-2014 International Business Machines
 *   Corporation and others.  All Rights Reserved.
 **********************************************************************
 *  FILE NAME : ustream.h
@@ -17,6 +19,8 @@
 
 #include "unicode/unistr.h"
 
+#if !UCONFIG_NO_CONVERSION  // not available without conversion
+
 /**
  * \file
  * \brief C++ API: Unicode iostream like API
@@ -26,13 +30,11 @@
  * C++ I/O stream API.
  */
 
-#if U_IOSTREAM_SOURCE >= 199711
-#if (__GNUC__ == 2)
-#include <iostream>
-#else
-#include <istream>
-#include <ostream>
+#if defined(__GLIBCXX__)
+namespace std { class type_info; } // WORKAROUND: http://llvm.org/bugs/show_bug.cgi?id=13364
 #endif
+
+#include <iostream>
 
 U_NAMESPACE_BEGIN
 

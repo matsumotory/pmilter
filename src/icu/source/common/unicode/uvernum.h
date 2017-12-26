@@ -1,11 +1,13 @@
+// © 2016 and later: Unicode, Inc. and others.
+// License & terms of use: http://www.unicode.org/copyright.html
 /*
 *******************************************************************************
-*   Copyright (C) 2000-2012, International Business Machines
+*   Copyright (C) 2000-2016, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 *******************************************************************************
 *
 *   file name:  uvernum.h
-*   encoding:   US-ASCII
+*   encoding:   UTF-8
 *   tab size:   8 (not used)
 *   indentation:4
 *
@@ -17,8 +19,8 @@
 /**
  * \file
  * \brief C API: definitions of ICU version numbers
- * 
- * This file is included by uversion.h and other files. This file contains only 
+ *
+ * This file is included by uversion.h and other files. This file contains only
  * macros and definitions. The actual version numbers are defined here.
  */
 
@@ -32,13 +34,12 @@
   *  by running the UNIX makefile target 'update-windows-makefiles' in icu/source.
   *
   *
-  * source/common/common.vcproj - update 'Output file name' on the link tab so
+  * source/common/common.vcxproj - update 'Output file name' on the link tab so
   *                   that it contains the new major/minor combination
-  * source/i18n/i18n.vcproj - same as for the common.vcproj
-  * source/layout/layout.vcproj - same as for the common.vcproj
+  * source/i18n/i18n.vcxproj - same as for the common.vcxproj
   * source/layoutex/layoutex.vcproj - same
-  * source/stubdata/stubdata.vcproj - same as for the common.vcproj
-  * source/io/io.vcproj - same as for the common.vcproj
+  * source/stubdata/stubdata.vcproj - same as for the common.vcxproj
+  * source/io/io.vcproj - same as for the common.vcxproj
   * source/data/makedata.mak - change U_ICUDATA_NAME so that it contains
   *                            the new major/minor combination and the Unicode version.
   */
@@ -46,32 +47,32 @@
 #ifndef UVERNUM_H
 #define UVERNUM_H
 
-/** The standard copyright notice that gets compiled into each library. 
+/** The standard copyright notice that gets compiled into each library.
  *  This value will change in the subsequent releases of ICU
  *  @stable ICU 2.4
  */
 #define U_COPYRIGHT_STRING \
-  " Copyright (C) 2012, International Business Machines Corporation and others. All Rights Reserved. "
+  " Copyright (C) 2016 and later: Unicode, Inc. and others. License & terms of use: http://www.unicode.org/copyright.html "
 
-/** The current ICU major version as an integer. 
+/** The current ICU major version as an integer.
  *  This value will change in the subsequent releases of ICU
  *  @stable ICU 2.4
  */
-#define U_ICU_VERSION_MAJOR_NUM 50
+#define U_ICU_VERSION_MAJOR_NUM 60
 
-/** The current ICU minor version as an integer. 
+/** The current ICU minor version as an integer.
  *  This value will change in the subsequent releases of ICU
  *  @stable ICU 2.6
  */
-#define U_ICU_VERSION_MINOR_NUM 1
+#define U_ICU_VERSION_MINOR_NUM 2
 
-/** The current ICU patchlevel version as an integer.  
+/** The current ICU patchlevel version as an integer.
  *  This value will change in the subsequent releases of ICU
  *  @stable ICU 2.4
  */
 #define U_ICU_VERSION_PATCHLEVEL_NUM 0
 
-/** The current ICU build level version as an integer.  
+/** The current ICU build level version as an integer.
  *  This value is for use by ICU clients. It defaults to 0.
  *  @stable ICU 4.0
  */
@@ -79,11 +80,11 @@
 #define U_ICU_VERSION_BUILDLEVEL_NUM 0
 #endif
 
-/** Glued version suffix for renamers 
+/** Glued version suffix for renamers
  *  This value will change in the subsequent releases of ICU
  *  @stable ICU 2.6
  */
-#define U_ICU_VERSION_SUFFIX _50
+#define U_ICU_VERSION_SUFFIX _60
 
 /**
  * \def U_DEF2_ICU_ENTRY_POINT_RENAME
@@ -93,7 +94,7 @@
  * \def U_DEF_ICU_ENTRY_POINT_RENAME
  * @internal
  */
-/** Glued version suffix function for renamers 
+/** Glued version suffix function for renamers
  *  This value will change in the subsequent releases of ICU.
  *  If a custom suffix (such as matching library suffixes) is desired, this can be modified.
  *  Note that if present, platform.h may contain an earlier definition of this macro.
@@ -114,23 +115,23 @@
 #endif
 
 /** The current ICU library version as a dotted-decimal string. The patchlevel
- *  only appears in this string if it non-zero. 
+ *  only appears in this string if it non-zero.
  *  This value will change in the subsequent releases of ICU
  *  @stable ICU 2.4
  */
-#define U_ICU_VERSION "50.1"
+#define U_ICU_VERSION "60.2"
 
-/** The current ICU library major/minor version as a string without dots, for library name suffixes. 
+/** The current ICU library major/minor version as a string without dots, for library name suffixes.
  *  This value will change in the subsequent releases of ICU
  *  @stable ICU 2.6
  */
-#define U_ICU_VERSION_SHORT "50"
+#define U_ICU_VERSION_SHORT "60"
 
 #ifndef U_HIDE_INTERNAL_API
 /** Data version in ICU4C.
  * @internal ICU 4.4 Internal Use Only
  **/
-#define U_ICU_DATA_VERSION "50.1"
+#define U_ICU_DATA_VERSION "60.2"
 #endif  /* U_HIDE_INTERNAL_API */
 
 /*===========================================================================
@@ -146,7 +147,7 @@
  * This value may change in subsequent releases of ICU.
  * @stable ICU 2.4
  */
-#define UCOL_RUNTIME_VERSION 7
+#define UCOL_RUNTIME_VERSION 9
 
 /**
  * Collation builder code version.
@@ -155,13 +156,16 @@
  * This value may change in subsequent releases of ICU.
  * @stable ICU 2.4
  */
-#define UCOL_BUILDER_VERSION 8
+#define UCOL_BUILDER_VERSION 9
 
+#ifndef U_HIDE_DEPRECATED_API
 /**
- * This is the version of collation tailorings.
- * This value may change in subsequent releases of ICU.
- * @stable ICU 2.4
+ * Constant 1.
+ * This was intended to be the version of collation tailorings,
+ * but instead the tailoring data carries a version number.
+ * @deprecated ICU 54
  */
 #define UCOL_TAILORINGS_VERSION 1
+#endif  /* U_HIDE_DEPRECATED_API */
 
 #endif

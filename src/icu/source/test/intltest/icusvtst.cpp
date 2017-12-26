@@ -1,6 +1,8 @@
+// © 2016 and later: Unicode, Inc. and others.
+// License & terms of use: http://www.unicode.org/copyright.html
 /**
  *******************************************************************************
- * Copyright (C) 2001-2012, International Business Machines Corporation and
+ * Copyright (C) 2001-2016, International Business Machines Corporation and
  * others. All Rights Reserved.
  *******************************************************************************
  */
@@ -11,6 +13,7 @@
 
 #if !UCONFIG_NO_SERVICE
 
+#include "cmemory.h"
 #include "icusvtst.h"
 #include "servloc.h"
 #include <stdio.h>
@@ -671,7 +674,7 @@ ICUServiceTest::testAPI_Two()
             "en_US_SURFER_GAL",
             "en_US_SURFER_DUDE"
         };
-        int32_t count = sizeof(xids)/sizeof(UnicodeString);
+        int32_t count = UPRV_LENGTHOF(xids);
 
         ICUServiceFactory* f = new TestMultipleKeyStringFactory(xids, count, "Later");
         service.registerFactory(f, status);
@@ -729,7 +732,7 @@ ICUServiceTest::testAPI_Two()
             "en_US_SILICON", 
             "en_US_SILICON_GEEK",
         };
-        int32_t count = sizeof(xids)/sizeof(UnicodeString);
+        int32_t count = UPRV_LENGTHOF(xids);
 
         ICUServiceFactory* f = new TestMultipleKeyStringFactory(xids, count, "Rad dude");
         service.registerFactory(f, status);
@@ -930,7 +933,7 @@ ICUServiceTest::testRBF()
             CalifornioLanguageFactory::surfer, 
             CalifornioLanguageFactory::geek,
         };
-        int32_t count = sizeof(idNames)/sizeof(idNames[0]);
+        int32_t count = UPRV_LENGTHOF(idNames);
 
         for (int i = 0; i < count; ++i) {
             logln(UnicodeString("\n  --- ") + idNames[i] + " ---");
@@ -950,11 +953,10 @@ ICUServiceTest::testRBF()
 
 class SimpleListener : public ServiceListener {
     ICUServiceTest* _test;
-    int32_t _n;
     UnicodeString _name;
 
     public:
-    SimpleListener(ICUServiceTest* test, const UnicodeString& name) : _test(test), _n(0), _name(name) {}
+    SimpleListener(ICUServiceTest* test, const UnicodeString& name) : _test(test), _name(name) {}
 
     virtual void serviceChanged(const ICUService& service) const {
         UnicodeString serviceName = "listener ";

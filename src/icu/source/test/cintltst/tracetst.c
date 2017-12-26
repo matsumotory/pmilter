@@ -1,6 +1,8 @@
+// © 2016 and later: Unicode, Inc. and others.
+// License & terms of use: http://www.unicode.org/copyright.html
 /********************************************************************
  * COPYRIGHT: 
- * Copyright (c) 2003-2007, International Business Machines Corporation and
+ * Copyright (c) 2003-2013, International Business Machines Corporation and
  * others. All Rights Reserved.
  ********************************************************************/
 /*
@@ -92,6 +94,7 @@ static void test_format(const char *format, int32_t bufCap, int32_t indent,
     va_start(args, line);
     memset(buf, 0, sizeof(buf));
     len = utrace_vformat(buf, bufCap, indent, format, args);
+    (void)len;    /* Suppress set but not used warning. */
 
     /* Check results.   */
     if (strcmp(expectedResult, buf) != 0) {
@@ -336,7 +339,7 @@ static void TestTraceAPI() {
 
         /* Null ptrs for strings, vectors  */
         test_format("Null string - %s", 50, 0, "Null string - *NULL*", __LINE__, NULL);
-        test_format("Null string - %S", 50, 0, "Null string - *NULL*", __LINE__, NULL);
+        test_format("Null string - %S", 50, 0, "Null string - *NULL*", __LINE__, NULL, -1);
         test_format("Null vector - %vc", 50, 0, "Null vector - *NULL* [00000002]", __LINE__, NULL, 2);
         test_format("Null vector - %vC", 50, 0, "Null vector - *NULL* [00000002]", __LINE__, NULL, 2);
         test_format("Null vector - %vd", 50, 0, "Null vector - *NULL* [00000002]", __LINE__, NULL, 2);

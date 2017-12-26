@@ -1,12 +1,14 @@
+// © 2016 and later: Unicode, Inc. and others.
+// License & terms of use: http://www.unicode.org/copyright.html
 /*
  *******************************************************************************
  *
- *   Copyright (C) 2003-2010, International Business Machines
+ *   Copyright (C) 2003-2014, International Business Machines
  *   Corporation and others.  All Rights Reserved.
  *
  *******************************************************************************
  *   file name:  usprep.h
- *   encoding:   US-ASCII
+ *   encoding:   UTF-8
  *   tab size:   8 (not used)
  *   indentation:4
  *
@@ -238,7 +240,7 @@ U_NAMESPACE_END
  * @param destCapacity  The capacity of destination array
  * @param options       A bit set of options:
  *
- *  - USPREP_NONE               Prohibit processing of unassigned code points in the input
+ *  - USPREP_DEFAULT            Prohibit processing of unassigned code points in the input
  *
  *  - USPREP_ALLOW_UNASSIGNED   Treat the unassigned code points are in the input 
  *                              as normal Unicode code points.

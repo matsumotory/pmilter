@@ -1,12 +1,14 @@
+// © 2016 and later: Unicode, Inc. and others.
+// License & terms of use: http://www.unicode.org/copyright.html
 /*
 ******************************************************************************
 *
-*   Copyright (C) 2002-2010, International Business Machines
+*   Copyright (C) 2002-2016, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 *
 ******************************************************************************
 *   file name:  custrtst.c
-*   encoding:   US-ASCII
+*   encoding:   UTF-8
 *   tab size:   8 (not used)
 *   indentation:4
 *
@@ -20,9 +22,8 @@
 #include "unicode/ucnv.h"
 #include "unicode/uiter.h"
 #include "cintltst.h"
+#include "cmemory.h"
 #include <string.h>
-
-#define LENGTHOF(array) (sizeof(array)/sizeof((array)[0]))
 
 /* get the sign of an integer */
 #define _SIGN(value) ((value)==0 ? 0 : ((int32_t)(value)>>31)|1)
@@ -37,8 +38,6 @@ static void TestSurrogateSearching(void);
 static void TestUnescape(void);
 static void TestCountChar32(void);
 static void TestUCharIterator(void);
-static void TestUNormIterator(void);
-static void TestBadUNormIterator(void);
 
 void addUStringTest(TestNode** root);
 
@@ -51,8 +50,6 @@ void addUStringTest(TestNode** root)
     addTest(root, &TestUnescape, "tsutil/custrtst/TestUnescape");
     addTest(root, &TestCountChar32, "tsutil/custrtst/TestCountChar32");
     addTest(root, &TestUCharIterator, "tsutil/custrtst/TestUCharIterator");
-    addTest(root, &TestUNormIterator, "tsutil/custrtst/TestUNormIterator");
-    addTest(root, &TestBadUNormIterator, "tsutil/custrtst/TestBadUNormIterator");
 }
 
 /* test data for TestStringFunctions ---------------------------------------- */
@@ -235,7 +232,7 @@ static void TestStringFunctions()
         if(temp[k] != 0xa4)
             log_err("something threw an error in u_strncpy()\n");
 
-        u_memset(temp, 0x3F, (sizeof(temp) / sizeof(UChar)) - 1);
+        u_memset(temp, 0x3F, UPRV_LENGTHOF(temp) - 1);
         u_uastrncpy(temp, raw[i][j], k-1);
         if(u_strncmp(temp, dataTable[i][j],k-1)!=0)
             log_err("something threw an error in u_uastrncpy(k-1)\n");
@@ -243,7 +240,7 @@ static void TestStringFunctions()
         if(temp[k-1] != 0x3F)
             log_err("something threw an error in u_uastrncpy(k-1)\n");
 
-        u_memset(temp, 0x3F, (sizeof(temp) / sizeof(UChar)) - 1);
+        u_memset(temp, 0x3F, UPRV_LENGTHOF(temp) - 1);
         u_uastrncpy(temp, raw[i][j], k+1);
         if(u_strcmp(temp, dataTable[i][j])!=0)
             log_err("something threw an error in u_uastrncpy(k+1)\n");
@@ -251,7 +248,7 @@ static void TestStringFunctions()
         if(temp[k] != 0)
             log_err("something threw an error in u_uastrncpy(k+1)\n");
 
-        u_memset(temp, 0x3F, (sizeof(temp) / sizeof(UChar)) - 1);
+        u_memset(temp, 0x3F, UPRV_LENGTHOF(temp) - 1);
         u_uastrncpy(temp, raw[i][j], k);
         if(u_strncmp(temp, dataTable[i][j], k)!=0)
             log_err("something threw an error in u_uastrncpy(k)\n");
@@ -367,7 +364,7 @@ static void TestStringFunctions()
             currToken++;
         }
 
-        if (currToken != sizeof(tokens)/sizeof(tokens[0])) {
+        if (currToken != UPRV_LENGTHOF(tokens)) {
             log_err("Didn't get correct number of tokens\n");
         }
         state = delimBuf;       /* Give it an "invalid" saveState */
@@ -431,7 +428,7 @@ static void TestStringFunctions()
         UCharIterator iter1, iter2;
         int32_t len1, len2, r1, r2;
 
-        for(i=0; i<(sizeof(strings)/sizeof(strings[0])-1); ++i) {
+        for(i=0; i<(UPRV_LENGTHOF(strings)-1); ++i) {
             if(u_strcmpCodePointOrder(strings[i], strings[i+1])>=0) {
                 log_err("error: u_strcmpCodePointOrder() fails for string %d and the following one\n", i);
             }
@@ -723,12 +720,12 @@ TestSurrogateSearching() {
     if(
         first!=u_strchr(s, nul) ||
         first!=u_strchr32(s, nul) ||
-        first!=u_memchr(s, nul, LENGTHOF(s)) ||
-        first!=u_memchr32(s, nul, LENGTHOF(s)) ||
+        first!=u_memchr(s, nul, UPRV_LENGTHOF(s)) ||
+        first!=u_memchr32(s, nul, UPRV_LENGTHOF(s)) ||
         first!=u_strrchr(s, nul) ||
         first!=u_strrchr32(s, nul) ||
-        first!=u_memrchr(s, nul, LENGTHOF(s)) ||
-        first!=u_memrchr32(s, nul, LENGTHOF(s))
+        first!=u_memrchr(s, nul, UPRV_LENGTHOF(s)) ||
+        first!=u_memrchr32(s, nul, UPRV_LENGTHOF(s))
     ) {
         log_err("error: one of the u_str[|mem][r]chr[32](s, nul) does not find the terminator of s\n");
     }
@@ -738,13 +735,13 @@ TestSurrogateSearching() {
         s!=u_strstr(s, &nul) ||
         s!=u_strFindFirst(s, -1, &nul, -1) ||
         s!=u_strFindFirst(s, -1, &nul, 0) ||
-        s!=u_strFindFirst(s, LENGTHOF(s), &nul, -1) ||
-        s!=u_strFindFirst(s, LENGTHOF(s), &nul, 0) ||
+        s!=u_strFindFirst(s, UPRV_LENGTHOF(s), &nul, -1) ||
+        s!=u_strFindFirst(s, UPRV_LENGTHOF(s), &nul, 0) ||
         s!=u_strrstr(s, &nul) ||
         s!=u_strFindLast(s, -1, &nul, -1) ||
         s!=u_strFindLast(s, -1, &nul, 0) ||
-        s!=u_strFindLast(s, LENGTHOF(s), &nul, -1) ||
-        s!=u_strFindLast(s, LENGTHOF(s), &nul, 0)
+        s!=u_strFindLast(s, UPRV_LENGTHOF(s), &nul, -1) ||
+        s!=u_strFindLast(s, UPRV_LENGTHOF(s), &nul, 0)
     ) {
         log_err("error: one of the u_str[str etc](s, \"\") does not find s itself\n");
     }
@@ -1098,18 +1095,18 @@ TestUnescape() {
         0x50, 0x72, 0x69, 0x76, 0x61, 0x74, 0x65, 0x73, 0x20,
         0x5a, 0x65, 0x69, 0x63, 0x68, 0x65, 0x6e, 0x3a, 0x20, 0xdbc8, 0xdf45, 0x1b, 0x03, 0x0a, 0x20, 0x1b, 0x263A, 0
     };
-    static const int32_t explength = sizeof(expect)/sizeof(expect[0])-1;
+    static const int32_t explength = UPRV_LENGTHOF(expect)-1;
     int32_t length;
 
     /* test u_unescape() */
-    length=u_unescape(input, buffer, sizeof(buffer)/sizeof(buffer[0]));
+    length=u_unescape(input, buffer, UPRV_LENGTHOF(buffer));
     if(length!=explength || u_strcmp(buffer, expect)!=0) {
         log_err("failure in u_unescape(): length %d!=%d and/or incorrect result string\n", length,
                 explength);
     }
 
     /* try preflighting */
-    length=u_unescape(input, NULL, sizeof(buffer)/sizeof(buffer[0]));
+    length=u_unescape(input, NULL, UPRV_LENGTHOF(buffer));
     if(length!=explength || u_strcmp(buffer, expect)!=0) {
         log_err("failure in u_unescape(preflighting): length %d!=%d\n", length, explength);
     }
@@ -1148,7 +1145,7 @@ TestCountChar32() {
     int32_t i, length, number;
 
     /* test u_strHasMoreChar32Than() with length>=0 */
-    length=LENGTHOF(string);
+    length=UPRV_LENGTHOF(string);
     while(length>=0) {
         for(i=0; i<=length; ++i) {
             for(number=-1; number<=((length-i)+2); ++number) {
@@ -1159,13 +1156,13 @@ TestCountChar32() {
     }
 
     /* test u_strHasMoreChar32Than() with NUL-termination (length=-1) */
-    length=LENGTHOF(string);
+    length=UPRV_LENGTHOF(string);
     u_memcpy(buffer, string, length);
     while(length>=0) {
         buffer[length]=0;
         for(i=0; i<=length; ++i) {
             for(number=-1; number<=((length-i)+2); ++number) {
-                _testStrHasMoreChar32Than(string+i, i, -1, number);
+                _testStrHasMoreChar32Than(buffer+i, i, -1, number);
             }
         }
         --length;
@@ -1458,7 +1455,7 @@ TestUCharIterator() {
     }
 
     /* test get/set state */
-    length=LENGTHOF(text)-1;
+    length=UPRV_LENGTHOF(text)-1;
     uiter_setString(&iter1, text, -1);
     uiter_setString(&iter2, text, length);
     testIteratorState(&iter1, &iter2, "UTF16IteratorState", length/2);
@@ -1481,7 +1478,7 @@ TestUCharIterator() {
     compareIterators(&iter1, "UTF16Iterator", &iter2, "UTF8Iterator_1");
 
     /* test get/set state */
-    length=LENGTHOF(text)-1;
+    length=UPRV_LENGTHOF(text)-1;
     uiter_setUTF8(&iter1, bytes, -1);
     testIteratorState(&iter1, &iter2, "UTF8IteratorState", length/2);
     testIteratorState(&iter1, &iter2, "UTF8IteratorStatePlus1", length/2+1);
@@ -1514,304 +1511,3 @@ TestUCharIterator() {
 
     /* ### TODO test other iterators: CharacterIterator, Replaceable */
 }
-
-#if UCONFIG_NO_COLLATION
-
-static void
-TestUNormIterator() {
-    /* test nothing */
-}
-
-static void
-TestBadUNormIterator(void) {
-    /* test nothing, as well */
-}
-
-#else
-
-#include "unicode/unorm.h"
-#include "unorm_it.h"
-
-/*
- * Compare results from two iterators, should be same.
- * Assume that the text is not empty and that
- * iteration start==0 and iteration limit==length.
- *
- * Modified version of compareIterators() but does not assume that indexes
- * are available.
- */
-static void
-compareIterNoIndexes(UCharIterator *iter1, const char *n1,
-                     UCharIterator *iter2, const char *n2,
-                     int32_t middle) {
-    uint32_t state;
-    int32_t i;
-    UChar32 c1, c2;
-    UErrorCode errorCode;
-
-    /* code coverage for unorm_it.c/unormIteratorGetIndex() */
-    if(
-        iter2->getIndex(iter2, UITER_START)!=0 ||
-        iter2->getIndex(iter2, UITER_LENGTH)!=UITER_UNKNOWN_INDEX
-    ) {
-        log_err("UNormIterator.getIndex() failed\n");
-    }
-
-    /* set into the middle */
-    iter1->move(iter1, middle, UITER_ZERO);
-    iter2->move(iter2, middle, UITER_ZERO);
-
-    /* test current() */
-    c1=iter1->current(iter1);
-    c2=iter2->current(iter2);
-    if(c1!=c2) {
-        log_err("%s->current()=U+%04x != U+%04x=%s->current() at middle=%d\n", n1, c1, c2, n2, middle);
-        return;
-    }
-
-    /* move forward 3 UChars */
-    for(i=0; i<3; ++i) {
-        c1=iter1->next(iter1);
-        c2=iter2->next(iter2);
-        if(c1!=c2) {
-            log_err("%s->next()=U+%04x != U+%04x=%s->next() at %d (started in middle)\n", n1, c1, c2, n2, iter1->getIndex(iter1, UITER_CURRENT));
-            return;
-        }
-    }
-
-    /* move backward 5 UChars */
-    for(i=0; i<5; ++i) {
-        c1=iter1->previous(iter1);
-        c2=iter2->previous(iter2);
-        if(c1!=c2) {
-            log_err("%s->previous()=U+%04x != U+%04x=%s->previous() at %d (started in middle)\n", n1, c1, c2, n2, iter1->getIndex(iter1, UITER_CURRENT));
-            return;
-        }
-    }
-
-    /* iterate forward from the beginning */
-    iter1->move(iter1, 0, UITER_START);
-    if(!iter1->hasNext(iter1)) {
-        log_err("%s->hasNext() at the start returns FALSE\n", n1);
-        return;
-    }
-
-    iter2->move(iter2, 0, UITER_START);
-    if(!iter2->hasNext(iter2)) {
-        log_err("%s->hasNext() at the start returns FALSE\n", n2);
-        return;
-    }
-
-    do {
-        c1=iter1->next(iter1);
-        c2=iter2->next(iter2);
-        if(c1!=c2) {
-            log_err("%s->next()=U+%04x != U+%04x=%s->next() at %d\n", n1, c1, c2, n2, iter1->getIndex(iter1, UITER_CURRENT));
-            return;
-        }
-    } while(c1>=0);
-
-    if(iter1->hasNext(iter1)) {
-        log_err("%s->hasNext() at the end returns TRUE\n", n1);
-        return;
-    }
-    if(iter2->hasNext(iter2)) {
-        log_err("%s->hasNext() at the end returns TRUE\n", n2);
-        return;
-    }
-
-    /* iterate backward */
-    do {
-        c1=iter1->previous(iter1);
-        c2=iter2->previous(iter2);
-        if(c1!=c2) {
-            log_err("%s->previous()=U+%04x != U+%04x=%s->previous() at %d\n", n1, c1, c2, n2, iter1->getIndex(iter1, UITER_CURRENT));
-            return;
-        }
-    } while(c1>=0);
-
-    /* back to the middle */
-    iter1->move(iter1, middle, UITER_ZERO);
-    iter2->move(iter2, middle, UITER_ZERO);
-
-    /* try get/set state */
-    while((state=uiter_getState(iter2))==UITER_NO_STATE) {
-        if(!iter2->hasNext(iter2)) {
-            log_err("%s has no known state from middle=%d to the end\n", n2, middle);
-            return;
-        }
-        iter2->next(iter2);
-    }
-
-    errorCode=U_ZERO_ERROR;
-
-    c2=iter2->current(iter2);
-    iter2->move(iter2, 0, UITER_ZERO);
-    uiter_setState(iter2, state, &errorCode);
-    c1=iter2->current(iter2);
-    if(U_FAILURE(errorCode) || c1!=c2) {
-        log_err("%s->current() differs across get/set state, U+%04x vs. U+%04x\n", n2, c2, c1);
-        return;
-    }
-
-    c2=iter2->previous(iter2);
-    iter2->move(iter2, 0, UITER_ZERO);
-    uiter_setState(iter2, state, &errorCode);
-    c1=iter2->previous(iter2);
-    if(U_FAILURE(errorCode) || c1!=c2) {
-        log_err("%s->previous() differs across get/set state, U+%04x vs. U+%04x\n", n2, c2, c1);
-        return;
-    }
-
-    /* iterate backward from the end */
-    iter1->move(iter1, 0, UITER_LIMIT);
-    if(!iter1->hasPrevious(iter1)) {
-        log_err("%s->hasPrevious() at the end returns FALSE\n", n1);
-        return;
-    }
-
-    iter2->move(iter2, 0, UITER_LIMIT);
-    if(!iter2->hasPrevious(iter2)) {
-        log_err("%s->hasPrevious() at the end returns FALSE\n", n2);
-        return;
-    }
-
-    do {
-        c1=iter1->previous(iter1);
-        c2=iter2->previous(iter2);
-        if(c1!=c2) {
-            log_err("%s->previous()=U+%04x != U+%04x=%s->previous() at %d\n", n1, c1, c2, n2, iter1->getIndex(iter1, UITER_CURRENT));
-            return;
-        }
-    } while(c1>=0);
-
-    if(iter1->hasPrevious(iter1)) {
-        log_err("%s->hasPrevious() at the start returns TRUE\n", n1);
-        return;
-    }
-    if(iter2->hasPrevious(iter2)) {
-        log_err("%s->hasPrevious() at the start returns TRUE\n", n2);
-        return;
-    }
-}
-
-/* n2 must have a digit 1 at the end, will be incremented with the normalization mode */
-static void
-testUNormIteratorWithText(const UChar *text, int32_t textLength, int32_t middle,
-                          const char *name1, const char *n2) {
-    UChar buffer[600];
-    char name2[40];
-
-    UCharIterator iter1, iter2, *iter;
-    UNormIterator *uni;
-
-    UNormalizationMode mode;
-    UErrorCode errorCode;
-    int32_t length;
-
-    /* open a normalizing iterator */
-    errorCode=U_ZERO_ERROR;
-    uni=unorm_openIter(NULL, 0, &errorCode);
-    if(U_FAILURE(errorCode)) {
-        log_err("unorm_openIter() fails: %s\n", u_errorName(errorCode));
-        return;
-    }
-
-    /* set iterator 2 to the original text */
-    uiter_setString(&iter2, text, textLength);
-
-    strcpy(name2, n2);
-
-    /* test the normalizing iterator for each mode */
-    for(mode=UNORM_NONE; mode<UNORM_MODE_COUNT; ++mode) {
-        length=unorm_normalize(text, textLength, mode, 0, buffer, LENGTHOF(buffer), &errorCode);
-        if(U_FAILURE(errorCode)) {
-            log_data_err("unorm_normalize(mode %d) failed: %s - (Are you missing data?)\n", mode, u_errorName(errorCode));
-            break;
-        }
-
-        /* set iterator 1 to the normalized text  */
-        uiter_setString(&iter1, buffer, length);
-
-        /* set the normalizing iterator to use iter2 */
-        iter=unorm_setIter(uni, &iter2, mode, &errorCode);
-        if(U_FAILURE(errorCode)) {
-            log_err("unorm_setIter(mode %d) failed: %s\n", mode, u_errorName(errorCode));
-            break;
-        }
-
-        compareIterNoIndexes(&iter1, name1, iter, name2, middle);
-        ++name2[strlen(name2)-1];
-    }
-
-    unorm_closeIter(uni);
-}
-
-static void
-TestUNormIterator() {
-    static const UChar text[]={ /* must contain <00C5 0327> see u_strchr() below */
-        0x61,                                                   /* 'a' */
-        0xe4, 0x61, 0x308,                                      /* variations of 'a'+umlaut */
-        0xc5, 0x327, 0x41, 0x30a, 0x327, 0x41, 0x327, 0x30a,    /* variations of 'A'+ring+cedilla */
-        0xfb03, 0xfb00, 0x69, 0x66, 0x66, 0x69, 0x66, 0xfb01    /* variations of 'ffi' */
-    };
-    static const UChar surrogateText[]={
-        0x6e, 0xd900, 0x6a, 0xdc00, 0xd900, 0xdc00, 0x61
-    };
-
-    UChar longText[600];
-    int32_t i, middle, length;
-
-    length=LENGTHOF(text);
-    testUNormIteratorWithText(text, length, length/2, "UCharIter", "UNormIter1");
-    testUNormIteratorWithText(text, length, length, "UCharIterEnd", "UNormIterEnd1");
-
-    /* test again, this time with an insane string to cause internal buffer overflows */
-    middle=(int32_t)(u_strchr(text, 0x327)-text); /* see comment at text[] */
-    memcpy(longText, text, middle*U_SIZEOF_UCHAR);
-    for(i=0; i<150; ++i) {
-        longText[middle+i]=0x30a; /* insert many rings between 'A-ring' and cedilla */
-    }
-    memcpy(longText+middle+i, text+middle, (LENGTHOF(text)-middle)*U_SIZEOF_UCHAR);
-    length=LENGTHOF(text)+i;
-
-    /* append another copy of this string for more overflows */
-    memcpy(longText+length, longText, length*U_SIZEOF_UCHAR);
-    length*=2;
-
-    /* the first test of the following two starts at length/4, inside the sea of combining rings */
-    testUNormIteratorWithText(longText, length, length/4, "UCharIterLong", "UNormIterLong1");
-    testUNormIteratorWithText(longText, length, length, "UCharIterLongEnd", "UNormIterLongEnd1");
-
-    length=LENGTHOF(surrogateText);
-    testUNormIteratorWithText(surrogateText, length, length/4, "UCharIterSurr", "UNormIterSurr1");
-    testUNormIteratorWithText(surrogateText, length, length, "UCharIterSurrEnd", "UNormIterSurrEnd1");
-}
-
-static void
-TestBadUNormIterator(void) {
-#if !UCONFIG_NO_NORMALIZATION
-    UErrorCode status = U_ILLEGAL_ESCAPE_SEQUENCE;
-    UNormIterator *uni;
-
-    unorm_setIter(NULL, NULL, UNORM_NONE, &status);
-    if (status != U_ILLEGAL_ESCAPE_SEQUENCE) {
-        log_err("unorm_setIter changed the error code to: %s\n", u_errorName(status));
-    }
-    status = U_ZERO_ERROR;
-    unorm_setIter(NULL, NULL, UNORM_NONE, &status);
-    if (status != U_ILLEGAL_ARGUMENT_ERROR) {
-        log_err("unorm_setIter didn't react correctly to bad arguments: %s\n", u_errorName(status));
-    }
-    status = U_ZERO_ERROR;
-    uni=unorm_openIter(NULL, 0, &status);
-    if(U_FAILURE(status)) {
-        log_err("unorm_openIter() fails: %s\n", u_errorName(status));
-        return;
-    }
-    unorm_setIter(uni, NULL, UNORM_NONE, &status);
-    unorm_closeIter(uni);
-#endif
-}
-
-#endif

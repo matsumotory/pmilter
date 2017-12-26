@@ -3,32 +3,57 @@
 
 <html lang="en-US" xmlns="http://www.w3.org/1999/xhtml" xml:lang="en-US">
   <head>
-    <title>ReadMe for ICU 50</title>
+    <title>ReadMe for ICU 60.2</title>
     <meta name="COPYRIGHT" content=
-    "Copyright (c) 1997-2012 IBM Corporation and others. All Rights Reserved." />
+    "Copyright (C) 2016 and later: Unicode, Inc. and others. License &amp; terms of use: http://www.unicode.org/copyright.html"/>
+    <!-- meta name="COPYRIGHT" content=
+    "Copyright (c) 1997-2016 IBM Corporation and others. All Rights Reserved." / -->
     <meta name="KEYWORDS" content=
     "ICU; International Components for Unicode; ICU4C; what's new; readme; read me; introduction; downloads; downloading; building; installation;" />
     <meta name="DESCRIPTION" content=
     "The introduction to the International Components for Unicode with instructions on building, installation, usage and other information about ICU." />
-    <meta http-equiv="Content-Type" content="text/html; charset=us-ascii" />
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
 	<link type="text/css" href="./icu4c.css" rel="stylesheet"/>
   </head>
 
-  <body class="draft">
-    <h1>International Components for Unicode<br />
-     <abbr title="International Components for Unicode">ICU</abbr> 50 (Release Candidate) ReadMe</h1>
+<!--
+    classes to use with the "body" -
+        draft - if the release note is itself a draft (May be combined with the other two)
+        rc  - if the release note is a release candidate
+        milestone - if the release note is a milestone release
+-->
 
-    <!--<p><b>Note:</b> This is a development milestone release of ICU4C 50.
-    This milestone is intended for those wishing to get an early look at ICU 50 new features and API changes.
-    It is not recommended for production use.</p>-->
-    <!--<p><b>Note:</b> This is a release candidate version of ICU4C 50.
-    It is not recommended for production use.</p>-->
+  <body>
+  <!-- <body> -->
+    <p class="only-draft"><b>Note:</b> This is a draft readme.</p>
 
-    <p>Last updated: 2012-Oct-31<br />
-     Copyright &copy; 1997-2012 International Business Machines Corporation and
-    others. All Rights Reserved.</p>
+    <h1>
+      <span class="only-draft">DRAFT</span>
+      International Components for Unicode<br/>
+      <span class="only-rc">Release Candidate</span>
+      <span class="only-milestone">(Milestone Release)</span>
+      <abbr title="International Components for Unicode">ICU</abbr> 60.2 ReadMe
+    </h1>
+
+    <!-- Shouldn't need to comment/uncomment this paragraph, just change the body class -->
+    <p class="note only-milestone">This is a development milestone release of ICU
+      This milestone is intended for those wishing to get an early look at new features and API changes.
+      It is not recommended for production use.</p>
+
+    <!-- Shouldn't need to comment/uncomment this paragraph, just change the body class -->
+    <p class="note only-rc">This is a release candidate version of ICU4C.
+      It is not recommended for production use.</p>
+
+    <p>Last updated: 2017-Dec-07<br/>
+      Copyright &copy; 2016 and later: Unicode, Inc. and others. License &amp; terms of use:
+      <a href="http://www.unicode.org/copyright.html">http://www.unicode.org/copyright.html</a><br/>
+      Copyright &copy; 1997-2016 International Business Machines Corporation and others.
+      All Rights Reserved.</p>
     <!-- Remember that there is a copyright at the end too -->
-    <hr />
+
+    <p class="note">This is a maintenance update of ICU 60,
+      with a small number of bug fixes but no API changes.</p>
+    <hr/>
 
     <h2 class="TOC">Table of Contents</h2>
 
@@ -37,14 +62,14 @@
 
       <li><a href="#GettingStarted">Getting Started</a></li>
 
-      <li><a href="#News">What Is New In This release?</a></li>
+      <li><a href="#News">What Is New In This Release?</a></li>
 
       <li><a href="#Download">How To Download the Source Code</a></li>
 
       <li><a href="#SourceCode">ICU Source Code Organization</a></li>
 
       <li>
-        <a href="#HowToBuild">How To Build And Install ICU</a> 
+        <a href="#HowToBuild">How To Build And Install ICU</a>
 
         <ul >
           <li><a href="#RecBuild">Recommended Build Options</a></li>
@@ -69,7 +94,7 @@
       <li><a href="#HowToPackage">How To Package ICU</a></li>
 
       <li>
-        <a href="#ImportantNotes">Important Notes About Using ICU</a> 
+        <a href="#ImportantNotes">Important Notes About Using ICU</a>
 
         <ul >
           <li><a href="#ImportantNotesMultithreaded">Using ICU in a Multithreaded
@@ -82,7 +107,7 @@
       </li>
 
       <li>
-        <a href="#PlatformDependencies">Platform Dependencies</a> 
+        <a href="#PlatformDependencies">Platform Dependencies</a>
 
         <ul >
           <li><a href="#PlatformDependenciesNew">Porting To A New
@@ -110,7 +135,7 @@
 
       <li>Character set conversions with support for over 220 codepages</li>
 
-      <li>Locale data for more than 290 locales</li>
+      <li>Locale data for more than 300 locales</li>
 
       <li>Language sensitive text collation (sorting) and searching based on the
       Unicode Collation Algorithm (=ISO 14651)</li>
@@ -126,8 +151,6 @@
       input/output formats</li>
 
       <li>Calendar specific date and time manipulation</li>
-
-      <li>Complex text layout for Arabic, Hebrew, Indic and Thai</li>
 
       <li>Text boundary analysis for finding characters, word and sentence
       boundaries</li>
@@ -208,71 +231,24 @@
     </table>
 
     <p><strong>Important:</strong> Please make sure you understand the <a href=
-    "license.html">Copyright and License Information</a>.</p>
+    "http://source.icu-project.org/repos/icu/trunk/icu4c/LICENSE">Copyright and License Information</a>.</p>
 
-    <h2><a name="News" href="#News" id="News">What is new in this
-    release?</a></h2>
 
-    <p>To see which APIs are new or changed in this release, view the <a href="APIChangeReport.html">ICU4C API Change Report</a>. </p>
+    <h2><a name="News" href="#News" id="News">What Is New In This Release?</a></h2>
 
-    <p>The following list concentrates on <em>changes that affect existing
-    applications migrating from previous ICU releases</em>.
-    For more news about this release, see the
-    <!--
-    <a href="http://site.icu-project.org/download/">ICU download page</a>.
-    -->
-    <a href="http://site.icu-project.org/download/milestone">ICU milestone download page</a>.
-    </p>
+    <p>See the <a href="http://site.icu-project.org/download/60">ICU 60 download page</a>
+    for an overview of this release, important changes, new features, bug fixes, known issues,
+    changes to supported platforms and build environments,
+    and migration issues for existing applications migrating from previous ICU releases.</p>
 
-    <h3>Thread safety support cannot be removed</h3>
-    <p>ICU4C 50 dropped support for the --enable-threads/--disable-threads configure option
-    and the uconfig.h <code>ICU_USE_THREADS</code> switch.
-    ICU4C 50 and higher is always built with multi-threading safety support.
-    ICU4C has never created threads in its libraries.</p>
+    <p>See the <a href="APIChangeReport.html">API Change Report</a> for a complete list of
+    APIs added, removed, or changed in this release.</p>
 
-    <p>If you need to prevent ICU from using thread safe mutexes when your application does
-    not create threads, then you can use the --enable-weak-threads configure option.
-    The --enable-weak-threads configure option will cause ICU to weakly reference the
-    pthread mutex functions, and the stub implementations in the C runtime will be used.
-    If this configure option does not work on your platform, then you can call
-    <code>u_setMutexFunctions()</code> and <code>u_setAtomicIncDecFunctions()</code>
-    with your own empty implementations.</p>
+    <p><a name="RecentPreviousChanges" id="RecentPreviousChanges"></a>For
+    changes in previous releases, see the
+    main <a href="http://site.icu-project.org/download">ICU download page</a>
+    with its version-specific subpages.</p>
 
-    <h3>The default compilers have changed</h3>
-    <p>ICU has changed the compilers chosen by default. If the clang and clang++ compilers
-    are available, those will be used instead of gcc and g++. If the clang compilers
-    are not available, then gcc and g++ will be used just as before. The clang++ compiler
-    provides C++11 support and some optimizations that are helpful to ICU. The API
-    remains the same between these two sets of compilers, but ICU can internally leverage
-    language features and optimizations that are available in clang++.</p>
-
-    <p>If you need to force ICU to compile with gcc and g++, then you can use the following
-    from the command line in the source directory:</p>
-
-<pre>
-<samp>./configure CC=gcc CXX=g++ CFLAGS=-O3 CXXFLAGS=-O3</samp>
-</pre>
-
-    <h3>C++ Collator subclassing-API breaking changes</h3>
-    <p>We have made some changes to the C++ Collator API for ICU 50
-    that will make it easier to use and implement the Collator but
-    which are incompatible for subclasses.
-    If there are subclasses, they will have to be modified as well.
-    It will be easy to adapt subclass source code, if there is any.
-    We think it is unlikely (or at least rare) that users write subclasses of the C++ Collator,
-    given the number of virtual methods and the complexities of a collation implementation.</p>
-
-    <p>For details see the email "ICU4C C++ Collator subclassing-API breaking changes"
-    sent on 2012-jul-25 to the icu-design and icu-support
-    <a href="http://site.icu-project.org/contacts">mailing lists</a>,
-    and <a href="http://bugs.icu-project.org/trac/ticket/9346">ICU ticket #9346</a>,
-    including the <a href="http://bugs.icu-project.org/trac/review/9346">changes for that ticket</a>.</p>
-
-    <p>In particular, the <code>class TestCollator</code> in
-    <a href="http://bugs.icu-project.org/trac/browser/icu/trunk/source/test/intltest/apicoll.cpp"><code>source/test/intltest/apicoll.cpp</code></a>
-    <a href="http://bugs.icu-project.org/trac/changeset/32100#file5">illustrates how a subclass needs to be changed</a>.
-    However, note that the TestCollator was also simplified slightly;
-    not all changes made there were strictly required for the API signature changes.</p>
 
     <h2><a name="Download" href="#Download" id="Download">How To Download the
     Source Code</a></h2>
@@ -331,7 +307,7 @@
       </tr>
 
       <tr>
-        <td>license.html</td>
+        <td>LICENSE</td>
 
         <td>Contains the text of the ICU license</td>
       </tr>
@@ -370,9 +346,9 @@
       </tr>
 
       <tr>
-        <td><i>&lt;ICU&gt;</i>/source/<b>layout</b>/</td>
+        <td><i>&lt;ICU&gt;</i>/source/<b>layoutex</b>/</td>
 
-        <td>Contains the ICU layout engine (not a rasterizer).</td>
+        <td>Contains the ICU paragraph layout engine.</td>
       </tr>
 
       <tr>
@@ -406,12 +382,31 @@
             <li><b>brkitr/</b> Data files for character, word, sentence, title
             casing and line boundary analysis.</li>
 
+            <li><b>coll/</b> Data for collation tailorings. The makefile
+            <b>colfiles.mk</b> contains the list of resource bundle files.</li>
+
             <li><b>locales/</b> These .txt files contain ICU language and
             culture-specific localization data. Two special bundles are
             <b>root</b>, which is the fallback data and parent of other bundles,
             and <b>index</b>, which contains a list of installed bundles. The
             makefile <b>resfiles.mk</b> contains the list of resource bundle
-            files.</li>
+            files. Some of the locale data is split out into the type-specific
+            directories curr, lang, region, unit, and zone, described below.</li>
+
+            <li><b>curr/</b> Locale data for currency symbols and names (including
+            plural forms), with its own makefile <b>resfiles.mk</b>.</li>
+
+            <li><b>lang/</b> Locale data for names of languages, scripts, and locale
+            key names and values, with its own makefile <b>resfiles.mk</b>.</li>
+
+            <li><b>region/</b> Locale data for names of regions, with its own
+            makefile <b>resfiles.mk</b>.</li>
+
+            <li><b>unit/</b> Locale data for measurement unit patterns and names, 
+            with its own makefile <b>resfiles.mk</b>.</li>
+
+            <li><b>zone/</b> Locale data for time zone names, with its own
+            makefile <b>resfiles.mk</b>.</li>
 
             <li><b>mappings/</b> Here are the code page converter tables. These
             .ucm files contain mappings to and from Unicode. These are compiled
@@ -433,9 +428,9 @@
             information.</li>
 
             <li><b>misc/</b> The misc directory contains other data files which
-            did not fit into the above categories. Currently it only contains
-            time zone information, and a name preperation file for <a href=
-            "http://www.ietf.org/rfc/rfc3490.txt">IDNA</a>.</li>
+            did not fit into the above categories, including time zone
+            information, region-specific data, and other data derived from CLDR
+            supplemental data.</li>
 
             <li><b>out/</b> This directory contains the assembled memory mapped
             files.</li>
@@ -556,14 +551,16 @@
     "RecBuild">Recommended Build Options</a></h3>
 
     <p>Depending on the platform and the type of installation,
-    we recommend a small number of modifications and build options.</p>
+    we recommend a small number of modifications and build options.
+    Note that C99 compatibility is now required.</p>
     <ul>
       <li><b>Namespace:</b> By default, unicode/uversion.h has
         "using namespace icu;" which defeats much of the purpose of the namespace.
         (This is for historical reasons: Originally, ICU4C did not use namespaces,
         and some compilers did not support them. The default "using" statement
         preserves source code compatibility.)<br />
-        We recommend you turn this off via <code>-DU_USING_ICU_NAMESPACE=0</code>
+        If this compatibility is not an issue, we recommend you turn this off
+         via <code>-DU_USING_ICU_NAMESPACE=0</code>
         or by modifying unicode/uversion.h:
 <pre>Index: source/common/unicode/uversion.h
 ===================================================================
@@ -589,7 +586,7 @@
         we recommend hardcoding ICU's default charset to UTF-8.
         This means that some implementation code becomes simpler and faster,
         and statically linked ICU libraries become smaller.
-        (See the <a href="http://icu-project.org/apiref/icu4c/utypes_8h.html#0a33e1edf3cd23d9e9c972b63c9f7943">U_CHARSET_IS_UTF8</a>
+        (See the <a href="http://icu-project.org/apiref/icu4c/platform_8h.html#a0a33e1edf3cd23d9e9c972b63c9f7943">U_CHARSET_IS_UTF8</a>
         API documentation for more details.)<br />
         You can <code>-DU_CHARSET_IS_UTF8=1</code> or
         modify unicode/utypes.h (in ICU 4.8 and below)
@@ -636,6 +633,14 @@
         (via -D or uconfig.h, as above)
         and include those header files explicitly that you actually need.<br />
         Note: The ICU test suites cannot be compiled with this setting.</li>
+      <li><b>utf_old.h:</b>
+        All of utf_old.h is deprecated or obsolete.<br />
+        Beginning with ICU 60,
+        you should define <code>U_HIDE_OBSOLETE_UTF_OLD_H</code> to 1
+        (via -D or uconfig.h, as above).
+        Use of any of these macros should be replaced as noted
+        in the comments for the obsolete macro.<br />
+        Note: The ICU test suites <i>can</i> be compiled with this setting.</li>
       <li><b>.dat file:</b> By default, the ICU data is built into
         a shared library (DLL). This is convenient because it requires no
         install-time or runtime configuration,
@@ -678,11 +683,16 @@
         source file tree clean and have build output files written to
         a different location. This is called an "out-of-source build".
         Simply invoke the configure script from the target location:
-<pre>~/icu$ svn export http://source.icu-project.org/repos/icu/icu/trunk
+<pre>~/icu$ svn export http://source.icu-project.org/repos/icu/trunk/icu4c
 ~/icu$ mkdir trunk-dev
 ~/icu$ cd trunk-dev
 ~/icu/trunk-dev$ ../trunk/source/runConfigureICU Linux
-~/icu/trunk-dev$ make check</pre></li>
+~/icu/trunk-dev$ make check</pre><br/>
+        (Note: this example shows a relative path to
+         <code>runConfigureICU</code>. If you experience difficulty,
+         try using an absolute path to <code>runConfigureICU</code>
+         instead.)
+      </li>
     </ul>
     <h4>ICU as a System-Level Library</h4>
     <p>If ICU is installed as a system-level library, there are further
@@ -695,7 +705,7 @@
         to the .dat package file can be hardcoded. ICU will automatically set
         the path to the final install location using U_ICU_DATA_DEFAULT_DIR.
         Alternatively, you can set <code>-DICU_DATA_DIR=/path/to/icu/data</code>
-        when building the ICU code. (Used by source/common/putil.c.)<br />
+        when building the ICU code. (Used by source/common/putil.c.)<br/>
         Consider also setting <code>-DICU_NO_USER_DATA_OVERRIDE</code>
         if you do not want the "ICU_DATA" environment variable to be used.
         (An application can still override the data path via
@@ -745,11 +755,12 @@
     <ul>
       <li>Microsoft Windows</li>
 
-      <li>Microsoft Visual C++</li>
-
-      <li><a href="#HowToBuildCygwin">Cygwin</a> is required when other versions
-      of Microsoft Visual C++ and other compilers are used to build ICU.</li>
+      <li>Microsoft Visual C++ (part of <a href="https://www.visualstudio.com/">Visual Studio</a>) (see the ICU download page for the currently compatible version)</li>
+      
+      <li><i><b>Optional:</b></i> A version of the <a href="https://developer.microsoft.com/windows/downloads">Windows 10 SDK</a> (if you want to build the UWP projects)</li>
     </ul>
+        <p class="note"><a href="#HowToBuildCygwin">Cygwin</a> is required if using a version of MSVC other than the one
+        compatible with the supplied project files or if other compilers are used to build ICU. (e.g. GCC)</p>
 
     <p>The steps are:</p>
 
@@ -769,7 +780,12 @@
       "#HowToBuildWindowsCommandLine">command line note below</a> if you want to
       build from the command line instead.</li>
 
-      <li>Set the active platform to "Win32" or "x64" (See <a href="#HowToBuildWindowsPlatform">Windows platform note</a> below) 
+      <li>You may need to re-target the UWP projects to the version of the SDK that you have installed. In Visual Studio you can
+      right-click on the UWP projects and select the option 'Retarget SDK Version'. Note: You do not need to have a copy of 
+      the Windows 10 SDK installed in order to build the non-UWP projects in Visual Studio. If the SDK is not installed then the
+      UWP projects will simply not be loaded.</li>
+
+      <li>Set the active platform to "Win32" or "x64" (See <a href="#HowToBuildWindowsPlatform">Windows platform note</a> below)
       and configuration to "Debug" or "Release" (See <a href="#HowToBuildWindowsConfig">Windows configuration note</a> below).</li>
 
       <li>Choose the "Build" menu and select "Rebuild Solution". If you want to
@@ -788,15 +804,12 @@
        </li>
 	<li>So, for example:
 				 <br />
-		<tt><i>&lt;ICU&gt;</i>\source\allinone\icucheck.bat  <b>x86</b> <b>Debug</b>
-		</tt>
-				<br/>  or <br />
-		<tt><i>&lt;ICU&gt;</i>\source\allinone\icucheck.bat  <b>x86</b> <b>Release</b>
-		</tt>
-				<br/>  or <br />
-		<tt><i>&lt;ICU&gt;</i>\source\allinone\icucheck.bat  <b>x64</b> <b>Release</b>
-		</tt></li>
-	</ul>	
+		<samp><i>&lt;ICU&gt;</i>\source\allinone\icucheck.bat  <b>x86</b> <b>Debug</b></samp>
+				or
+		<samp><i>&lt;ICU&gt;</i>\source\allinone\icucheck.bat  <b>x86</b> <b>Release</b></samp>
+				or
+		<samp><i>&lt;ICU&gt;</i>\source\allinone\icucheck.bat  <b>x64</b> <b>Release</b></samp></li>
+	</ul>
 
          <h4>Running the Tests from within Visual Studio</h4>
 
@@ -830,15 +843,17 @@
     "HowToBuildWindowsCommandLine"><strong>Using MSDEV At The Command Line
     Note:</strong></a> You can build ICU from the command line. Assuming that you
     have properly installed Microsoft Visual C++ to support command line
-    execution, you can run the following command, 'devenv.com
-    <i>&lt;ICU&gt;</i>\source\allinone\allinone.sln /build "Win32|Release"'. You can also
-    use Cygwin with this compiler to build ICU, and you can refer to the <a href=
+    execution, you can run the following command to build the 32-bit Release version:
+    <code>'devenv.com <i>&lt;ICU&gt;</i>\source\allinone\allinone.sln /build "Release|Win32"'</code>.
+    Or to build the 64-bit Release version from the command line: 
+    <code>'devenv.com <i>&lt;ICU&gt;</i>\source\allinone\allinone.sln /build "Release|x64"'</code>.
+    <br />You can also use Cygwin with this compiler to build ICU, and you can refer to the <a href=
     "#HowToBuildCygwin">How To Build And Install On Windows with Cygwin</a>
     section for more details.</p>
-    
+
     <p><a name="HowToBuildWindowsPlatform" id=
     "HowToBuildWindowsPlatform"><strong>Setting Active Platform
-    Note:</strong></a> Even though you are able to select "x64" as the active platform, if your operating system is 
+    Note:</strong></a> Even though you are able to select "x64" as the active platform, if your operating system is
     not a 64 bit version of Windows, the build will fail. To set the active platform, two different possibilities are:</p>
 
     <ul>
@@ -865,7 +880,7 @@
     </ul>
 
     <p><a name="HowToBuildWindowsBatch" id="HowToBuildWindowsBatch"><strong>Batch
-    Configuration Note:</strong></a> If you want to build the Win32 and x64 platforms and 
+    Configuration Note:</strong></a> If you want to build the Win32 and x64 platforms and
     Debug and Release configurations at the same time, choose "Build" menu, and select "Batch
     Build...". Click the "Select All" button, and then click the "Rebuild"
     button.</p>
@@ -879,10 +894,10 @@
     <ul>
       <li>Microsoft Windows</li>
 
-      <li>Microsoft Visual C++ (when gcc isn't used).</li>
+      <li>Microsoft Visual C++ (from Visual Studio 2015 or newer, when gcc isn't used).</li>
 
       <li>
-        Cygwin with the following installed: 
+        Cygwin with the following installed:
 
         <ul>
           <li>bash</li>
@@ -914,11 +929,11 @@
       Visual C++ compiler will not work with a bash command prompt.</li>
 
       <li>If the computer isn't set up to use Visual C++ from the command line,
-      you need to run vcvars32.bat.<br />For example:<br />"<tt>C:\Program Files\Microsoft
-      Visual Studio 8\VC\bin\vcvars32.bat</tt>" can be used for 32-bit builds
-      <strong>or</strong> <br />"<tt>C:\Program Files (x86)\Microsoft Visual Studio
-      8\VC\bin\amd64\vcvarsamd64.bat</tt>" can be used for 64-bit builds on
-      Windows x64.</li>
+      you need to run vcvars32.bat.<br />For example:<br />
+      "<tt>C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\bin\vcvars32.bat</tt>"
+      can be used for 32-bit builds <strong>or</strong> <br />
+      "<tt>C:\Program Files (x86)\Microsoft Visual Studio 14\VC\bin\x86_amd64\vcvarsx86_amd64.bat</tt>"
+      can be used for 64-bit builds on Windows x64.</li>
 
       <li>Unzip the icu-XXXX.zip file into any convenient location. Using command
       line zip, type "unzip -a icu-XXXX.zip -d drive:\directory", or just use
@@ -947,7 +962,7 @@
     "HowToWindowsConfigureICU"><strong>Configuring ICU on Windows
     NOTE:</strong></a> </p>
     <p>
-    Ensure that the order of the PATH is MSVC, Cygwin, and then other PATHs. The configure 
+    Ensure that the order of the PATH is MSVC, Cygwin, and then other PATHs. The configure
     script needs certain tools in Cygwin (e.g. grep).
     </p>
     <p>
@@ -997,36 +1012,36 @@
 
     <ol>
       <li>Decompress the icu-<i>X</i>.<i>Y</i>.tgz (or
-      icu-<i>X</i>.<i>Y</i>.tar.gz) file. For example, <tt>"gunzip -d &lt;
-      icu-<i>X</i>.<i>Y</i>.tgz | tar xvf -"</tt></li>
+      icu-<i>X</i>.<i>Y</i>.tar.gz) file. For example, <samp>gunzip -d &lt; icu-<i>X</i>.<i>Y</i>.tgz | tar xvf -</samp></li>
 
-      <li>Change directory to the "icu/source".</li>
+      <li>Change directory to <code>icu/source</code>.
+          <samp>cd icu/source</samp>
+          </li>
 
-      <li>Run <span style='font-family: monospace;'>"chmod +x runConfigureICU configure install-sh"</span> because
-      these files may have the wrong permissions.</li>
+      <li>Some files may have the wrong permissions.<samp>chmod +x runConfigureICU configure install-sh</samp></li>
 
       <li>Run the <span style='font-family: monospace;'><a href="source/runConfigureICU">runConfigureICU</a></span>
       script for your platform. (See <a href="#HowToConfigureICU">configuration
       note</a> below).</li>
 
-      <li>Type <span style='font-family: monospace;'>"gmake"</span> (or "make" if GNU make is the default make on
+      <li>Now build: <samp>gmake</samp> (or just <code>make</code> if GNU make is the default make on
       your platform) to compile the libraries and all the data files. The proper
       name of the GNU make command is printed at the end of the configuration
-      run, as in "You must use gmake to compile ICU".
+      run, as in <tt>"You must use gmake to compile ICU"</tt>.
       <br/>
       Note that the compilation command output may be simplified on your platform.  If this is the case, you will see just:
-      <blockquote><p style='background-color: #ddd; font-family: monospace; font-size: small'>gcc ... stubdata.c</p></blockquote>
+      <tt>gcc ... stubdata.c</tt>
       rather than
-      <blockquote><p style='background-color: #ddd; font-family: monospace; font-size: small'>gcc  -DU_NO_DEFAULT_INCLUDE_UTF_HEADERS=1 -D_REENTRANT -I../common -DU_ATTRIBUTE_DEPRECATED= -O2 -Wall -std=c99 -pedantic -Wshadow -Wpointer-arith -Wmissing-prototypes -Wwrite-strings -c -DPIC -fPIC -o stubdata.o stubdata.c</p></blockquote>
-      .<br/>
+      <tt>gcc  -DU_NO_DEFAULT_INCLUDE_UTF_HEADERS=1 -D_REENTRANT -I../common -DU_ATTRIBUTE_DEPRECATED= -O2 -Wall -std=c99 -pedantic -Wshadow -Wpointer-arith -Wmissing-prototypes -Wwrite-strings -c -DPIC -fPIC -o stubdata.o stubdata.c</tt>
+      <br/>
       If you need to see the whole compilation line,  use <span style='font-family: monospace;'>"gmake VERBOSE=1"</span>. The full compilation line will print if an error occurs.
       </li>
 
-      <li>Optionally, type <span style='font-family: monospace;'>"gmake check"</span> to run the test suite, which
+      <li>Optionally,<samp>gmake check</samp> will run the test suite, which
       checks for ICU's functionality integrity (See <a href=
       "#HowToTestWithoutGmake">testing note</a> below).</li>
 
-      <li>Type <span style='font-family: monospace;'>"gmake install"</span> to install ICU. If you used the --prefix=
+      <li>To install, <samp>gmake install</samp> to install ICU. If you used the --prefix=
       option on configure or runConfigureICU, ICU will be installed to the
       directory you specified. (See <a href="#HowToInstallICU">installation
       note</a> below).</li>
@@ -1039,7 +1054,7 @@
     you may want to give runConfigureICU. If you are not using the
     runConfigureICU script, or your platform is not supported by the script, you
     may need to set your CC, CXX, CFLAGS and CXXFLAGS environment variables, and
-    type <tt>"./configure"</tt>. 
+    type <tt>"./configure"</tt>.
     HP-UX users, please see this <a href="#ImportantNotesHPUX">note regarding
     HP-UX multithreaded build issues</a> with newer compilers. Solaris users,
     please see this <a href="#ImportantNotesSolaris">note regarding Solaris
@@ -1127,15 +1142,21 @@
       configure option.</li>
 
       <li>The latest versions of z/OS use <a
-      href="http://www.ibm.com/support/docview.wss?uid=swg2120240">XPLINK
+      href="https://www.ibm.com/support/knowledgecenter/SSLTBW_2.2.0/com.ibm.zos.v2r2.cbcux01/oebind6.htm">XPLINK
       version (C128) of the C++ standard library</a> by default. You may see <a
-      href="http://www.ibm.com/support/docview.wss?uid=swg21376279">an
+      href="https://www.ibm.com/support/knowledgecenter/SSLTBW_2.2.0/com.ibm.zos.v2r2.cbcux01/oebind5.htm">an
       error</a> when running with XPLINK disabled. To avoid this error,
       set the following environment variable or similar:
 
 <pre><samp>export _CXX_PSYSIX="CEE.SCEELIB(C128N)":"CBC.SCLBSID(IOSTREAM,COMPLEX)"</samp></pre>
       </li>
-      
+
+      <li>When building ICU data, the heap size may need to be increased with the following
+      environment variable:
+
+<pre><samp>export _CEE_RUNOPTS="HEAPPOOLS(ON),HEAP(4M,1M,ANY,FREE,0K,4080)"</samp></pre>
+      </li>
+
 
       <li>The rest of the instructions for building and testing ICU on z/OS with
       UNIX System Services are the same as the <a href="#HowToBuildUNIX">How To
@@ -1235,7 +1256,8 @@ Data set name type  : PDS</samp>
       <li>ILE C/C++ Compiler installed on the system</li>
 
       <li>The latest IBM tools for Developers for IBM i &mdash;
-        <a href='http://www.ibm.com/servers/enable/site/porting/tools/'>http://www.ibm.com/servers/enable/site/porting/tools/</a>
+        <a href='https://www-356.ibm.com/partnerworld/wps/servlet/ContentHandler/pw_com_porting_tools_index'>https://www-356.ibm.com/partnerworld/wps/servlet/ContentHandler/pw_com_porting_tools_index</a>
+        <!-- formerly http://www.ibm.com/servers/enable/site/porting/tools/'>http://www.ibm.com/servers/enable/site/porting/tools/</a> -->
         <!-- formerly: http://www.ibm.com/servers/enable/site/porting/iseries/overview/gnu_utilities.html -->
       </li>
     </ul>
@@ -1246,47 +1268,59 @@ Data set name type  : PDS</samp>
 
     <ol>
       <li>
+        Copy the ICU source .tgz to the IBM i environment, as binary.
+        Also, copy the <a href='as_is/os400/unpax-icu.sh'>unpax-icu.sh</a> script into the same directory, as a text file.
+      </li>
+
+      <li>
         Create target library. This library will be the target for the
         resulting modules, programs and service programs. You will specify this
         library on the OUTPUTDIR environment variable.
 <pre>
 <samp>CRTLIB LIB(<i>libraryname</i>)
-ADDENVVAR ENVVAR(OUTPUTDIR) VALUE('<i>libraryname</i>') REPLACE(*YES)   </samp>
-</pre>
+ADDENVVAR ENVVAR(OUTPUTDIR) VALUE('<i>libraryname</i>') REPLACE(*YES)   </samp></pre>
       </li>
 
       <li>
       Set up the following environment variables and job characteristics in your build process
 <pre>
 <samp>ADDENVVAR ENVVAR(MAKE) VALUE('gmake') REPLACE(*YES)
-CHGJOB CCSID(37)</samp>
-</pre></li>
+CHGJOB CCSID(37)</samp></pre></li>
 
-      <li>Run <tt>'QSH'</tt></li>
-      
-      <li>Run: <br /><tt>export PATH=/QIBM/ProdData/DeveloperTools/qsh/bin:$PATH:/QOpenSys/usr/bin</tt>
+      <li>Fire up the QSH <i>(all subsequent commands are run inside the qsh session.)</i>
+        <pre><samp>qsh</samp></pre>
       </li>
 
-      <li>Run <b><tt>gzip -d</tt></b> on the ICU source code compressed tar archive
-      (icu-<i>X</i>.<i>Y</i>.tgz).</li>
+      <li>Set up the PATH: <pre><samp>export PATH=/QIBM/ProdData/DeveloperTools/qsh/bin:$PATH:/QOpenSys/usr/bin</samp></pre>
+      </li>
 
-      <li>Run <a href='as_is/os400/unpax-icu.sh'>unpax-icu.sh</a> on the tar file generated from the previous step.</li>
+      <li>Unpack the ICU source code archive:
+        <pre><samp>gzip -d icu-<i>X</i>.<i>Y</i>.tgz</samp></pre>
+          </li>
 
-      <li>Change your current directory to icu/as_is/os400.</li>
-      <li>Run <tt>qsh bldiculd.sh</tt> to build the program ICULD which ICU will use for linkage.</li>
+      <li>Run unpax-icu.sh on the tar file generated from the previous step.
+        <pre><samp>unpax-icu.sh icu.tar</samp></pre></li>
 
-      <li>Change your current directory to icu/source.</li>
+      <li>Build the program ICULD which ICU will use for linkage.
+        <pre><samp>cd icu/as_is/os400
+qsh bldiculd.sh
+cd ../../..</samp></pre>
+        </li>
 
-      <li>Run <tt>'./runConfigureICU IBMi'</tt>  (See <a href="#HowToConfigureICU">configuration
-      note</a> for details). Note that --with-data-packaging=archive and setting the --prefix are recommended, building in default (dll) mode is currently not supported.</li>
+      <li>Change into the 'source' directory, and configure ICU.  (See <a href="#HowToConfigureICU">configuration
+      note</a> for details). Note that --with-data-packaging=archive and setting the --prefix are recommended, building in default (dll) mode is currently not supported.
+        <pre><samp>cd icu/source
+./runConfigureICU IBMi --prefix=<i>/path/to/somewhere</i> --with-data-packaging=archive</samp></pre>
+</li>
 
-      <li>Run <tt>'gmake'</tt> to build ICU. (Do not use the -j option)</li>
+      <li>Build ICU. <i>(Note: Do not use the -j option)</i> <pre><samp>gmake</samp></pre></li>
 
-      <li>Run <tt>'gmake check QIBM_MULTI_THREADED=Y'</tt> to build and run the tests.
-      You can look at the <a href=
-      "http://publib.boulder.ibm.com/infocenter/iseries/v5r3/index.jsp?topic=/apis/concept4.htm">
+      <li>Test ICU. <pre><samp>gmake check</samp></pre>
+        (The <tt> QIBM_MULTI_THREADED=Y</tt> flag will be automatically applied to intltest -
+          you can look at the <a href=
+      "https://www.ibm.com/support/knowledgecenter/ssw_ibm_i_73/rzahw/rzahwceeco.htm">
       iSeries Information Center</a> for more details regarding the running of multiple threads
-      on IBM i.</li>
+      on IBM i.)</li>
     </ol>
 
       <!-- cross -->
@@ -1307,7 +1341,7 @@ CHGJOB CCSID(37)</samp>
 				<th align="left">/buildB</th><td>an empty directory, it will contain ICU built for B<br />(HaikuOS in this case)</td>
 			</tr>
 		</table>
-		
+
 		<ol>
 		<li>Check out or unpack the ICU source code into the /icu directory.You will have the directories /icu/source, etc.</li>
 		<li>Build ICU in /buildA normally (using runConfigureICU or configure):
@@ -1318,7 +1352,7 @@ gnumake
 		</li>
 		<li>Set PATH or other variables as needed, such as CPPFLAGS.</li>
 		<li>Build ICU in /buildB<br />
-			<div class="note"><b>Note:</b> "<code>--with-cross-build</code>" takes an absolute path.</div>
+			<p class="note">"<code>--with-cross-build</code>" takes an absolute path.</p>
 <pre class="samp">cd /buildB
 sh /icu/source/configure --host=<strong>i586-pc-haiku</strong> --with-cross-build=<strong>/buildA</strong>
 gnumake</pre>
@@ -1414,23 +1448,15 @@ gnumake</pre>
       </tr>
 
       <tr>
-        <td>Layout Engine</td>
-
-        <td>icule<i>XY</i>.dll</td>
-
-        <td>libicule.so.<i>XY</i>.<i>Z</i></td>
-
-        <td>An optional engine for doing font layout.</td>
-      </tr>
-
-      <tr>
         <td>Layout Extensions Engine</td>
 
         <td>iculx<i>XY</i>.dll</td>
 
         <td>libiculx.so.<i>XY</i>.<i>Z</i></td>
 
-        <td>An optional engine for doing font layout that uses parts of ICU.</td>
+        <td>An optional engine for doing paragraph layout that uses
+        parts of ICU.
+        HarfBuzz is required.</td>
       </tr>
 
       <tr>
@@ -1544,7 +1570,7 @@ gnumake</pre>
     <p>In order to avoid synchronization and threading issues, developers are
     <strong>suggested</strong> to strictly follow the compiling and linking
     guidelines for multithreaded applications, specified in the following
-    document from Sun Microsystems. Most notably, pay strict attention to the
+    SUn Solaris document available from Oracle. Most notably, pay strict attention to the
     following statements from Sun:</p>
 
     <blockquote>
@@ -1558,10 +1584,15 @@ gnumake</pre>
     <p>Failure to do this may cause spurious lock conflicts, recursive mutex
     failure, and deadlock.</p>
 
-    <p>Source: "<i>Solaris Multithreaded Programming Guide, Compiling and
-    Debugging</i>", Sun Microsystems, Inc., Apr 2004<br />
+    <p>Source: "<i>Multithreaded Programming Guide, Compiling and
+    Debugging</i>", Sun Microsystems, 2002 <br />
      <a href=
-    "http://docs.sun.com/app/docs/doc/816-5137/6mba5vpke?a=view">http://docs.sun.com/app/docs/doc/816-5137/6mba5vpke?a=view</a></p>
+    "https://docs.oracle.com/cd/E19683-01/806-6867/compile-74765/index.html">https://docs.oracle.com/cd/E19683-01/806-6867/compile-74765/index.html</a></p>
+
+    <p>Note, a version of that chapter from a 2008 document update covering both Solaris 9
+    and Solaris 10 is available here:<br />
+     <a href=
+    "http://docs.oracle.com/cd/E19253-01/816-5137/compile-94179/index.html">http://docs.oracle.com/cd/E19253-01/816-5137/compile-94179/index.html</a></p>
 
     <h3><a name="ImportantNotesWindows" href="#ImportantNotesWindows" id=
     "ImportantNotesWindows">Windows Platform</a></h3>
@@ -1702,7 +1733,7 @@ gnumake</pre>
          <strong>unicode/p<i>XXXX</i>.h</strong> (others: pwin32.h, ppalmos.h,
         ..): Platform-dependent typedefs and defines:<br />
         <br />
-         
+
 
         <ul>
           <li>Generic types like UBool, int8_t, int16_t, int32_t, int64_t,
@@ -1720,7 +1751,7 @@ gnumake</pre>
         <strong>unicode/putil.h, putil.c</strong>: platform-dependent
         implementations of various functions that are platform dependent:<br />
         <br />
-         
+
 
         <ul>
           <li>uprv_isNaN, uprv_isInfinite, uprv_getNaN and uprv_getInfinity for
@@ -1761,13 +1792,9 @@ gnumake</pre>
       these #ifdef's can cause testing problems for your platform.</li>
     </ul>
     <hr />
-
-    <p>Copyright &copy; 1997-2012 International Business Machines Corporation and
-    others. All Rights Reserved.<br />
-     IBM Globalization Center of Competency - San Jos&eacute;<br />
-     4400 North First Street<br />
-     San Jos&eacute;, CA 95134<br />
-     USA</p>
+    <p> Copyright &copy; 2016 and later: Unicode, Inc. and others. License &amp; terms of use:
+    <a href="http://www.unicode.org/copyright.html">http://www.unicode.org/copyright.html</a><br/>
+    Copyright &copy; 1997-2016 International Business Machines Corporation and  others.
+    All Rights Reserved.</p>
   </body>
 </html>
-

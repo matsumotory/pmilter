@@ -1,16 +1,17 @@
+// © 2016 and later: Unicode, Inc. and others.
+// License & terms of use: http://www.unicode.org/copyright.html
 /*
 **********************************************************************
-* Copyright (c) 2002-2009, International Business Machines
+* Copyright (c) 2002-2016, International Business Machines
 * Corporation and others.  All Rights Reserved.
 **********************************************************************
 */
 #include "unicode/uset.h"
 #include "unicode/ustring.h"
 #include "cintltst.h"
+#include "cmemory.h"
 #include <stdlib.h>
 #include <string.h>
-
-#define LENGTHOF(array) (int32_t)(sizeof(array)/sizeof((array)[0]))
 
 #define TEST(x) addTest(root, &x, "uset/" # x)
 
@@ -61,19 +62,19 @@ static void Testj2269() {
 }
 
 static const UChar PAT[] = {91,97,45,99,123,97,98,125,93,0}; /* "[a-c{ab}]" */
-static const int32_t PAT_LEN = (sizeof(PAT) / sizeof(PAT[0])) - 1;
+static const int32_t PAT_LEN = UPRV_LENGTHOF(PAT) - 1;
 
 static const UChar PAT_lb[] = {0x6C, 0x62, 0}; /* "lb" */
-static const int32_t PAT_lb_LEN = (sizeof(PAT_lb) / sizeof(PAT_lb[0])) - 1;
+static const int32_t PAT_lb_LEN = UPRV_LENGTHOF(PAT_lb) - 1;
 
 static const UChar VAL_SP[] = {0x53, 0x50, 0}; /* "SP" */
-static const int32_t VAL_SP_LEN = (sizeof(VAL_SP) / sizeof(VAL_SP[0])) - 1;
+static const int32_t VAL_SP_LEN = UPRV_LENGTHOF(VAL_SP) - 1;
 
 static const UChar STR_bc[] = {98,99,0}; /* "bc" */
-static const int32_t STR_bc_LEN = (sizeof(STR_bc) / sizeof(STR_bc[0])) - 1;
+static const int32_t STR_bc_LEN = UPRV_LENGTHOF(STR_bc) - 1;
 
 static const UChar STR_ab[] = {97,98,0}; /* "ab" */
-static const int32_t STR_ab_LEN = (sizeof(STR_ab) / sizeof(STR_ab[0])) - 1;
+static const int32_t STR_ab_LEN = UPRV_LENGTHOF(STR_ab) - 1;
 
 /**
  * Basic API test for uset.x
@@ -492,7 +493,7 @@ TestSerialized() {
         return;
     }
 
-    length=uset_serialize(set, buffer, LENGTHOF(buffer), &errorCode);
+    length=uset_serialize(set, buffer, UPRV_LENGTHOF(buffer), &errorCode);
     if(U_FAILURE(errorCode)) {
         log_err("unable to uset_serialize([:Cf:]) - %s\n", u_errorName(errorCode));
         uset_close(set);

@@ -1,6 +1,8 @@
+// © 2016 and later: Unicode, Inc. and others.
+// License & terms of use: http://www.unicode.org/copyright.html
 /*
 ******************************************************************************
-* Copyright (C) 2009-2010, International Business Machines Corporation and
+* Copyright (C) 2009-2012, International Business Machines Corporation and
 * others. All Rights Reserved.
 ******************************************************************************
 *   Date        Name        Description
@@ -17,8 +19,6 @@
 #include "uvectr32.h"
 
 U_NAMESPACE_BEGIN
-
-UOBJECT_DEFINE_NO_RTTI_IMPLEMENTATION(FieldPositionIterator)
 
 FieldPositionIterator::~FieldPositionIterator() {
   delete data;
@@ -62,7 +62,10 @@ void FieldPositionIterator::setData(UVector32 *adopt, UErrorCode& status) {
   // Verify that adopt has valid data, and update status if it doesn't.
   if (U_SUCCESS(status)) {
     if (adopt) {
-      if ((adopt->size() % 3) != 0) {
+      if (adopt->size() == 0) {
+        delete adopt;
+        adopt = NULL;
+      } else if ((adopt->size() % 3) != 0) {
         status = U_ILLEGAL_ARGUMENT_ERROR;
       } else {
         for (int i = 1; i < adopt->size(); i += 3) {

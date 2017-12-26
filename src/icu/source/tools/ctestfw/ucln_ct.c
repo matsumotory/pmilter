@@ -1,6 +1,8 @@
+// © 2016 and later: Unicode, Inc. and others.
+// License & terms of use: http://www.unicode.org/copyright.html
 /********************************************************************
  * COPYRIGHT:
- * Copyright (c) 2007-2010, International Business Machines Corporation and
+ * Copyright (c) 2007-2013, International Business Machines Corporation and
  * others. All Rights Reserved.
  ********************************************************************/
 
@@ -9,8 +11,8 @@
 #define UCLN_TYPE UCLN_CTESTFW
 #include "ucln_imp.h"
 
-int dummyFunction(void);
-int dummyFunction(void)
+int uprv_dummyFunction_CT(void);
+int uprv_dummyFunction_CT(void)
 {
   /* this is here to prevent the compiler from complaining about an empty file */
   return 0;

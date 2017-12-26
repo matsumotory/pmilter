@@ -1,6 +1,8 @@
+// © 2016 and later: Unicode, Inc. and others.
+// License & terms of use: http://www.unicode.org/copyright.html
 /********************************************************************
  * COPYRIGHT: 
- * Copyright (c) 1997-2011, International Business Machines Corporation and
+ * Copyright (c) 1997-2016, International Business Machines Corporation and
  * others. All Rights Reserved.
  ********************************************************************/
 
@@ -11,6 +13,7 @@
 #include "unicode/uchar.h"
 #include "unicode/ustring.h"
 #include "unicode/locid.h"
+#include "unicode/strenum.h"
 #include "unicode/ucnv.h"
 #include "unicode/uenum.h"
 #include "unicode/utf16.h"
@@ -25,48 +28,43 @@ using namespace std;
 
 #endif
 
-#define LENGTHOF(array) (int32_t)((sizeof(array)/sizeof((array)[0])))
-
 UnicodeStringTest::~UnicodeStringTest() {}
+
+extern IntlTest *createStringCaseTest();
 
 void UnicodeStringTest::runIndexedTest( int32_t index, UBool exec, const char* &name, char *par)
 {
     if (exec) logln("TestSuite UnicodeStringTest: ");
-    switch (index) {
-        case 0:
-            name = "StringCaseTest";
-            if (exec) {
-                logln("StringCaseTest---"); logln("");
-                StringCaseTest test;
-                callTest(test, par);
-            }
-            break;
-        case 1: name = "TestBasicManipulation"; if (exec) TestBasicManipulation(); break;
-        case 2: name = "TestCompare"; if (exec) TestCompare(); break;
-        case 3: name = "TestExtract"; if (exec) TestExtract(); break;
-        case 4: name = "TestRemoveReplace"; if (exec) TestRemoveReplace(); break;
-        case 5: name = "TestSearching"; if (exec) TestSearching(); break;
-        case 6: name = "TestSpacePadding"; if (exec) TestSpacePadding(); break;
-        case 7: name = "TestPrefixAndSuffix"; if (exec) TestPrefixAndSuffix(); break;
-        case 8: name = "TestFindAndReplace"; if (exec) TestFindAndReplace(); break;
-        case 9: name = "TestBogus"; if (exec) TestBogus(); break;
-        case 10: name = "TestReverse"; if (exec) TestReverse(); break;
-        case 11: name = "TestMiscellaneous"; if (exec) TestMiscellaneous(); break;
-        case 12: name = "TestStackAllocation"; if (exec) TestStackAllocation(); break;
-        case 13: name = "TestUnescape"; if (exec) TestUnescape(); break;
-        case 14: name = "TestCountChar32"; if (exec) TestCountChar32(); break;
-        case 15: name = "TestStringEnumeration"; if (exec) TestStringEnumeration(); break;
-        case 16: name = "TestNameSpace"; if (exec) TestNameSpace(); break;
-        case 17: name = "TestUTF32"; if (exec) TestUTF32(); break;
-        case 18: name = "TestUTF8"; if (exec) TestUTF8(); break;
-        case 19: name = "TestReadOnlyAlias"; if (exec) TestReadOnlyAlias(); break;
-        case 20: name = "TestAppendable"; if (exec) TestAppendable(); break;
-        case 21: name = "TestUnicodeStringImplementsAppendable"; if (exec) TestUnicodeStringImplementsAppendable(); break;
-        case 22: name = "TestSizeofUnicodeString"; if (exec) TestSizeofUnicodeString(); break;
-        case 23: name = "TestStartsWithAndEndsWithNulTerminated"; if (exec) TestStartsWithAndEndsWithNulTerminated(); break;
-
-        default: name = ""; break; //needed to end loop
-    }
+    TESTCASE_AUTO_BEGIN;
+    TESTCASE_AUTO_CREATE_CLASS(StringCaseTest);
+    TESTCASE_AUTO(TestBasicManipulation);
+    TESTCASE_AUTO(TestCompare);
+    TESTCASE_AUTO(TestExtract);
+    TESTCASE_AUTO(TestRemoveReplace);
+    TESTCASE_AUTO(TestSearching);
+    TESTCASE_AUTO(TestSpacePadding);
+    TESTCASE_AUTO(TestPrefixAndSuffix);
+    TESTCASE_AUTO(TestFindAndReplace);
+    TESTCASE_AUTO(TestBogus);
+    TESTCASE_AUTO(TestReverse);
+    TESTCASE_AUTO(TestMiscellaneous);
+    TESTCASE_AUTO(TestStackAllocation);
+    TESTCASE_AUTO(TestUnescape);
+    TESTCASE_AUTO(TestCountChar32);
+    TESTCASE_AUTO(TestStringEnumeration);
+    TESTCASE_AUTO(TestNameSpace);
+    TESTCASE_AUTO(TestUTF32);
+    TESTCASE_AUTO(TestUTF8);
+    TESTCASE_AUTO(TestReadOnlyAlias);
+    TESTCASE_AUTO(TestAppendable);
+    TESTCASE_AUTO(TestUnicodeStringImplementsAppendable);
+    TESTCASE_AUTO(TestSizeofUnicodeString);
+    TESTCASE_AUTO(TestStartsWithAndEndsWithNulTerminated);
+    TESTCASE_AUTO(TestMoveSwap);
+    TESTCASE_AUTO(TestUInt16Pointers);
+    TESTCASE_AUTO(TestWCharPointers);
+    TESTCASE_AUTO(TestNullPointers);
+    TESTCASE_AUTO_END;
 }
 
 void
@@ -113,9 +111,9 @@ UnicodeStringTest::TestBasicManipulation()
         errln("operator+=() failed:  expected \"" + expectedValue + "\"\n,got \"" + test2 + "\"");
     
     if (test1.length() != 70)
-        errln("length() failed: expected 70, got " + test1.length());
+        errln(UnicodeString("length() failed: expected 70, got ") + test1.length());
     if (test2.length() != 30)
-        errln("length() failed: expected 30, got " + test2.length());
+        errln(UnicodeString("length() failed: expected 30, got ") + test2.length());
 
     UnicodeString test3;
     test3.append((UChar32)0x20402);
@@ -123,7 +121,7 @@ UnicodeStringTest::TestBasicManipulation()
         errln((UnicodeString)"append failed for UChar32, expected \"\\\\ud841\\\\udc02\", got " + prettify(test3));
     }
     if(test3.length() != 2){
-        errln("append or length failed for UChar32, expected 2, got " + test3.length());
+        errln(UnicodeString("append or length failed for UChar32, expected 2, got ") + test3.length());
     }
     test3.append((UChar32)0x0074);
     if(test3 != CharsToUnicodeString("\\uD841\\uDC02t")){
@@ -199,9 +197,9 @@ UnicodeStringTest::TestBasicManipulation()
         }
 
         UChar buffer[10]={ 0x61, 0x62, 0x20ac, 0xd900, 0xdc05, 0,   0x62, 0xffff, 0xdbff, 0xdfff };
-        UnicodeString s, t(buffer, -1, LENGTHOF(buffer));
+        UnicodeString s, t(buffer, -1, UPRV_LENGTHOF(buffer));
 
-        if(s.setTo(buffer, -1, LENGTHOF(buffer)).length()!=u_strlen(buffer)) {
+        if(s.setTo(buffer, -1, UPRV_LENGTHOF(buffer)).length()!=u_strlen(buffer)) {
             errln("UnicodeString.setTo(buffer, length, capacity) does not work with length==-1");
         }
         if(t.length()!=u_strlen(buffer)) {
@@ -216,11 +214,11 @@ UnicodeStringTest::TestBasicManipulation()
         }
 
         buffer[u_strlen(buffer)]=0xe4;
-        UnicodeString u(buffer, -1, LENGTHOF(buffer));
-        if(s.setTo(buffer, -1, LENGTHOF(buffer)).length()!=LENGTHOF(buffer)) {
+        UnicodeString u(buffer, -1, UPRV_LENGTHOF(buffer));
+        if(s.setTo(buffer, -1, UPRV_LENGTHOF(buffer)).length()!=UPRV_LENGTHOF(buffer)) {
             errln("UnicodeString.setTo(buffer without NUL, length, capacity) does not work with length==-1");
         }
-        if(u.length()!=LENGTHOF(buffer)) {
+        if(u.length()!=UPRV_LENGTHOF(buffer)) {
             errln("UnicodeString(buffer without NUL, length, capacity) does not work with length==-1");
         }
 
@@ -243,7 +241,7 @@ UnicodeStringTest::TestBasicManipulation()
         static const UChar utf16[]={ 0x61, 0xE4, 0xDF, 0x4E00 };
         UnicodeString from8a = UnicodeString((const char *)utf8);
         UnicodeString from8b = UnicodeString((const char *)utf8, (int32_t)sizeof(utf8)-1);
-        UnicodeString from16(FALSE, utf16, LENGTHOF(utf16));
+        UnicodeString from16(FALSE, utf16, UPRV_LENGTHOF(utf16));
         if(from8a != from16 || from8b != from16) {
             errln("UnicodeString(const char * U_CHARSET_IS_UTF8) failed");
         }
@@ -365,11 +363,11 @@ UnicodeStringTest::TestCompare()
         UnicodeString u[20]; // must be at least as long as strings[]
         int32_t i;
 
-        for(i=0; i<(int32_t)(sizeof(strings)/sizeof(strings[0])); ++i) {
+        for(i=0; i<UPRV_LENGTHOF(strings); ++i) {
             u[i]=UnicodeString(TRUE, strings[i], -1);
         }
 
-        for(i=0; i<(int32_t)(sizeof(strings)/sizeof(strings[0])-1); ++i) {
+        for(i=0; i<UPRV_LENGTHOF(strings)-1; ++i) {
             if(u[i].compareCodePointOrder(u[i+1])>=0 || u[i].compareCodePointOrder(0, INT32_MAX, u[i+1].getBuffer())>=0) {
                 errln("error: UnicodeString::compareCodePointOrder() fails for string %d and the following one\n", i);
             }
@@ -721,14 +719,15 @@ UnicodeStringTest::TestSearching()
           (startPos = test1.indexOf(test2, startPos)) != -1 ? (++occurrences, startPos += 4) : 0)
         ;
     if (occurrences != 6)
-        errln("indexOf failed: expected to find 6 occurrences, found " + occurrences);
-    
+        errln(UnicodeString("indexOf failed: expected to find 6 occurrences, found ") + occurrences);
+
     for ( occurrences = 0, startPos = 10;
           startPos != -1 && startPos < test1.length();
           (startPos = test1.indexOf(test2, startPos)) != -1 ? (++occurrences, startPos += 4) : 0)
         ;
     if (occurrences != 4)
-        errln("indexOf with starting offset failed: expected to find 4 occurrences, found " + occurrences);
+        errln(UnicodeString("indexOf with starting offset failed: "
+                            "expected to find 4 occurrences, found ") + occurrences);
 
     int32_t endPos = 28;
     for ( occurrences = 0, startPos = 5;
@@ -736,7 +735,8 @@ UnicodeStringTest::TestSearching()
           (startPos = test1.indexOf(test2, startPos, endPos - startPos)) != -1 ? (++occurrences, startPos += 4) : 0)
         ;
     if (occurrences != 4)
-        errln("indexOf with starting and ending offsets failed: expected to find 4 occurrences, found " + occurrences);
+        errln(UnicodeString("indexOf with starting and ending offsets failed: "
+                            "expected to find 4 occurrences, found ") + occurrences);
 
     //using UChar32 string
     for ( startPos=0, occurrences=0;
@@ -751,7 +751,7 @@ UnicodeStringTest::TestSearching()
           (startPos = test3.indexOf(test4, startPos)) != -1 ? (++occurrences, startPos += 2) : 0)
         ;
     if (occurrences != 2)
-        errln("indexOf failed: expected to find 2 occurrences, found " + occurrences);
+        errln(UnicodeString("indexOf failed: expected to find 2 occurrences, found ") + occurrences);
     //---
 
     for ( occurrences = 0, startPos = 0;
@@ -759,21 +759,24 @@ UnicodeStringTest::TestSearching()
           (startPos = test1.indexOf(testChar, startPos)) != -1 ? (++occurrences, startPos += 1) : 0)
         ;
     if (occurrences != 16)
-        errln("indexOf with character failed: expected to find 16 occurrences, found " + occurrences);
+        errln(UnicodeString("indexOf with character failed: "
+                            "expected to find 16 occurrences, found ") + occurrences);
 
     for ( occurrences = 0, startPos = 10;
           startPos != -1 && startPos < test1.length();
           (startPos = test1.indexOf(testChar, startPos)) != -1 ? (++occurrences, startPos += 1) : 0)
         ;
     if (occurrences != 12)
-        errln("indexOf with character & start offset failed: expected to find 12 occurrences, found " + occurrences);
+        errln(UnicodeString("indexOf with character & start offset failed: "
+                            "expected to find 12 occurrences, found ") + occurrences);
 
     for ( occurrences = 0, startPos = 5, endPos = 28;
           startPos != -1 && startPos < test1.length();
           (startPos = test1.indexOf(testChar, startPos, endPos - startPos)) != -1 ? (++occurrences, startPos += 1) : 0)
         ;
     if (occurrences != 10)
-        errln("indexOf with character & start & end offsets failed: expected to find 10 occurrences, found " + occurrences);
+        errln(UnicodeString("indexOf with character & start & end offsets failed: "
+                            "expected to find 10 occurrences, found ") + occurrences);
 
     //testing for UChar32
     UnicodeString subString;
@@ -816,14 +819,16 @@ UnicodeStringTest::TestSearching()
           (startPos = test1.lastIndexOf(test2, 5, startPos - 5)) != -1 ? ++occurrences : 0)
         ;
     if (occurrences != 4)
-        errln("lastIndexOf with starting and ending offsets failed: expected to find 4 occurrences, found " + occurrences);
+        errln(UnicodeString("lastIndexOf with starting and ending offsets failed: "
+                            "expected to find 4 occurrences, found ") + occurrences);
 
     for ( occurrences = 0, startPos = 32;
           startPos != -1;
           (startPos = test1.lastIndexOf(testChar, 5, startPos - 5)) != -1 ? ++occurrences : 0)
         ;
     if (occurrences != 11)
-        errln("lastIndexOf with character & start & end offsets failed: expected to find 11 occurrences, found " + occurrences);
+        errln(UnicodeString("lastIndexOf with character & start & end offsets failed: "
+                            "expected to find 11 occurrences, found ") + occurrences);
 
     //testing UChar32
     startPos=test3.length();
@@ -1167,6 +1172,14 @@ UnicodeStringTest::TestMiscellaneous()
         errln("UnicodeString(shared buffer).remove().getTerminatedBuffer() "
               "modified another copy of the string!");
     }
+
+    // ticket #9740
+    test1.setTo(TRUE, ucs, 3);
+    assertEquals("length of read-only alias", 3, test1.length());
+    test1.trim();
+    assertEquals("length of read-only alias after trim()", 2, test1.length());
+    assertEquals("length of terminated buffer of read-only alias + trim()",
+                 2, u_strlen(test1.getTerminatedBuffer()));
 }
 
 void
@@ -1395,7 +1408,7 @@ UnicodeStringTest::TestCountChar32(void) {
         0xd804, 0xdc04, 0xd805, 0xdc05,
         0x67
     };
-    UnicodeString string(str, LENGTHOF(str));
+    UnicodeString string(str, UPRV_LENGTHOF(str));
     int32_t start, length, number;
 
     /* test hasMoreChar32Than() */
@@ -1544,7 +1557,10 @@ UnicodeStringTest::TestBogus() {
 
     // writable alias to another string's buffer: very bad idea, just convenient for this test
     test3.setToBogus();
-    if(!test3.isBogus() || test3.setTo((UChar *)test1.getBuffer(), test1.length(), test1.getCapacity()).isBogus() || test3!=test1) {
+    if(!test3.isBogus() ||
+            test3.setTo(const_cast<UChar *>(test1.getBuffer()),
+                        test1.length(), test1.getCapacity()).isBogus() ||
+            test3!=test1) {
         errln("bogus.setTo(writable alias) failed");
     }
 
@@ -1599,8 +1615,8 @@ UnicodeStringTest::TestBogus() {
     // test that NULL primitive input string values are treated like
     // empty strings, not errors (bogus)
     test2.setTo((UChar32)0x10005);
-    if(test2.insert(1, NULL, 1).length()!=2) {
-        errln("UniStr.insert(...NULL...) should not modify the string but does");
+    if(test2.insert(1, nullptr, 1).length()!=2) {
+        errln("UniStr.insert(...nullptr...) should not modify the string but does");
     }
 
     UErrorCode errorCode=U_ZERO_ERROR;
@@ -1649,11 +1665,11 @@ public:
     TestEnumeration() : i(0) {}
 
     virtual int32_t count(UErrorCode& /*status*/) const {
-        return LENGTHOF(testEnumStrings);
+        return UPRV_LENGTHOF(testEnumStrings);
     }
 
     virtual const UnicodeString *snext(UErrorCode &status) {
-        if(U_SUCCESS(status) && i<LENGTHOF(testEnumStrings)) {
+        if(U_SUCCESS(status) && i<UPRV_LENGTHOF(testEnumStrings)) {
             unistr=UnicodeString(testEnumStrings[i++], "");
             return &unistr;
         }
@@ -1675,7 +1691,7 @@ public:
 private:
     static const char fgClassID;
 
-    int32_t i, length;
+    int32_t i;
 };
 
 const char TestEnumeration::fgClassID=0;
@@ -1691,7 +1707,7 @@ UnicodeStringTest::TestStringEnumeration() {
     const char *pc;
 
     // test the next() default implementation and ensureCharsCapacity()
-    for(i=0; i<LENGTHOF(testEnumStrings); ++i) {
+    for(i=0; i<UPRV_LENGTHOF(testEnumStrings); ++i) {
         status=U_ZERO_ERROR;
         pc=ten.next(&length, status);
         s=UnicodeString(testEnumStrings[i], "");
@@ -1706,7 +1722,7 @@ UnicodeStringTest::TestStringEnumeration() {
 
     // test the unext() default implementation
     ten.reset(status);
-    for(i=0; i<LENGTHOF(testEnumStrings); ++i) {
+    for(i=0; i<UPRV_LENGTHOF(testEnumStrings); ++i) {
         status=U_ZERO_ERROR;
         pu=ten.unext(&length, status);
         s=UnicodeString(testEnumStrings[i], "");
@@ -1735,7 +1751,7 @@ UnicodeStringTest::TestStringEnumeration() {
     }
     
     // test  uenum_next()
-    for(i=0; i<LENGTHOF(testEnumStrings); ++i) {
+    for(i=0; i<UPRV_LENGTHOF(testEnumStrings); ++i) {
         status=U_ZERO_ERROR;
         pc=uenum_next(uten, &length, &status);
         if(U_FAILURE(status) || pc==NULL || strcmp(pc, testEnumStrings[i]) != 0) {
@@ -1749,7 +1765,7 @@ UnicodeStringTest::TestStringEnumeration() {
 
     // test the uenum_unext()
     uenum_reset(uten, &status);
-    for(i=0; i<LENGTHOF(testEnumStrings); ++i) {
+    for(i=0; i<UPRV_LENGTHOF(testEnumStrings); ++i) {
         status=U_ZERO_ERROR;
         pu=uenum_unext(uten, &length, &status);
         s=UnicodeString(testEnumStrings[i], "");
@@ -1776,7 +1792,7 @@ namespace bogus {
     public:
         enum EInvariant { kInvariant };
         UnicodeString() : i(1) {}
-        UnicodeString(UBool /*isTerminated*/, const UChar * /*text*/, int32_t textLength) : i(textLength) {}
+        UnicodeString(UBool /*isTerminated*/, const UChar * /*text*/, int32_t textLength) : i(textLength) {(void)i;}
         UnicodeString(const char * /*src*/, int32_t length, enum EInvariant /*inv*/
 ) : i(length) {}
     private:
@@ -1814,8 +1830,8 @@ UnicodeStringTest::TestUTF32() {
         0x41, 0xfffd, 0x61, 0xfffd, 0xfffd, 0xfffd, 0x5a, 0xd900, 0xdc00, 0x7a,
         0xd800, 0xdc00, 0xd840, 0xdc00, 0xdb40, 0xdc00, 0xdbff, 0xdfff
     };
-    UnicodeString from32 = UnicodeString::fromUTF32(utf32, LENGTHOF(utf32));
-    UnicodeString expected(FALSE, expected_utf16, LENGTHOF(expected_utf16));
+    UnicodeString from32 = UnicodeString::fromUTF32(utf32, UPRV_LENGTHOF(utf32));
+    UnicodeString expected(FALSE, expected_utf16, UPRV_LENGTHOF(expected_utf16));
     if(from32 != expected) {
         errln("UnicodeString::fromUTF32() did not create the expected string.");
     }
@@ -1829,9 +1845,9 @@ UnicodeStringTest::TestUTF32() {
     UChar32 result32[16];
     UErrorCode errorCode = U_ZERO_ERROR;
     int32_t length32 =
-        UnicodeString(FALSE, utf16, LENGTHOF(utf16)).
-        toUTF32(result32, LENGTHOF(result32), errorCode);
-    if( length32 != LENGTHOF(expected_utf32) ||
+        UnicodeString(FALSE, utf16, UPRV_LENGTHOF(utf16)).
+        toUTF32(result32, UPRV_LENGTHOF(result32), errorCode);
+    if( length32 != UPRV_LENGTHOF(expected_utf32) ||
         0 != uprv_memcmp(result32, expected_utf32, length32*4) ||
         result32[length32] != 0
     ) {
@@ -1865,26 +1881,24 @@ UnicodeStringTest::TestUTF8() {
         0xf3, 0xa0, 0x80, 0x80, 0xf4, 0x8f, 0xbf, 0xbf
     };
     static const UChar expected_utf16[] = {
-        0x41, 0xfffd,
-        0x61, 0xfffd,
-        0xfffd, 0x5a,
+        0x41, 0xfffd, 0xfffd, 0xfffd,
+        0x61, 0xfffd, 0xfffd, 0xfffd,
+        0xfffd,  0xfffd, 0xfffd, 0xfffd,0x5a,
         0xd900, 0xdc00, 0x7a,
         0xd800, 0xdc00, 0xd840, 0xdc00,
         0xdb40, 0xdc00, 0xdbff, 0xdfff
     };
     UnicodeString from8 = UnicodeString::fromUTF8(StringPiece((const char *)utf8, (int32_t)sizeof(utf8)));
-    UnicodeString expected(FALSE, expected_utf16, LENGTHOF(expected_utf16));
+    UnicodeString expected(FALSE, expected_utf16, UPRV_LENGTHOF(expected_utf16));
 
     if(from8 != expected) {
         errln("UnicodeString::fromUTF8(StringPiece) did not create the expected string.");
     }
-#if U_HAVE_STD_STRING
     std::string utf8_string((const char *)utf8, sizeof(utf8));
     UnicodeString from8b = UnicodeString::fromUTF8(utf8_string);
     if(from8b != expected) {
         errln("UnicodeString::fromUTF8(std::string) did not create the expected string.");
     }
-#endif
 
     static const UChar utf16[] = {
         0x41, 0xd900, 0x61, 0xdc00, 0x5a, 0xd900, 0xdc00, 0x7a, 0xd800, 0xdc00, 0xdbff, 0xdfff
@@ -1893,7 +1907,7 @@ UnicodeStringTest::TestUTF8() {
         0x41, 0xef, 0xbf, 0xbd, 0x61, 0xef, 0xbf, 0xbd, 0x5a, 0xf1, 0x90, 0x80, 0x80, 0x7a,
         0xf0, 0x90, 0x80, 0x80, 0xf4, 0x8f, 0xbf, 0xbf
     };
-    UnicodeString us(FALSE, utf16, LENGTHOF(utf16));
+    UnicodeString us(FALSE, utf16, UPRV_LENGTHOF(utf16));
 
     char buffer[64];
     TestCheckedArrayByteSink sink(buffer, (int32_t)sizeof(buffer));
@@ -1906,7 +1920,6 @@ UnicodeStringTest::TestUTF8() {
     if(!sink.calledFlush) {
         errln("UnicodeString::toUTF8(sink) did not sink.Flush().");
     }
-#if U_HAVE_STD_STRING
     // Initial contents for testing that toUTF8String() appends.
     std::string result8 = "-->";
     std::string expected8 = "-->" + std::string((const char *)expected_utf8, sizeof(expected_utf8));
@@ -1915,7 +1928,6 @@ UnicodeStringTest::TestUTF8() {
     if(result8r != expected8 || &result8r != &result8) {
         errln("UnicodeString::toUTF8String() did not create the expected string.");
     }
-#endif
 }
 
 // Test if this compiler supports Return Value Optimization of unnamed temporary objects.
@@ -2085,20 +2097,154 @@ UnicodeStringTest::TestUnicodeStringImplementsAppendable() {
 void
 UnicodeStringTest::TestSizeofUnicodeString() {
     // See the comments in unistr.h near the declaration of UnicodeString's fields.
+    // See the API comments for UNISTR_OBJECT_SIZE.
     size_t sizeofUniStr=sizeof(UnicodeString);
-    size_t expected;
-    switch(sizeof(void *)) {
-    case 4:
-        expected=32;
-        break;
-    case 8:
-        expected=40;
-        break;
-    default:
-        logln("This platform has neither 32-bit nor 64-bit pointers.");
-        return;
-    }
+    size_t expected=UNISTR_OBJECT_SIZE;
     if(expected!=sizeofUniStr) {
-        errln("sizeof(UnicodeString)=%d, expected %d", (int)sizeofUniStr, (int)expected);
+        // Possible cause: UNISTR_OBJECT_SIZE may not be a multiple of sizeof(pointer),
+        // of the compiler might add more internal padding than expected.
+        errln("sizeof(UnicodeString)=%d, expected UNISTR_OBJECT_SIZE=%d",
+              (int)sizeofUniStr, (int)expected);
     }
+    if(sizeofUniStr<32) {
+        errln("sizeof(UnicodeString)=%d < 32, probably too small", (int)sizeofUniStr);
+    }
+    // We assume that the entire UnicodeString object,
+    // minus the vtable pointer and 2 bytes for flags and short length,
+    // is available for internal storage of UChars.
+    int32_t expectedStackBufferLength=((int32_t)UNISTR_OBJECT_SIZE-sizeof(void *)-2)/U_SIZEOF_UCHAR;
+    UnicodeString s;
+    const UChar *emptyBuffer=s.getBuffer();
+    for(int32_t i=0; i<expectedStackBufferLength; ++i) {
+        s.append((UChar)0x2e);
+    }
+    const UChar *fullBuffer=s.getBuffer();
+    if(fullBuffer!=emptyBuffer) {
+        errln("unexpected reallocation when filling with assumed stack buffer size of %d",
+              expectedStackBufferLength);
+    }
+    const UChar *terminatedBuffer=s.getTerminatedBuffer();
+    if(terminatedBuffer==emptyBuffer) {
+        errln("unexpected keeping stack buffer when overfilling assumed stack buffer size of %d",
+              expectedStackBufferLength);
+    }
+}
+
+void
+UnicodeStringTest::TestMoveSwap() {
+    static const UChar abc[3] = { 0x61, 0x62, 0x63 };  // "abc"
+    UnicodeString s1(FALSE, abc, UPRV_LENGTHOF(abc));  // read-only alias
+    UnicodeString s2(100, 0x7a, 100);  // 100 * 'z' should be on the heap
+    UnicodeString s3("defg", 4, US_INV);  // in stack buffer
+    const UChar *p = s2.getBuffer();
+    s1.swap(s2);
+    if(s1.getBuffer() != p || s1.length() != 100 || s2.getBuffer() != abc || s2.length() != 3) {
+        errln("UnicodeString.swap() did not swap");
+    }
+    swap(s2, s3);
+    if(s2 != UNICODE_STRING_SIMPLE("defg") || s3.getBuffer() != abc || s3.length() != 3) {
+        errln("swap(UnicodeString) did not swap back");
+    }
+    UnicodeString s4;
+    s4.moveFrom(s1);
+    if(s4.getBuffer() != p || s4.length() != 100 || !s1.isBogus()) {
+        errln("UnicodeString.moveFrom(heap) did not move");
+    }
+    UnicodeString s5;
+    s5.moveFrom(s2);
+    if(s5 != UNICODE_STRING_SIMPLE("defg")) {
+        errln("UnicodeString.moveFrom(stack) did not move");
+    }
+    UnicodeString s6;
+    s6.moveFrom(s3);
+    if(s6.getBuffer() != abc || s6.length() != 3) {
+        errln("UnicodeString.moveFrom(alias) did not move");
+    }
+    infoln("TestMoveSwap() with rvalue references");
+    s1 = static_cast<UnicodeString &&>(s6);
+    if(s1.getBuffer() != abc || s1.length() != 3) {
+        errln("UnicodeString move assignment operator did not move");
+    }
+    UnicodeString s7(static_cast<UnicodeString &&>(s4));
+    if(s7.getBuffer() != p || s7.length() != 100 || !s4.isBogus()) {
+        errln("UnicodeString move constructor did not move");
+    }
+
+    // Move self assignment leaves the object valid but in an undefined state.
+    // Do it to make sure there is no crash,
+    // but do not check for any particular resulting value.
+    s1.moveFrom(s1);
+    s2.moveFrom(s2);
+    s3.moveFrom(s3);
+    s4.moveFrom(s4);
+    s5.moveFrom(s5);
+    s6.moveFrom(s6);
+    s7.moveFrom(s7);
+    // Simple copy assignment must work.
+    UnicodeString simple = UNICODE_STRING_SIMPLE("simple");
+    s1 = s6 = s4 = s7 = simple;
+    if(s1 != simple || s4 != simple || s6 != simple || s7 != simple) {
+        errln("UnicodeString copy after self-move did not work");
+    }
+}
+
+void
+UnicodeStringTest::TestUInt16Pointers() {
+    static const uint16_t carr[] = { 0x61, 0x62, 0x63, 0 };
+    uint16_t arr[4];
+
+    UnicodeString expected(u"abc");
+    assertEquals("abc from pointer", expected, UnicodeString(carr));
+    assertEquals("abc from pointer+length", expected, UnicodeString(carr, 3));
+    assertEquals("abc from read-only-alias pointer", expected, UnicodeString(TRUE, carr, 3));
+
+    UnicodeString alias(arr, 0, 4);
+    alias.append(u'a').append(u'b').append(u'c');
+    assertEquals("abc from writable alias", expected, alias);
+    assertEquals("buffer=abc from writable alias", expected, UnicodeString(arr, 3));
+
+    UErrorCode errorCode = U_ZERO_ERROR;
+    int32_t length = UnicodeString(u"def").extract(arr, 4, errorCode);
+    TEST_ASSERT_STATUS(errorCode);
+    assertEquals("def from extract()", UnicodeString(u"def"), UnicodeString(arr, length));
+}
+
+void
+UnicodeStringTest::TestWCharPointers() {
+#if U_SIZEOF_WCHAR_T==2
+    static const wchar_t carr[] = { 0x61, 0x62, 0x63, 0 };
+    wchar_t arr[4];
+
+    UnicodeString expected(u"abc");
+    assertEquals("abc from pointer", expected, UnicodeString(carr));
+    assertEquals("abc from pointer+length", expected, UnicodeString(carr, 3));
+    assertEquals("abc from read-only-alias pointer", expected, UnicodeString(TRUE, carr, 3));
+
+    UnicodeString alias(arr, 0, 4);
+    alias.append(u'a').append(u'b').append(u'c');
+    assertEquals("abc from writable alias", expected, alias);
+    assertEquals("buffer=abc from writable alias", expected, UnicodeString(arr, 3));
+
+    UErrorCode errorCode = U_ZERO_ERROR;
+    int32_t length = UnicodeString(u"def").extract(arr, 4, errorCode);
+    TEST_ASSERT_STATUS(errorCode);
+    assertEquals("def from extract()", UnicodeString(u"def"), UnicodeString(arr, length));
+#endif
+}
+
+void
+UnicodeStringTest::TestNullPointers() {
+    assertTrue("empty from nullptr", UnicodeString(nullptr).isEmpty());
+    assertTrue("empty from nullptr+length", UnicodeString(nullptr, 2).isEmpty());
+    assertTrue("empty from read-only-alias nullptr", UnicodeString(TRUE, nullptr, 3).isEmpty());
+
+    UnicodeString alias(nullptr, 4, 4);  // empty, no alias
+    assertTrue("empty from writable alias", alias.isEmpty());
+    alias.append(u'a').append(u'b').append(u'c');
+    UnicodeString expected(u"abc");
+    assertEquals("abc from writable alias", expected, alias);
+
+    UErrorCode errorCode = U_ZERO_ERROR;
+    UnicodeString(u"def").extract(nullptr, 0, errorCode);
+    assertEquals("buffer overflow extracting to nullptr", U_BUFFER_OVERFLOW_ERROR, errorCode);
 }

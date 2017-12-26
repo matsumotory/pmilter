@@ -1,12 +1,14 @@
+// © 2016 and later: Unicode, Inc. and others.
+// License & terms of use: http://www.unicode.org/copyright.html
 /*
 *******************************************************************************
 *
-*   Copyright (C) 2003-2012, International Business Machines
+*   Copyright (C) 2003-2014, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 *
 *******************************************************************************
 *   file name:  gencnvex.c
-*   encoding:   US-ASCII
+*   encoding:   UTF-8
 *   tab size:   8 (not used)
 *   indentation:4
 *
@@ -26,9 +28,6 @@
 #include "ucm.h"
 #include "makeconv.h"
 #include "genmbcs.h"
-
-#define LENGTHOF(array) (int32_t)(sizeof(array)/sizeof((array)[0]))
-
 
 static void
 CnvExtClose(NewConverter *cnvData);
@@ -606,7 +605,7 @@ prepareFromUMappings(UCMTable *table) {
             flag&=MBCS_FROM_U_EXT_MASK;
             m->f=flag;
         }
-        if(flag==0 || flag==1 || (flag==2 && m->bLen==1)) {
+        if(flag==0 || flag==1 || (flag==2 && m->bLen==1) || flag==4) {
             map[j++]=i;
 
             if(m->uLen>1) {
@@ -672,6 +671,8 @@ getFromUBytesValue(CnvExtData *extData, UCMTable *table, UCMapping *m) {
     value|=(uint32_t)m->bLen<<UCNV_EXT_FROM_U_LENGTH_SHIFT;
     if(m->f==0) {
         value|=UCNV_EXT_FROM_U_ROUNDTRIP_FLAG;
+    } else if(m->f==4) {
+        value|=UCNV_EXT_FROM_U_GOOD_ONE_WAY_FLAG;
     }
 
     /* calculate the real UTF-16 length (see recoding in prepareFromUMappings()) */
@@ -847,7 +848,7 @@ addFromUTrieEntry(CnvExtData *extData, UChar32 c, uint32_t value) {
 
         extData->stage1[i1]=(uint16_t)newBlock;
         extData->stage2Top=newBlock+MBCS_STAGE_2_BLOCK_SIZE;
-        if(extData->stage2Top>LENGTHOF(extData->stage2)) {
+        if(extData->stage2Top>UPRV_LENGTHOF(extData->stage2)) {
             fprintf(stderr, "error: too many stage 2 entries at U+%04x\n", (int)c);
             exit(U_MEMORY_ALLOCATION_ERROR);
         }
@@ -869,7 +870,7 @@ addFromUTrieEntry(CnvExtData *extData, UChar32 c, uint32_t value) {
         extData->stage2[i2]=(uint16_t)(newBlock>>UCNV_EXT_STAGE_2_LEFT_SHIFT);
 
         extData->stage3Top=newBlock+MBCS_STAGE_3_BLOCK_SIZE;
-        if(extData->stage3Top>LENGTHOF(extData->stage3)) {
+        if(extData->stage3Top>UPRV_LENGTHOF(extData->stage3)) {
             fprintf(stderr, "error: too many stage 3 entries at U+%04x\n", (int)c);
             exit(U_MEMORY_ALLOCATION_ERROR);
         }
@@ -913,7 +914,7 @@ addFromUTrieEntry(CnvExtData *extData, UChar32 c, uint32_t value) {
             }
         }
     } else {
-        if((i3b=extData->stage3bTop++)>=LENGTHOF(extData->stage3b)) {
+        if((i3b=extData->stage3bTop++)>=UPRV_LENGTHOF(extData->stage3b)) {
             fprintf(stderr, "error: too many stage 3b entries at U+%04x\n", (int)c);
             exit(U_MEMORY_ALLOCATION_ERROR);
         }

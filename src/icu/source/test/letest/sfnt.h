@@ -1,6 +1,8 @@
+// © 2016 and later: Unicode, Inc. and others.
+// License & terms of use: http://www.unicode.org/copyright.html
 /***************************************************************************
 *
-*   Copyright (C) 1998-2011, International Business Machines
+*   Copyright (C) 1998-2013, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 *
 ************************************************************************/
@@ -8,7 +10,7 @@
 #ifndef __SFNT_H
 #define __SFNT_H
 
-#include "LETypes.h"
+#include "layout/LETypes.h"
 
 U_NAMESPACE_USE
 

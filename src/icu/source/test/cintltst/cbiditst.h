@@ -1,10 +1,12 @@
+// © 2016 and later: Unicode, Inc. and others.
+// License & terms of use: http://www.unicode.org/copyright.html
 /********************************************************************
- * COPYRIGHT: 
- * Copyright (c) 1997-2011, International Business Machines Corporation and
+ * COPYRIGHT:
+ * Copyright (c) 1997-2016, International Business Machines Corporation and
  * others. All Rights Reserved.
  ********************************************************************/
 /*   file name:  cbiditst.h
-*   encoding:   US-ASCII
+*   encoding:   UTF-8
 *   tab size:   8 (not used)
 *   indentation:4
 *
@@ -24,9 +26,6 @@ extern "C" {
 #endif
 
 #define MAX_STRING_LENGTH 200
-
-/* length of an array */
-#define ARRAY_LENGTH(array) (sizeof(array)/sizeof(array[0]))
 
 /*  Comparing the description of the BiDi algorithm with this implementation
     is easier with the same names for the BiDi types in the code as there.
@@ -51,6 +50,10 @@ extern "C" {
 #define PDF U_POP_DIRECTIONAL_FORMAT
 #define NSM U_DIR_NON_SPACING_MARK
 #define BN  U_BOUNDARY_NEUTRAL
+#define FSI U_FIRST_STRONG_ISOLATE
+#define LRI U_LEFT_TO_RIGHT_ISOLATE
+#define RLI U_RIGHT_TO_LEFT_ISOLATE
+#define PDI U_POP_DIRECTIONAL_ISOLATE
 
 extern const char * const
 dirPropNames[U_CHAR_DIRECTION_COUNT];

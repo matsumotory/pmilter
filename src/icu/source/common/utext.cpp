@@ -1,12 +1,14 @@
+// © 2016 and later: Unicode, Inc. and others.
+// License & terms of use: http://www.unicode.org/copyright.html
 /*
 *******************************************************************************
 *
-*   Copyright (C) 2005-2012, International Business Machines
+*   Copyright (C) 2005-2016, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 *
 *******************************************************************************
 *   file name:  utext.cpp
-*   encoding:   US-ASCII
+*   encoding:   UTF-8
 *   tab size:   8 (not used)
 *   indentation:4
 *
@@ -516,8 +518,17 @@ utext_copy(UText *ut,
 
 U_CAPI UText * U_EXPORT2
 utext_clone(UText *dest, const UText *src, UBool deep, UBool readOnly, UErrorCode *status) {
-    UText *result;
-    result = src->pFuncs->clone(dest, src, deep, status);
+    if (U_FAILURE(*status)) {
+        return dest;
+    }
+    UText *result = src->pFuncs->clone(dest, src, deep, status);
+    if (U_FAILURE(*status)) {
+        return result;
+    }
+    if (result == NULL) {
+        *status = U_MEMORY_ALLOCATION_ERROR;
+        return result;
+    }
     if (readOnly) {
         utext_freeze(result);
     }
@@ -806,6 +817,11 @@ shallowTextClone(UText * dest, const UText * src, UErrorCode * status) {
     adjustPointer(dest, &dest->r, src);
     adjustPointer(dest, (const void **)&dest->chunkContents, src);
 
+    // The newly shallow-cloned UText does _not_ own the underlying storage for the text.
+    // (The source for the clone may or may not have owned the text.)
+
+    dest->providerProperties &= ~I32_FLAG(UTEXT_PROVIDER_OWNS_TEXT);
+
     return dest;
 }
 
@@ -831,9 +847,11 @@ U_CDECL_END
 //------------------------------------------------------------------------------
 
 // Chunk size.
-//     Must be less than 85, because of byte mapping from UChar indexes to native indexes.
+//     Must be less than 85 (256/3), because of byte mapping from UChar indexes to native indexes.
 //     Worst case is three native bytes to one UChar.  (Supplemenaries are 4 native bytes
 //     to two UChars.)
+//     The longest illegal byte sequence treated as a single error (and converted to U+FFFD)
+//     is a three-byte sequence (truncated four-byte sequence).
 //
 enum { UTF8_TEXT_CHUNK_SIZE=32 };
 
@@ -1016,6 +1034,7 @@ utf8TextAccess(UText *ut, int64_t index, UBool forward) {
             // Requested index is in this buffer.
             u8b = (UTF8Buf *)ut->p;   // the current buffer
             mapIndex = ix - u8b->toUCharsMapStart;
+            U_ASSERT(mapIndex < (int32_t)sizeof(UTF8Buf::mapToUChars));
             ut->chunkOffset = u8b->mapToUChars[mapIndex] - u8b->bufStartIdx;
             return TRUE;
 
@@ -1217,14 +1236,10 @@ fillForward:
                 int32_t  cIx      = srcIx;
                 int32_t  dIx      = destIx;
                 int32_t  dIxSaved = destIx;
-                U8_NEXT(s8, srcIx, strLen, c);
+                U8_NEXT_OR_FFFD(s8, srcIx, strLen, c);
                 if (c==0 && nulTerminated) {
                     srcIx--;
                     break;
-                }
-                if (c<0) {
-                    // Illegal UTF-8.  Replace with sub character.
-                    c = 0x0fffd;
                 }
 
                 U16_APPEND_UNSAFE(buf, destIx, c);
@@ -1286,6 +1301,10 @@ fillReverse:
         // Can only do this if the incoming index is somewhere in the interior of the string.
         //   If index is at the end, there is no character there to look at.
         if (ix != ut->b) {
+            // Note: this function will only move the index back if it is on a trail byte
+            //       and there is a preceding lead byte and the sequence from the lead 
+            //       through this trail could be part of a valid UTF-8 sequence
+            //       Otherwise the index remains unchanged.
             U8_SET_CP_START(s8, 0, ix);
         }
 
@@ -1299,7 +1318,10 @@ fillReverse:
         UChar   *buf = u8b->buf;
         uint8_t *mapToNative = u8b->mapToNative;
         uint8_t *mapToUChars = u8b->mapToUChars;
-        int32_t  toUCharsMapStart = ix - (UTF8_TEXT_CHUNK_SIZE*3 + 1);
+        int32_t  toUCharsMapStart = ix - sizeof(UTF8Buf::mapToUChars) + 1;
+        // Note that toUCharsMapStart can be negative. Happens when the remaining
+        // text from current position to the beginning is less than the buffer size.
+        // + 1 because mapToUChars must have a slot at the end for the bufNativeLimit entry.
         int32_t  destIx = UTF8_TEXT_CHUNK_SIZE+2;   // Start in the overflow region
                                                     //   at end of buffer to leave room
                                                     //   for a surrogate pair at the
@@ -1326,6 +1348,7 @@ fillReverse:
             if (c<0x80) {
                 // Special case ASCII range for speed.
                 buf[destIx] = (UChar)c;
+                U_ASSERT(toUCharsMapStart <= srcIx);
                 mapToUChars[srcIx - toUCharsMapStart] = (uint8_t)destIx;
                 mapToNative[destIx] = (uint8_t)(srcIx - toUCharsMapStart);
             } else {
@@ -1334,15 +1357,11 @@ fillReverse:
                 int32_t  sIx      = srcIx;  // ix of last byte of multi-byte u8 char
 
                 // Get the full character from the UTF8 string.
-                //   use code derived from tbe macros in utf.8
+                //   use code derived from tbe macros in utf8.h
                 //   Leaves srcIx pointing at the first byte of the UTF-8 char.
                 //
-                if (c<=0xbf) {
-                    c=utf8_prevCharSafeBody(s8, 0, &srcIx, c, -1);
-                    // leaves srcIx at first byte of the multi-byte char.
-                } else {
-                    c=0x0fffd;
-                }
+                c=utf8_prevCharSafeBody(s8, 0, &srcIx, c, -3);
+                // leaves srcIx at first byte of the multi-byte char.
 
                 // Store the character in UTF-16 buffer.
                 if (c<0x10000) {
@@ -1359,6 +1378,7 @@ fillReverse:
                 do {
                     mapToUChars[sIx-- - toUCharsMapStart] = (uint8_t)destIx;
                 } while (sIx >= srcIx);
+                U_ASSERT(toUCharsMapStart <= (srcIx+1));
 
                 // Set native indexing limit to be the current position.
                 //   We are processing a non-ascii, non-native-indexing char now;
@@ -1415,10 +1435,7 @@ utext_strFromUTF8(UChar *dest,
         if(ch <=0x7f){
             *pDest++=(UChar)ch;
         }else{
-            ch=utf8_nextCharSafeBody(pSrc, &index, srcLength, ch, -1);
-            if(ch<0){
-                ch = 0xfffd;
-            }
+            ch=utf8_nextCharSafeBody(pSrc, &index, srcLength, ch, -3);
             if(U_IS_BMP(ch)){
                 *(pDest++)=(UChar)ch;
             }else{
@@ -1438,10 +1455,7 @@ utext_strFromUTF8(UChar *dest,
         if(ch <= 0x7f){
             reqLength++;
         }else{
-            ch=utf8_nextCharSafeBody(pSrc, &index, srcLength, ch, -1);
-            if(ch<0){
-                ch = 0xfffd;
-            }
+            ch=utf8_nextCharSafeBody(pSrc, &index, srcLength, ch, -3);
             reqLength+=U16_LENGTH(ch);
         }
     }
@@ -1539,6 +1553,7 @@ utf8TextMapIndexToUTF16(const UText *ut, int64_t index64) {
     U_ASSERT(index>=ut->chunkNativeStart+ut->nativeIndexingLimit);
     U_ASSERT(index<=ut->chunkNativeLimit);
     int32_t mapIndex = index - u8b->toUCharsMapStart;
+    U_ASSERT(mapIndex < (int32_t)sizeof(UTF8Buf::mapToUChars));
     int32_t offset = u8b->mapToUChars[mapIndex] - u8b->bufStartIdx;
     U_ASSERT(offset>=0 && offset<=ut->chunkLength);
     return offset;
@@ -1589,7 +1604,7 @@ utf8TextClose(UText *ut) {
 U_CDECL_END
 
 
-static const struct UTextFuncs utf8Funcs = 
+static const struct UTextFuncs utf8Funcs =
 {
     sizeof(UTextFuncs),
     0, 0, 0,             // Reserved alignment padding
@@ -1876,7 +1891,7 @@ repTextExtract(UText *ut,
     UnicodeString buffer(dest, 0, destCapacity); // writable alias
     rep->extractBetween(start32, limit32, buffer);
     repTextAccess(ut, limit32, TRUE);
-    
+
     return u_terminateUChars(dest, destCapacity, length, status);
 }
 
@@ -1998,7 +2013,7 @@ repTextCopy(UText *ut,
     repTextAccess(ut, nativeIterIndex, TRUE);
 }
 
-static const struct UTextFuncs repFuncs = 
+static const struct UTextFuncs repFuncs =
 {
     sizeof(UTextFuncs),
     0, 0, 0,           // Reserved alignment padding
@@ -2006,8 +2021,8 @@ static const struct UTextFuncs repFuncs =
     repTextLength,
     repTextAccess,
     repTextExtract,
-    repTextReplace,   
-    repTextCopy,   
+    repTextReplace,
+    repTextCopy,
     NULL,              // MapOffsetToNative,
     NULL,              // MapIndexToUTF16,
     repTextClose,
@@ -2028,6 +2043,9 @@ utext_openReplaceable(UText *ut, Replaceable *rep, UErrorCode *status)
         return NULL;
     }
     ut = utext_setup(ut, sizeof(ReplExtra), status);
+    if(U_FAILURE(*status)) {
+        return ut;
+    }
 
     ut->providerProperties = I32_FLAG(UTEXT_PROVIDER_WRITABLE);
     if(rep->hasMetaData()) {
@@ -2220,13 +2238,13 @@ unistrTextCopy(UText *ut,
     }
 
     if(move) {
-        // move: copy to destIndex, then replace original with nothing
+        // move: copy to destIndex, then remove original
         int32_t segLength=limit32-start32;
         us->copy(start32, limit32, destIndex32);
         if(destIndex32<start32) {
             start32+=segLength;
         }
-        us->replace(start32, segLength, NULL, 0);
+        us->remove(start32, segLength);
     } else {
         // copy
         us->copy(start32, limit32, destIndex32);
@@ -2249,7 +2267,7 @@ unistrTextCopy(UText *ut,
 
 }
 
-static const struct UTextFuncs unistrFuncs = 
+static const struct UTextFuncs unistrFuncs =
 {
     sizeof(UTextFuncs),
     0, 0, 0,             // Reserved alignment padding
@@ -2257,8 +2275,8 @@ static const struct UTextFuncs unistrFuncs =
     unistrTextLength,
     unistrTextAccess,
     unistrTextExtract,
-    unistrTextReplace,   
-    unistrTextCopy,   
+    unistrTextReplace,
+    unistrTextCopy,
     NULL,                // MapOffsetToNative,
     NULL,                // MapIndexToUTF16,
     unistrTextClose,
@@ -2524,6 +2542,7 @@ ucstrTextExtract(UText *ut,
             ut->chunkLength         = si;
             ut->nativeIndexingLimit = si;
             strLength               = si;
+            limit32                 = si;
             break;
         }
         U_ASSERT(di>=0); /* to ensure di never exceeds INT32_MAX, which must not happen logically */
@@ -2545,16 +2564,21 @@ ucstrTextExtract(UText *ut,
     // If the limit index points to a lead surrogate of a pair,
     //   add the corresponding trail surrogate to the destination.
     if (si>0 && U16_IS_LEAD(s[si-1]) &&
-        ((si<strLength || strLength<0)  && U16_IS_TRAIL(s[si])))
+            ((si<strLength || strLength<0)  && U16_IS_TRAIL(s[si])))
     {
         if (di<destCapacity) {
             // store only if there is space in the output buffer.
-            dest[di++] = s[si++];
+            dest[di++] = s[si];
         }
+        si++;
     }
 
     // Put iteration position at the point just following the extracted text
-    ut->chunkOffset = uprv_min(strLength, start32 + destCapacity);
+    if (si <= ut->chunkNativeLimit) {
+        ut->chunkOffset = si;
+    } else {
+        ucstrTextAccess(ut, si, TRUE);
+    }
 
     // Add a terminating NUL if space in the buffer permits,
     // and set the error status as required.
@@ -2562,7 +2586,7 @@ ucstrTextExtract(UText *ut,
     return di;
 }
 
-static const struct UTextFuncs ucstrFuncs = 
+static const struct UTextFuncs ucstrFuncs =
 {
     sizeof(UTextFuncs),
     0, 0, 0,           // Reserved alignment padding
@@ -2733,6 +2757,9 @@ charIterTextClone(UText *dest, const UText *src, UBool deep, UErrorCode * status
         CharacterIterator *srcCI =(CharacterIterator *)src->context;
         srcCI = srcCI->clone();
         dest = utext_openCharacterIterator(dest, srcCI, status);
+        if (U_FAILURE(*status)) {
+            return dest;
+        }
         // cast off const on getNativeIndex.
         //   For CharacterIterator based UTexts, this is safe, the operation is const.
         int64_t  ix = utext_getNativeIndex((UText *)src);
@@ -2779,14 +2806,14 @@ charIterTextExtract(UText *ut,
         }
         srci += len;
     }
-    
+
     charIterTextAccess(ut, copyLimit, TRUE);
 
     u_terminateUChars(dest, destCapacity, desti, status);
     return desti;
 }
 
-static const struct UTextFuncs charIterFuncs = 
+static const struct UTextFuncs charIterFuncs =
 {
     sizeof(UTextFuncs),
     0, 0, 0,             // Reserved alignment padding
@@ -2846,6 +2873,3 @@ utext_openCharacterIterator(UText *ut, CharacterIterator *ci, UErrorCode *status
     }
     return ut;
 }
-
-
-

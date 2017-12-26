@@ -1,6 +1,8 @@
+# Copyright (C) 2016 and later: Unicode, Inc. and others.
+# License & terms of use: http://www.unicode.org/copyright.html
 ## -*-makefile-*-
 #******************************************************************************
-#   Copyright (C) 1999-2012, International Business Machines
+#   Copyright (C) 1999-2014, International Business Machines
 #   Corporation and others.  All Rights Reserved.
 #******************************************************************************
 # This Makefile.inc is designed to be included into projects which make use
@@ -25,7 +27,7 @@
 # etc.  If ICU is not installed in this directory, you must change the
 # following line.  There should exist $(prefix)/include/unicode/utypes.h
 # for example.
-prefix = /home/ubuntu/pmilter/build
+prefix = /home/ubuntu/DEV/pmilter/build
 exec_prefix = ${prefix}
 libdir = ${exec_prefix}/lib
 libexecdir = ${exec_prefix}/libexec
@@ -35,8 +37,8 @@ datadir = ${datarootdir}
 sbindir = ${exec_prefix}/sbin
 
 # about the ICU version
-VERSION = 50.1
-UNICODE_VERSION = 6.2
+VERSION = 60.2
+UNICODE_VERSION = 10.0
 
 # The prefix for ICU libraries, normally 'icu'
 ICUPREFIX = icu
@@ -90,7 +92,6 @@ endif
 DATA_STUBNAME = data
 COMMON_STUBNAME = uc
 I18N_STUBNAME = i18n
-LAYOUT_STUBNAME = le
 LAYOUTEX_STUBNAME = lx
 IO_STUBNAME = io
 TOOLUTIL_STUBNAME = tu
@@ -103,7 +104,6 @@ CTESTFW_STUBNAME = test
 # 2. link with $(ICULIBS)
 # 3. optionally, add one or more of:
 #    - $(ICULIBS_I18N)    - i18n library, formatting, etc.
-#    - $(ICULIBS_LAYOUT)  - ICU layout library. 
 #    - $(ICULIBS_ICUIO)   - ICU stdio equivalent library
 
 ICULIBS_COMMON = -l$(ICUPREFIX)uc$(ICULIBSUFFIX)$(ICULIBSUFFIX_VERSION)
@@ -113,9 +113,8 @@ ICULIBS_TOOLUTIL = -l$(ICUPREFIX)tu$(ICULIBSUFFIX)$(ICULIBSUFFIX_VERSION)
 ICULIBS_CTESTFW = -l$(ICUPREFIX)ctestfw$(ICULIBSUFFIX)$(ICULIBSUFFIX_VERSION)
 ICULIBS_ICUIO = -l$(ICUPREFIX)io$(ICULIBSUFFIX)$(ICULIBSUFFIX_VERSION)
 ICULIBS_OBSOLETE = -l$(ICUPREFIX)obsolete$(ICULIBSUFFIX)$(ICULIBSUFFIX_VERSION)
-ICULIBS_LAYOUT = -l$(ICUPREFIX)le$(ICULIBSUFFIX)$(ICULIBSUFFIX_VERSION)
 ICULIBS_LAYOUTEX = -l$(ICUPREFIX)lx$(ICULIBSUFFIX)$(ICULIBSUFFIX_VERSION)
-ICULIBS_BASE = $(LIBS) -L$(libdir)
+ICULIBS_BASE = -L$(libdir)
 
 # for icu-config to test with
 ICULIBS_COMMON_LIB_NAME = ${LIBICU}${COMMON_STUBNAME}${ICULIBSUFFIX}${ICULIBSUFFIX_VERSION}.${SO}
@@ -185,15 +184,14 @@ AR = ar
 # initial tab keeps it out of the shell version.
 	ARFLAGS :=  $(ARFLAGS)
 #SH#ARFLAGS=" ${ARFLAGS}"
-CC = gcc
-CFLAGS =  -O2 -Wall -std=c99 -pedantic -Wshadow -Wpointer-arith -Wmissing-prototypes -Wwrite-strings $(THREADSCFLAGS) 
-CPP = gcc -E
-CPPFLAGS =  -ffunction-sections -fdata-sections $(THREADSCPPFLAGS)   $(LIBCPPFLAGS) -I$(prefix)/include
-CXX = g++
-CXXFLAGS =  -O2 -W -Wall -pedantic -Wpointer-arith -Wwrite-strings -Wno-long-long -std=c++11 $(THREADSCXXFLAGS) 
-DEFAULT_MODE = static
-DEFS = -DPACKAGE_NAME=\"\" -DPACKAGE_TARNAME=\"\" -DPACKAGE_VERSION=\"\" -DPACKAGE_STRING=\"\" -DPACKAGE_BUGREPORT=\"\" -DPACKAGE_URL=\"\" -DSTDC_HEADERS=1 -DHAVE_SYS_TYPES_H=1 -DHAVE_SYS_STAT_H=1 -DHAVE_STDLIB_H=1 -DHAVE_STRING_H=1 -DHAVE_MEMORY_H=1 -DHAVE_STRINGS_H=1 -DHAVE_INTTYPES_H=1 -DHAVE_STDINT_H=1 -DHAVE_UNISTD_H=1 -DSIZEOF_VOID_P=8 -DHAVE_LIBM=1 -DHAVE_DLFCN_H=1 -DHAVE_DLOPEN=1 -DHAVE_GETTIMEOFDAY=1 -DHAVE_LIBPTHREAD=1 -DHAVE_INTTYPES_H=1 -DHAVE_DIRENT_H=1 -DHAVE_WCHAR_H=1 -DSIZEOF_WCHAR_T=4 
-FFLAGS = @FFLAGS@
+CC = clang
+CPP = clang -E
+CFLAGS =  
+CPPFLAGS =  -I$(prefix)/include
+CXXFLAGS =  -std=c++11
+CXX = clang++
+DEFAULT_MODE = dll
+DEFS = -DPACKAGE_NAME=\"ICU\" -DPACKAGE_TARNAME=\"International\ Components\ for\ Unicode\" -DPACKAGE_VERSION=\"60.1\" -DPACKAGE_STRING=\"ICU\ 60.1\" -DPACKAGE_BUGREPORT=\"http://icu-project.org/bugs\" -DPACKAGE_URL=\"http://icu-project.org\" -DSTDC_HEADERS=1 -DHAVE_SYS_TYPES_H=1 -DHAVE_SYS_STAT_H=1 -DHAVE_STDLIB_H=1 -DHAVE_STRING_H=1 -DHAVE_MEMORY_H=1 -DHAVE_STRINGS_H=1 -DHAVE_INTTYPES_H=1 -DHAVE_STDINT_H=1 -DHAVE_UNISTD_H=1 -DSIZEOF_VOID_P=8 -DHAVE_LIBM=1 -DHAVE_ELF_H=1 -DHAVE_DLFCN_H=1 -DHAVE_DLOPEN=1 -DHAVE_GETTIMEOFDAY=1 -DHAVE_LIBPTHREAD=1 -DHAVE_INTTYPES_H=1 -DHAVE_DIRENT_H=1 -DHAVE_WCHAR_H=1 -DSIZEOF_WCHAR_T=4 
 # use a consistent INSTALL 
 INSTALL  =  $(SHELL) $(pkgdatadir)/install-sh -c
 INSTALL_DATA  =  ${INSTALL} -m 644
@@ -201,11 +199,11 @@ INSTALL_DATA = ${INSTALL} -m 644
 INSTALL_PROGRAM  =  ${INSTALL}
 INSTALL_PROGRAM = ${INSTALL}
 INSTALL_SCRIPT = ${INSTALL}
-LDFLAGS =  -Wl,--gc-sections $(RPATHLDFLAGS)
+LDFLAGS = $(RPATHLDFLAGS)
 LIBS = -lpthread -ldl -lm  
 LIB_M = 
-LIB_VERSION = 50.1
-LIB_VERSION_MAJOR = 50
+LIB_VERSION = 60.2
+LIB_VERSION_MAJOR = 60
 MKINSTALLDIRS = $(SHELL) $(pkgdatadir)/mkinstalldirs
 RANLIB = ranlib
 RMV = rm -rf
@@ -237,7 +235,7 @@ ICU_MSG=@echo "   $(1)	"  #M#
 
 # The basename of the ICU data file (i.e. icudt21b )
 ICUDATA_CHAR = l
-ICUDATA_NAME = icudt50l
+ICUDATA_NAME = icudt60l
 
 # Defaults for pkgdata's mode and directories
 # The default data dir changes depending on what packaging mode 
@@ -245,7 +243,7 @@ ICUDATA_NAME = icudt50l
 ifeq ($(strip $(PKGDATA_MODE)),)
 #SH# if [ "x$PKGDATA_MODE" = "x" ];
 #SH# then
-PKGDATA_MODE=static
+PKGDATA_MODE=dll
 #SH# fi
 endif
 

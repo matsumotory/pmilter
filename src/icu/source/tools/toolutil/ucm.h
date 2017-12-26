@@ -1,10 +1,12 @@
+// © 2016 and later: Unicode, Inc. and others.
+// License & terms of use: http://www.unicode.org/copyright.html
 /*
  *******************************************************************************
- *   Copyright (C) 2003-2010, International Business Machines
+ *   Copyright (C) 2003-2013, International Business Machines
  *   Corporation and others.  All Rights Reserved.
  *******************************************************************************
  *   file name:  ucm.h
- *   encoding:   US-ASCII
+ *   encoding:   UTF-8
  *   tab size:   8 (not used)
  *   indentation:4
  *
@@ -45,7 +47,8 @@ enum {
  * bIsMultipleChars indicates that the bytes contain more than one sequence
  *                  according to the state table
  * f flag for roundtrip (0), fallback (1), sub mapping (2), reverse fallback (3)
- *   same values as in the source file after |
+ *   or "good one-way" mapping (4).
+ *   Same values as in the source file after |
  */
 typedef struct UCMapping {
     UChar32 u;

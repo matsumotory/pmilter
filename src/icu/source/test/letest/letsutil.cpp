@@ -1,7 +1,9 @@
+// © 2016 and later: Unicode, Inc. and others.
+// License & terms of use: http://www.unicode.org/copyright.html
 /*
  *******************************************************************************
  *
- *   Copyright (C) 1999-2008, International Business Machines
+ *   Copyright (C) 1999-2014, International Business Machines
  *   Corporation and others.  All Rights Reserved.
  *
  *******************************************************************************
@@ -20,7 +22,9 @@
 #include "layout/LayoutEngine.h"
 #include "layout/LELanguages.h"
 
+#ifndef USING_ICULEHB
 #include "OpenTypeLayoutEngine.h"
+#endif
 
 #include "letest.h"
 #include "letsutil.h"
@@ -102,11 +106,22 @@ le_int32 getLanguageCode(const char *lang)
 
     LETag langTag = (LETag) ((lang[0] << 24) + (lang[1] << 16) + (lang[2] << 8) + 0x20);
 
+#ifndef USING_ICULEHB
     for (le_int32 i = 0; i < languageCodeCount; i += 1) {
         if (langTag == OpenTypeLayoutEngine::languageTags[i]) {
             return i;
         }
     }
+#else
+    if (!strcmp(lang, "JAN")) return janLanguageCode;
+    if (!strcmp(lang, "KOR")) return korLanguageCode;
+    if (!strcmp(lang, "ZHT")) return zhtLanguageCode;
+    if (!strcmp(lang, "ZHS")) return zhsLanguageCode;
+    if (!strcmp(lang, "HIN")) return hinLanguageCode;
+    if (!strcmp(lang, "MAR")) return marLanguageCode;
+    if (!strcmp(lang, "ROM")) return romLanguageCode;
+#endif
+
 
     return -1;
 }

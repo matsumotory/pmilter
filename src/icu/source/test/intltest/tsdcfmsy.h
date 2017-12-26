@@ -1,6 +1,8 @@
+// © 2016 and later: Unicode, Inc. and others.
+// License & terms of use: http://www.unicode.org/copyright.html
 /********************************************************************
  * COPYRIGHT: 
- * Copyright (c) 1997-2001, International Business Machines Corporation and
+ * Copyright (c) 1997-2013, International Business Machines Corporation and
  * others. All Rights Reserved.
  ********************************************************************/
 
@@ -25,9 +27,12 @@ private:
      * Test the API of DecimalFormatSymbols; primarily a simple get/set set.
      */
     void testSymbols(/*char *par*/);
+    void testLastResortData();
+    void testNumberingSystem();
 
      /** helper functions**/
-    void Verify(double value, const UnicodeString& pattern, DecimalFormatSymbols sym, const UnicodeString& expected);
+    void Verify(double value, const UnicodeString& pattern,
+                const DecimalFormatSymbols &sym, const UnicodeString& expected);
 };
 
 #endif /* #if !UCONFIG_NO_FORMATTING */

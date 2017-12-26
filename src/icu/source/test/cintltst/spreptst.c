@@ -1,12 +1,14 @@
+// © 2016 and later: Unicode, Inc. and others.
+// License & terms of use: http://www.unicode.org/copyright.html
 /*
  *******************************************************************************
  *
- *   Copyright (C) 2003-2010, International Business Machines
+ *   Copyright (C) 2003-2016, International Business Machines
  *   Corporation and others.  All Rights Reserved.
  *
  *******************************************************************************
  *   file name:  spreptst.c
- *   encoding:   US-ASCII
+ *   encoding:   UTF-8
  *   tab size:   8 (not used)
  *   indentation:4
  *
@@ -23,10 +25,8 @@
 #include "unicode/usprep.h"
 #include "cstring.h"
 #include "cintltst.h"
+#include "cmemory.h"
 #include "nfsprep.h"
-
-
-#define LENGTHOF(array) (int32_t)(sizeof(array)/sizeof((array)[0]))
 
 void addUStringPrepTest(TestNode** root);
 void doStringPrepTest(const char* binFileName, const char* txtFileName, 
@@ -320,7 +320,7 @@ static void Test_nfs4_cis_prep(void){
         return;
     }
 
-    for(i=0;i< (int32_t)(sizeof(conformanceTestCases)/sizeof(conformanceTestCases[0]));i++){
+    for(i=0;i< UPRV_LENGTHOF(conformanceTestCases);i++){
         const char* src = conformanceTestCases[i].in;
         UErrorCode status = U_ZERO_ERROR;
         UParseError parseError;
@@ -444,7 +444,7 @@ Test_nfs4_mixed_prep(void){
         char src[MAX_BUFFER_SIZE];
         int32_t srcLen;
 
-        for(i=0; i< LENGTHOF(mixed_prep_data); i++){
+        for(i=0; i< UPRV_LENGTHOF(mixed_prep_data); i++){
             int32_t destLen=0;
             char* dest = NULL;
             UErrorCode status = U_ZERO_ERROR;
@@ -761,7 +761,7 @@ static void TestStringPrepProfiles(void) {
     int32_t i, testNum = 0;
     UStringPrepProfile *sprep = NULL;
     
-    for (i = 0; i < LENGTHOF(profile_test_case); i++) {
+    for (i = 0; i < UPRV_LENGTHOF(profile_test_case); i++) {
         if (uprv_strstr(profile_test_case[i], "RFC")) {
             if (sprep != NULL) {
                 usprep_close(sprep);

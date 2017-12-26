@@ -2,12 +2,14 @@
 #
 # Yves Arrouye.
 #
-# Copyright (C) 2000-2012, International Business Machines Corporation and others.
+# Copyright (C) 2016 and later: Unicode, Inc. and others.
+# License & terms of use: http://www.unicode.org/copyright.html
+# Copyright (C) 2000-2016, International Business Machines Corporation and others.
 # All Rights Reserved.
 
 #
 # Some of these variables are overridden in the config/mh-* files.
-# 
+#
 # Please be sure to update config/Makefile.inc.in  if you add something here.
 #
 
@@ -17,7 +19,7 @@ SHELL = /bin/bash
 
 # Standard directories
 
-prefix = /home/ubuntu/pmilter/build
+prefix = /home/ubuntu/DEV/pmilter/build
 exec_prefix = ${prefix}
 
 bindir = ${exec_prefix}/bin
@@ -37,10 +39,10 @@ cross_buildroot =
 PACKAGE_ICU_DESCRIPTION = "International Components for Unicode"
 PACKAGE_ICU_URL = "http://icu-project.org"
 PACKAGE = icu
-VERSION = 50.1
-UNICODE_VERSION = 6.2
-SO_TARGET_VERSION = 50.1
-SO_TARGET_VERSION_MAJOR = 50
+VERSION = 60.2
+UNICODE_VERSION = 10.0
+SO_TARGET_VERSION = 60.2
+SO_TARGET_VERSION_MAJOR = 60
 
 # The ICU data external name is usually icudata; the entry point name is
 # the version-dependent name (for no particular reason except it was easier
@@ -49,14 +51,14 @@ SO_TARGET_VERSION_MAJOR = 50
 
 ICUDATA_DIR = ${datarootdir}/$(PACKAGE)$(ICULIBSUFFIX)/$(VERSION)
 
-ICUDATA_BASENAME_VERSION = $(ICUPREFIX)dt50
+ICUDATA_BASENAME_VERSION = $(ICUPREFIX)dt60
 # the entry point is almost like the basename, but has the lib suffix.  
-ICUDATA_ENTRY_POINT = $(ICUPREFIX)dt50 
+ICUDATA_ENTRY_POINT = $(ICUPREFIX)dt60 
 ICUDATA_CHAR = l
 ICUDATA_PLATFORM_NAME = $(ICUDATA_BASENAME_VERSION)$(ICUDATA_CHAR)
 PKGDATA_LIBSTATICNAME = -L $(STATIC_PREFIX)$(ICUPREFIX)$(DATA_STUBNAME)$(ICULIBSUFFIX)
 ifeq ($(strip $(PKGDATA_MODE)),)
-PKGDATA_MODE=static
+PKGDATA_MODE=dll
 endif
 ifeq ($(PKGDATA_MODE),common)
 ICUDATA_NAME = $(ICUDATA_PLATFORM_NAME)
@@ -109,13 +111,14 @@ ICULIBSUFFIX=
 ENABLE_DEBUG = 0
 ENABLE_RELEASE = 1
 EXEEXT = 
-CC = gcc
-CXX = g++
+CC = clang
+CXX = clang++
 AR = ar
 ARFLAGS =  r
 RANLIB = ranlib
 COMPILE_LINK_ENVVAR = 
 UCLN_NO_AUTO_CLEANUP = 1
+SED = /bin/sed
 
 # Various flags for the tools
 
@@ -125,11 +128,11 @@ UCLN_NO_AUTO_CLEANUP = 1
 # U_ATTRIBUTE_DEPRECATED is defined to hide warnings about deprecated API warnings.
 DEFS = -DU_ATTRIBUTE_DEPRECATED=
 # CFLAGS is for C only flags
-CFLAGS =  -O2 -Wall -std=c99 -pedantic -Wshadow -Wpointer-arith -Wmissing-prototypes -Wwrite-strings $(THREADSCFLAGS)
+CFLAGS =  -O2 -std=c99 -Wall -pedantic -Wshadow -Wpointer-arith -Wmissing-prototypes -Wwrite-strings $(THREADSCFLAGS) -Qunused-arguments -Wno-parentheses-equality
 # CXXFLAGS is for C++ only flags
-CXXFLAGS =  -O2 -W -Wall -pedantic -Wpointer-arith -Wwrite-strings -Wno-long-long -std=c++11 $(THREADSCXXFLAGS)
+CXXFLAGS =  -O2 -W -Wall -pedantic -Wpointer-arith -Wwrite-strings -Wno-long-long -std=c++11 $(THREADSCXXFLAGS) -Qunused-arguments -Wno-parentheses-equality
 # CPPFLAGS is for C Pre-Processor flags
-CPPFLAGS =  -ffunction-sections -fdata-sections $(THREADSCPPFLAGS)  
+CPPFLAGS =  $(THREADSCPPFLAGS)  -DU_HAVE_ELF_H=1 -DU_HAVE_ATOMIC=1 -DU_HAVE_STRTOD_L=1 -DU_HAVE_XLOCALE_H=1 
 # LIBCFLAGS are the flags for static and shared libraries.
 LIBCFLAGS = 
 # LIBCXXFLAGS are the flags for static and shared libraries.
@@ -149,11 +152,11 @@ ENABLE_RPATH = NO
 ifeq ($(ENABLE_RPATH),YES)
 RPATHLDFLAGS = $(LD_RPATH)$(LD_RPATH_PRE)$(libdir)
 endif
-LDFLAGS =  -Wl,--gc-sections $(RPATHLDFLAGS)
+LDFLAGS =  $(RPATHLDFLAGS)
 
 # What kind of libraries are we building and linking against?
 ENABLE_STATIC = YES
-ENABLE_SHARED = 
+ENABLE_SHARED = YES
 
 # Echo w/o newline
 
@@ -165,8 +168,8 @@ COMPILE.c=    $(CC) $(CPPFLAGS) $(DEFS) $(CFLAGS) -c
 COMPILE.cc=   $(CXX) $(CPPFLAGS) $(DEFS) $(CXXFLAGS) -c
 
 # Commands to link
-LINK.c=       $(CC) $(CFLAGS) $(LDFLAGS)
-LINK.cc=      $(CXX) $(CXXFLAGS) $(LDFLAGS)
+LINK.c=       $(CC) $(CFLAGS) $(LDFLAGS) $(LINKFLAGS)
+LINK.cc=      $(CXX) $(CXXFLAGS) $(LDFLAGS) $(LINKFLAGS)
 
 # Commands to make a shared library
 SHLIB.c=      $(CC) $(CFLAGS) $(LDFLAGS) -shared $(LD_SOOPTIONS)
@@ -243,17 +246,30 @@ TOOLLIBDIR=$(LIBDIR)
 DATA_STUBNAME = data
 COMMON_STUBNAME = uc
 I18N_STUBNAME = i18n
-LAYOUT_STUBNAME = le
 LAYOUTEX_STUBNAME = lx
 IO_STUBNAME = io
 TOOLUTIL_STUBNAME = tu
 CTESTFW_STUBNAME = test
 
+# get these from pkg-config, if available
+ICULEHB_CFLAGS=
+ICULEHB_LIBS=
+ifneq ($(ICULEHB_CFLAGS),)
+USING_ICULEHB=yes
+ICULEHB_TRUE=
+ICULEHB_FALSE=#
+ICULIBS_LE=$(ICULEHB_LIBS)
+ICULE_CFLAGS=$(ICULEHB_CFLAGS) -DUSING_ICULEHB
+else
+USING_ICULEHB=no
+ICULEHB_TRUE=#
+ICULEHB_FALSE=
+endif
+
 # Just the libs.
 ICULIBS_DT	= -l$(STATIC_PREFIX_WHEN_USED)$(ICUPREFIX)$(DATA_STUBNAME)$(ICULIBSUFFIX)$(SO_TARGET_VERSION_SUFFIX)
 ICULIBS_UC	= -l$(STATIC_PREFIX_WHEN_USED)$(ICUPREFIX)$(COMMON_STUBNAME)$(ICULIBSUFFIX)$(SO_TARGET_VERSION_SUFFIX)
 ICULIBS_I18N	= -l$(STATIC_PREFIX_WHEN_USED)$(ICUPREFIX)$(I18N_STUBNAME)$(ICULIBSUFFIX)$(SO_TARGET_VERSION_SUFFIX)
-ICULIBS_LE	= -l$(STATIC_PREFIX_WHEN_USED)$(ICUPREFIX)$(LAYOUT_STUBNAME)$(ICULIBSUFFIX)$(SO_TARGET_VERSION_SUFFIX)
 ICULIBS_LX	= -l$(STATIC_PREFIX_WHEN_USED)$(ICUPREFIX)$(LAYOUTEX_STUBNAME)$(ICULIBSUFFIX)$(SO_TARGET_VERSION_SUFFIX)
 ICULIBS_IO	= -l$(STATIC_PREFIX_WHEN_USED)$(ICUPREFIX)$(IO_STUBNAME)$(ICULIBSUFFIX)$(SO_TARGET_VERSION_SUFFIX)
 ICULIBS_CTESTFW	= -l$(STATIC_PREFIX_WHEN_USED)$(ICUPREFIX)$(CTESTFW_STUBNAME)$(ICULIBSUFFIX)$(SO_TARGET_VERSION_SUFFIX)
@@ -266,7 +282,7 @@ LCTESTFW	= -L$(top_builddir)/tools/ctestfw
 LIBICUDT	= $(LLIBDIR) $(LSTUBDIR) $(ICULIBS_DT)
 LIBICUUC	= $(LLIBDIR) $(ICULIBS_UC) $(LSTUBDIR) $(ICULIBS_DT)
 LIBICUI18N	= $(LLIBDIR) $(ICULIBS_I18N)
-LIBICULE	= $(LLIBDIR) $(ICULIBS_LE)
+LIBICULE	= $(ICULEHB_CFLAGS) $(LLIBDIR) $(ICULIBS_LE)
 LIBICULX	= $(LLIBDIR) $(ICULIBS_LX)
 LIBCTESTFW	= $(LCTESTFW) $(ICULIBS_CTESTFW)
 LIBICUTOOLUTIL	= $(LLIBDIR) $(ICULIBS_TOOLUTIL)
@@ -278,6 +294,11 @@ INVOKE = $(LDLIBRARYPATH_ENVVAR)=$(LIBRARY_PATH_PREFIX)$(LIBDIR):$(top_builddir)
 # prefer stubdata
 PKGDATA_INVOKE = $(LDLIBRARYPATH_ENVVAR)=$(top_builddir)/stubdata:$(top_builddir)/tools/ctestfw:$(LIBRARY_PATH_PREFIX)$(LIBDIR):$$$(LDLIBRARYPATH_ENVVAR) $(LEAK_CHECKER)
 INSTALLED_INVOKE = $(LDLIBRARYPATH_ENVVAR)=$(libdir):$$$(LDLIBRARYPATH_ENVVAR)
+
+# Current full path directory for cross compilation
+ifneq ($(strip $(cross_buildroot)),)
+include $(cross_buildroot)/config/icucross.inc
+endif
 
 # Platform-specific setup
 include $(top_srcdir)/config/mh-linux
@@ -299,6 +320,11 @@ ifneq ($(strip $(cross_buildroot)),)
 include $(cross_buildroot)/config/icucross.mk
 else
 cross_buildroot = $(top_builddir)
+endif
+
+# for tests
+ifneq ($(TEST_STATUS_FILE),)
+TEST_OUTPUT_OPTS="-E$(TEST_STATUS_FILE)"
 endif
 
 # optional include at top

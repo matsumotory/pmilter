@@ -1,4 +1,6 @@
-# Copyright (c) 2001-2012 International Business Machines
+# Copyright (C) 2016 and later: Unicode, Inc. and others.
+# License & terms of use: http://www.unicode.org/copyright.html
+# Copyright (c) 2001-2016 International Business Machines
 # Corporation and others. All Rights Reserved.
 # Begin temporary addition.
 # These are very bad "C" APIs that do not work with a C compiler and
@@ -21,6 +23,8 @@ bytestrie.h
 bytestriebuilder.h
 calendar.h
 caniter.h
+casemap.h
+char16ptr.h
 chariter.h
 choicfmt.h
 coleitr.h
@@ -41,8 +45,11 @@ dtitvfmt.h
 dtfmtsym.h
 dtptngen.h
 dtrule.h
+edits.h
+enumset.h
 errorcode.h
 fieldpos.h
+filteredbrk.h
 fmtable.h
 format.h
 fpositer.h
@@ -59,6 +66,8 @@ messagepattern.h
 msgfmt.h
 normalizer2.h
 normlzr.h
+nounit.h
+numberformatter.h
 numfmt.h
 numsys.h
 parsepos.h
@@ -68,11 +77,15 @@ rbbi.h
 rbnf.h
 rbtz.h
 regex.h
+region.h
 rep.h
 resbund.h
 schriter.h
+scientificformathelper.h
+scientificnumberformatter.h
 search.h
 selfmt.h
+simpleformatter.h
 simpletz.h
 smpdtfmt.h
 sortkey.h

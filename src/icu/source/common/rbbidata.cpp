@@ -1,6 +1,8 @@
+// © 2016 and later: Unicode, Inc. and others.
+// License & terms of use: http://www.unicode.org/copyright.html
 /*
 ***************************************************************************
-*   Copyright (C) 1999-2010 International Business Machines Corporation   *
+*   Copyright (C) 1999-2014 International Business Machines Corporation   *
 *   and others. All rights reserved.                                      *
 ***************************************************************************
 */
@@ -12,7 +14,7 @@
 #include "unicode/utypes.h"
 #include "rbbidata.h"
 #include "rbbirb.h"
-#include "utrie.h"
+#include "utrie2.h"
 #include "udatamem.h"
 #include "cmemory.h"
 #include "cstring.h"
@@ -20,23 +22,6 @@
 
 #include "uassert.h"
 
-
-//-----------------------------------------------------------------------------------
-//
-//   Trie access folding function.  Copied as-is from properties code in uchar.c
-//
-//-----------------------------------------------------------------------------------
-U_CDECL_BEGIN
-static int32_t U_CALLCONV
-getFoldingOffset(uint32_t data) {
-    /* if bit 15 is set, then the folding offset is in bits 14..0 of the 16-bit trie result */
-    if(data&0x8000) {
-        return (int32_t)(data&0x7fff);
-    } else {
-        return 0;
-    }
-}
-U_CDECL_END
 
 U_NAMESPACE_BEGIN
 
@@ -46,22 +31,45 @@ U_NAMESPACE_BEGIN
 //
 //-----------------------------------------------------------------------------
 RBBIDataWrapper::RBBIDataWrapper(const RBBIDataHeader *data, UErrorCode &status) {
+    init0();
     init(data, status);
 }
 
 RBBIDataWrapper::RBBIDataWrapper(const RBBIDataHeader *data, enum EDontAdopt, UErrorCode &status) {
+    init0();
     init(data, status);
     fDontFreeData = TRUE;
 }
 
 RBBIDataWrapper::RBBIDataWrapper(UDataMemory* udm, UErrorCode &status) {
-    const RBBIDataHeader *d = (const RBBIDataHeader *)
-        // ((char *)&(udm->pHeader->info) + udm->pHeader->info.size);
-        // taking into consideration the padding added in by udata_write
-        ((char *)(udm->pHeader) + udm->pHeader->dataHeader.headerSize);
-    init(d, status);
+    init0();
+    if (U_FAILURE(status)) {
+        return;
+    }
+    const DataHeader *dh = udm->pHeader;
+    int32_t headerSize = dh->dataHeader.headerSize;
+    if (  !(headerSize >= 20 &&
+            dh->info.isBigEndian == U_IS_BIG_ENDIAN &&
+            dh->info.charsetFamily == U_CHARSET_FAMILY &&
+            dh->info.dataFormat[0] == 0x42 &&  // dataFormat="Brk "
+            dh->info.dataFormat[1] == 0x72 &&
+            dh->info.dataFormat[2] == 0x6b &&
+            dh->info.dataFormat[3] == 0x20 &&
+            isDataVersionAcceptable(dh->info.formatVersion))
+        ) {
+        status = U_INVALID_FORMAT_ERROR;
+        return;
+    }
+    const char *dataAsBytes = reinterpret_cast<const char *>(dh);
+    const RBBIDataHeader *rbbidh = reinterpret_cast<const RBBIDataHeader *>(dataAsBytes + headerSize);
+    init(rbbidh, status);
     fUDataMem = udm;
 }
+
+UBool RBBIDataWrapper::isDataVersionAcceptable(const UVersionInfo version) {
+    return RBBI_DATA_FORMAT_VERSION[0] == version[0];
+}
+
 
 //-----------------------------------------------------------------------------
 //
@@ -69,13 +77,26 @@ RBBIDataWrapper::RBBIDataWrapper(UDataMemory* udm, UErrorCode &status) {
 //              constructors.
 //
 //-----------------------------------------------------------------------------
+void RBBIDataWrapper::init0() {
+    fHeader = NULL;
+    fForwardTable = NULL;
+    fReverseTable = NULL;
+    fSafeFwdTable = NULL;
+    fSafeRevTable = NULL;
+    fRuleSource   = NULL;
+    fRuleStatusTable = NULL;
+    fTrie         = NULL;
+    fUDataMem     = NULL;
+    fRefCount     = 0;
+    fDontFreeData = TRUE;
+}
+
 void RBBIDataWrapper::init(const RBBIDataHeader *data, UErrorCode &status) {
     if (U_FAILURE(status)) {
         return;
     }
     fHeader = data;
-    if (fHeader->fMagic != 0xb1a0 || fHeader->fFormatVersion[0] != 3) 
-    {
+    if (fHeader->fMagic != 0xb1a0 || !isDataVersionAcceptable(fHeader->fFormatVersion)) {
         status = U_INVALID_FORMAT_ERROR;
         return;
     }
@@ -84,10 +105,6 @@ void RBBIDataWrapper::init(const RBBIDataHeader *data, UErrorCode &status) {
     //       an int32_t field, rather than an array of 4 bytes.
 
     fDontFreeData = FALSE;
-    fUDataMem     = NULL;
-    fReverseTable = NULL;
-    fSafeFwdTable = NULL;
-    fSafeRevTable = NULL;
     if (data->fFTableLen != 0) {
         fForwardTable = (RBBIStateTable *)((char *)data + fHeader->fFTable);
     }
@@ -101,16 +118,23 @@ void RBBIDataWrapper::init(const RBBIDataHeader *data, UErrorCode &status) {
         fSafeRevTable = (RBBIStateTable *)((char *)data + fHeader->fSRTable);
     }
 
+    // Rule Compatibility Hacks
+    //    If a rule set includes reverse rules but does not explicitly include safe reverse rules,
+    //    the reverse rules are to be treated as safe reverse rules.
 
-    utrie_unserialize(&fTrie,
-                       (uint8_t *)data + fHeader->fTrie,
-                       fHeader->fTrieLen,
-                       &status);
+    if (fSafeRevTable == NULL && fReverseTable != NULL) {
+        fSafeRevTable = fReverseTable;
+        fReverseTable = NULL;
+    }
+
+    fTrie = utrie2_openFromSerialized(UTRIE2_16_VALUE_BITS,
+                                      (uint8_t *)data + fHeader->fTrie,
+                                      fHeader->fTrieLen,
+                                      NULL,           // *actual length
+                                      &status);
     if (U_FAILURE(status)) {
         return;
     }
-    fTrie.getFoldingOffset=getFoldingOffset;
-
 
     fRuleSource   = (UChar *)((char *)data + fHeader->fRuleSource);
     fRuleString.setTo(TRUE, fRuleSource, -1);
@@ -135,6 +159,8 @@ void RBBIDataWrapper::init(const RBBIDataHeader *data, UErrorCode &status) {
 //-----------------------------------------------------------------------------
 RBBIDataWrapper::~RBBIDataWrapper() {
     U_ASSERT(fRefCount == 0);
+    utrie2_close(fTrie);
+    fTrie = NULL;
     if (fUDataMem) {
         udata_close(fUDataMem);
     } else if (!fDontFreeData) {
@@ -293,7 +319,7 @@ ubrk_swap(const UDataSwapper *ds, const void *inData, int32_t length, void *outD
            pInfo->dataFormat[1]==0x72 &&
            pInfo->dataFormat[2]==0x6b &&
            pInfo->dataFormat[3]==0x20 &&
-           pInfo->formatVersion[0]==3  )) {
+           RBBIDataWrapper::isDataVersionAcceptable(pInfo->formatVersion) )) {
         udata_printError(ds, "ubrk_swap(): data format %02x.%02x.%02x.%02x (format version %02x) is not recognized\n",
                          pInfo->dataFormat[0], pInfo->dataFormat[1],
                          pInfo->dataFormat[2], pInfo->dataFormat[3],
@@ -314,17 +340,11 @@ ubrk_swap(const UDataSwapper *ds, const void *inData, int32_t length, void *outD
     //
     // Get the RRBI Data Header, and check that it appears to be OK.
     //
-    //    Note:  ICU 3.2 and earlier, RBBIDataHeader::fDataFormat was actually 
-    //           an int32_t with a value of 1.  Starting with ICU 3.4,
-    //           RBBI's fDataFormat matches the dataFormat field from the
-    //           UDataInfo header, four int8_t bytes.  The value is {3,1,0,0}
-    //
     const uint8_t  *inBytes =(const uint8_t *)inData+headerSize;
     RBBIDataHeader *rbbiDH = (RBBIDataHeader *)inBytes;
     if (ds->readUInt32(rbbiDH->fMagic) != 0xb1a0 || 
-        rbbiDH->fFormatVersion[0] != 3 ||
-        ds->readUInt32(rbbiDH->fLength)  <  sizeof(RBBIDataHeader)) 
-    {
+            !RBBIDataWrapper::isDataVersionAcceptable(rbbiDH->fFormatVersion) ||
+            ds->readUInt32(rbbiDH->fLength)  <  sizeof(RBBIDataHeader)) {
         udata_printError(ds, "ubrk_swap(): RBBI Data header is invalid.\n");
         *status=U_UNSUPPORTED_ERROR;
         return 0;
@@ -421,8 +441,8 @@ ubrk_swap(const UDataSwapper *ds, const void *inData, int32_t length, void *outD
     }
 
     // Trie table for character categories
-    utrie_swap(ds, inBytes+ds->readUInt32(rbbiDH->fTrie), ds->readUInt32(rbbiDH->fTrieLen),
-                            outBytes+ds->readUInt32(rbbiDH->fTrie), status);
+    utrie2_swap(ds, inBytes+ds->readUInt32(rbbiDH->fTrie), ds->readUInt32(rbbiDH->fTrieLen),
+                    outBytes+ds->readUInt32(rbbiDH->fTrie), status);
 
     // Source Rules Text.  It's UChar data
     ds->swapArray16(ds, inBytes+ds->readUInt32(rbbiDH->fRuleSource), ds->readUInt32(rbbiDH->fRuleSourceLen),

@@ -1,12 +1,14 @@
+// © 2016 and later: Unicode, Inc. and others.
+// License & terms of use: http://www.unicode.org/copyright.html
 /*
 ******************************************************************************
 *
-*   Copyright (C) 2002-2011, International Business Machines
+*   Copyright (C) 2002-2015, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 *
 ******************************************************************************
 *   file name:  bocu1tst.c
-*   encoding:   US-ASCII
+*   encoding:   UTF-8
 *   tab size:   8 (not used)
 *   indentation:4
 *
@@ -34,8 +36,6 @@
 #include "unicode/utf16.h"
 #include "cmemory.h"
 #include "cintltst.h"
-
-#define LENGTHOF(array) (sizeof(array)/sizeof((array)[0]))
 
 /* icuhtml/design/conversion/bocu1/bocu1.h ---------------------------------- */
 
@@ -344,7 +344,7 @@ packDiff(int32_t diff) {
     } while(--count>0);
 
     /* add lead byte */
-    result|=(lead+diff)<<shift;
+    result |= (uint32_t)(lead+diff)<<shift;
 
     return result;
 }
@@ -951,21 +951,21 @@ static const struct {
     const UChar *s;
     int32_t length;
 } strings[]={
-    { feff,         LENGTHOF(feff) },
-    { ascii,        LENGTHOF(ascii) },
-    { crlf,         LENGTHOF(crlf) },
-    { nul,          LENGTHOF(nul) },
-    { latin,        LENGTHOF(latin) },
-    { devanagari,   LENGTHOF(devanagari) },
-    { hiragana,     LENGTHOF(hiragana) },
-    { unihan,       LENGTHOF(unihan) },
-    { hangul,       LENGTHOF(hangul) },
-    { surrogates,   LENGTHOF(surrogates) },
-    { plane1,       LENGTHOF(plane1) },
-    { plane2,       LENGTHOF(plane2) },
-    { plane15,      LENGTHOF(plane15) },
-    { plane16,      LENGTHOF(plane16) },
-    { c0,           LENGTHOF(c0) }
+    { feff,         UPRV_LENGTHOF(feff) },
+    { ascii,        UPRV_LENGTHOF(ascii) },
+    { crlf,         UPRV_LENGTHOF(crlf) },
+    { nul,          UPRV_LENGTHOF(nul) },
+    { latin,        UPRV_LENGTHOF(latin) },
+    { devanagari,   UPRV_LENGTHOF(devanagari) },
+    { hiragana,     UPRV_LENGTHOF(hiragana) },
+    { unihan,       UPRV_LENGTHOF(unihan) },
+    { hangul,       UPRV_LENGTHOF(hangul) },
+    { surrogates,   UPRV_LENGTHOF(surrogates) },
+    { plane1,       UPRV_LENGTHOF(plane1) },
+    { plane2,       UPRV_LENGTHOF(plane2) },
+    { plane15,      UPRV_LENGTHOF(plane15) },
+    { plane16,      UPRV_LENGTHOF(plane16) },
+    { c0,           UPRV_LENGTHOF(c0) }
 };
 
 /*
@@ -985,7 +985,7 @@ TestBOCU1(void) {
     errorCode=U_ZERO_ERROR;
     bocu1=ucnv_open("BOCU-1", &errorCode);
     if(U_FAILURE(errorCode)) {
-        log_err("error: unable to open BOCU-1 converter: %s\n", u_errorName(errorCode));
+        log_data_err("error: unable to open BOCU-1 converter: %s\n", u_errorName(errorCode));
         return;
     }
 
@@ -993,7 +993,7 @@ TestBOCU1(void) {
 
     /* text 1: each of strings[] once */
     length=0;
-    for(i=0; i<LENGTHOF(strings); ++i) {
+    for(i=0; i<UPRV_LENGTHOF(strings); ++i) {
         u_memcpy(text+length, strings[i].s, strings[i].length);
         length+=strings[i].length;
     }
@@ -1001,7 +1001,7 @@ TestBOCU1(void) {
 
     /* text 2: each of strings[] twice */
     length=0;
-    for(i=0; i<LENGTHOF(strings); ++i) {
+    for(i=0; i<UPRV_LENGTHOF(strings); ++i) {
         u_memcpy(text+length, strings[i].s, strings[i].length);
         length+=strings[i].length;
         u_memcpy(text+length, strings[i].s, strings[i].length);
@@ -1012,8 +1012,8 @@ TestBOCU1(void) {
     /* text 3: each of strings[] many times (set step vs. |strings| so that all strings are used) */
     length=0;
     for(i=1; length<5000; i+=7) {
-        if(i>=LENGTHOF(strings)) {
-            i-=LENGTHOF(strings);
+        if(i>=UPRV_LENGTHOF(strings)) {
+            i-=UPRV_LENGTHOF(strings);
         }
         u_memcpy(text+length, strings[i].s, strings[i].length);
         length+=strings[i].length;

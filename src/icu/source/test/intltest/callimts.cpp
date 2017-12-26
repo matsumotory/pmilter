@@ -1,6 +1,8 @@
+// © 2016 and later: Unicode, Inc. and others.
+// License & terms of use: http://www.unicode.org/copyright.html
 /***********************************************************************
  * COPYRIGHT: 
- * Copyright (c) 1997-2011, International Business Machines Corporation
+ * Copyright (c) 1997-2015, International Business Machines Corporation
  * and others. All Rights Reserved.
  ***********************************************************************/
 
@@ -14,8 +16,10 @@
 #include "unicode/gregocal.h"
 #include "unicode/datefmt.h"
 #include "unicode/smpdtfmt.h"
-#include "putilimp.h"
 #include "cstring.h"
+#include "mutex.h"
+#include "putilimp.h"
+#include "simplethread.h"
 
 U_NAMESPACE_USE
 void CalendarLimitTest::runIndexedTest( int32_t index, UBool exec, const char* &name, char* /*par*/ )
@@ -139,57 +143,90 @@ CalendarLimitTest::TestCalendarExtremeLimit()
     delete fmt;
 }
 
-void
-CalendarLimitTest::TestLimits(void) {
-    static const UDate DEFAULT_START = 944006400000.0; // 1999-12-01T00:00Z
-    static const int32_t DEFAULT_END = -120; // Default for non-quick is run 2 minutes
+namespace {
 
-    static const struct {
-        const char *type;
-        UBool hasLeapMonth;
-        UDate actualTestStart;
-        int32_t actualTestEnd;
-    } TestCases[] = {
+struct TestCase {
+    const char *type;
+    UBool hasLeapMonth;
+    UDate actualTestStart;
+    int32_t actualTestEnd;
+};
+    
+const UDate DEFAULT_START = 944006400000.0; // 1999-12-01T00:00Z
+const int32_t DEFAULT_END = -120; // Default for non-quick is run 2 minutes
+
+TestCase TestCases[] = {
         {"gregorian",       FALSE,      DEFAULT_START, DEFAULT_END},
         {"japanese",        FALSE,      596937600000.0, DEFAULT_END}, // 1988-12-01T00:00Z, Showa 63
         {"buddhist",        FALSE,      DEFAULT_START, DEFAULT_END},
         {"roc",             FALSE,      DEFAULT_START, DEFAULT_END},
         {"persian",         FALSE,      DEFAULT_START, DEFAULT_END},
         {"islamic-civil",   FALSE,      DEFAULT_START, DEFAULT_END},
-        {"islamic",         FALSE,      DEFAULT_START, 800000}, // Approx. 2250 years from now, after which some rounding errors occur in Islamic calendar
+        {"islamic",         FALSE,      DEFAULT_START, 800000}, // Approx. 2250 years from now, after which 
+                                                                // some rounding errors occur in Islamic calendar
         {"hebrew",          TRUE,       DEFAULT_START, DEFAULT_END},
         {"chinese",         TRUE,       DEFAULT_START, DEFAULT_END},
+        {"dangi",           TRUE,       DEFAULT_START, DEFAULT_END},
         {"indian",          FALSE,      DEFAULT_START, DEFAULT_END},
         {"coptic",          FALSE,      DEFAULT_START, DEFAULT_END},
         {"ethiopic",        FALSE,      DEFAULT_START, DEFAULT_END},
-        {"ethiopic-amete-alem", FALSE,  DEFAULT_START, DEFAULT_END},
-        {NULL,              FALSE,      0, 0}
-    };
+        {"ethiopic-amete-alem", FALSE,  DEFAULT_START, DEFAULT_END}
+};
+    
+struct {
+    int32_t fIndex;
+    UBool next (int32_t &rIndex) {
+        Mutex lock;
+        if (fIndex >= UPRV_LENGTHOF(TestCases)) {
+            return FALSE;
+        }
+        rIndex = fIndex++;
+        return TRUE;
+    }
+    void reset() {
+        fIndex = 0;
+    }
+} gTestCaseIterator;
 
-    int16_t i = 0;
-    char buf[64];
+}  // anonymous name space
 
-    for (i = 0; TestCases[i].type; i++) {
+void
+CalendarLimitTest::TestLimits(void) {
+    gTestCaseIterator.reset();
+
+    ThreadPool<CalendarLimitTest> threads(this, threadCount, &CalendarLimitTest::TestLimitsThread);
+    threads.start();
+    threads.join();
+}
+
+
+void CalendarLimitTest::TestLimitsThread(int32_t threadNum) {
+    logln("thread %d starting", threadNum);
+    int32_t testIndex = 0;
+    LocalPointer<Calendar> cal;
+    while (gTestCaseIterator.next(testIndex)) {
+        TestCase &testCase = TestCases[testIndex];
+        logln("begin test of %s calendar.", testCase.type);
         UErrorCode status = U_ZERO_ERROR;
+        char buf[64];
         uprv_strcpy(buf, "root@calendar=");
-        strcat(buf, TestCases[i].type);
-        Calendar *cal = Calendar::createInstance(buf, status);
+        strcat(buf, testCase.type);
+        cal.adoptInstead(Calendar::createInstance(buf, status));
         if (failure(status, "Calendar::createInstance", TRUE)) {
             continue;
         }
-        if (uprv_strcmp(cal->getType(), TestCases[i].type) != 0) {
+        if (uprv_strcmp(cal->getType(), testCase.type) != 0) {
             errln((UnicodeString)"FAIL: Wrong calendar type: " + cal->getType()
-                + " Requested: " + TestCases[i].type);
-            delete cal;
+                + " Requested: " + testCase.type);
             continue;
         }
-        // Do the test
-        doTheoreticalLimitsTest(*cal, TestCases[i].hasLeapMonth);
-        doLimitsTest(*cal, TestCases[i].actualTestStart,TestCases[i].actualTestEnd);
-        delete cal;
+        doTheoreticalLimitsTest(*(cal.getAlias()), testCase.hasLeapMonth);
+        doLimitsTest(*(cal.getAlias()), testCase.actualTestStart, testCase.actualTestEnd);
+        logln("end test of %s calendar.", testCase.type);
     }
 }
 
+    
 void
 CalendarLimitTest::doTheoreticalLimitsTest(Calendar& cal, UBool leapMonth) {
     const char* calType = cal.getType();
@@ -338,7 +375,8 @@ CalendarLimitTest::doLimitsTest(Calendar& cal,
             logln((UnicodeString)"(" + i + " days)");
             mark += 5000; // 5 sec
         }
-        cal.setTime(greg.getTime(status), status);
+        UDate testMillis = greg.getTime(status);
+        cal.setTime(testMillis, status);
         cal.setMinimalDaysInFirstWeek(1);
         if (failure(status, "Calendar set/getTime")) {
             return;
@@ -378,19 +416,50 @@ CalendarLimitTest::doLimitsTest(Calendar& cal,
                       ", actual_min=" + minActual);
             }
             if (maxActual < maxLow || maxActual > maxHigh) {
-                errln((UnicodeString)"Fail: [" + cal.getType() + "] " +
-                      ymdToString(cal, ymd) +
-                      " Range for max of " + FIELD_NAME[f] + "(" + f +
-                      ")=" + maxLow + ".." + maxHigh +
-                      ", actual_max=" + maxActual);
+                if ( uprv_strcmp(cal.getType(), "chinese") == 0 &&
+                        testMillis >= 1802044800000.0 &&
+                     logKnownIssue("12620", "chinese calendar failures for some actualMax tests")) {
+                    logln((UnicodeString)"KnownFail: [" + cal.getType() + "] " +
+                          ymdToString(cal, ymd) +
+                          " Range for max of " + FIELD_NAME[f] + "(" + f +
+                          ")=" + maxLow + ".." + maxHigh +
+                          ", actual_max=" + maxActual);
+                } else {
+                    errln((UnicodeString)"Fail: [" + cal.getType() + "] " +
+                          ymdToString(cal, ymd) +
+                          " Range for max of " + FIELD_NAME[f] + "(" + f +
+                          ")=" + maxLow + ".." + maxHigh +
+                          ", actual_max=" + maxActual);
+                }
             }
             if (v < minActual || v > maxActual) {
-                errln((UnicodeString)"Fail: [" + cal.getType() + "] " +
-                      ymdToString(cal, ymd) +
-                      " " + FIELD_NAME[f] + "(" + f + ")=" + v +
-                      ", actual range=" + minActual + ".." + maxActual +
-                      ", allowed=(" + minLow + ".." + minHigh + ")..(" +
-                      maxLow + ".." + maxHigh + ")");
+                // timebomb per #9967, fix with #9972
+                if ( uprv_strcmp(cal.getType(), "dangi") == 0 &&
+                        testMillis >= 1865635198000.0  &&
+                     logKnownIssue("9972", "as per #9967")) { // Feb 2029 gregorian, end of dangi 4361
+                    logln((UnicodeString)"KnownFail: [" + cal.getType() + "] " +
+                          ymdToString(cal, ymd) +
+                          " " + FIELD_NAME[f] + "(" + f + ")=" + v +
+                          ", actual=" + minActual + ".." + maxActual +
+                          ", allowed=(" + minLow + ".." + minHigh + ")..(" +
+                          maxLow + ".." + maxHigh + ")");
+                } else if ( uprv_strcmp(cal.getType(), "chinese") == 0 &&
+                        testMillis >= 1832544000000.0 &&
+                     logKnownIssue("12620", "chinese calendar failures for some actualMax tests")) {
+                    logln((UnicodeString)"KnownFail: [" + cal.getType() + "] " +
+                          ymdToString(cal, ymd) +
+                          " " + FIELD_NAME[f] + "(" + f + ")=" + v +
+                          ", actual=" + minActual + ".." + maxActual +
+                          ", allowed=(" + minLow + ".." + minHigh + ")..(" +
+                          maxLow + ".." + maxHigh + ")");
+                } else {
+                    errln((UnicodeString)"Fail: [" + cal.getType() + "] " +
+                          ymdToString(cal, ymd) +
+                          " " + FIELD_NAME[f] + "(" + f + ")=" + v +
+                          ", actual=" + minActual + ".." + maxActual +
+                          ", allowed=(" + minLow + ".." + minHigh + ")..(" +
+                          maxLow + ".." + maxHigh + ")");
+                }
             }
         }
         greg.add(UCAL_DAY_OF_YEAR, 1, status);
@@ -449,7 +518,11 @@ CalendarLimitTest::ymdToString(const Calendar& cal, UnicodeString& str) {
         + "/" + (cal.get(UCAL_MONTH, status) + 1)
         + (cal.get(UCAL_IS_LEAP_MONTH, status) == 1 ? "(leap)" : "")
         + "/" + cal.get(UCAL_DATE, status)
-        + ", time=" + cal.getTime(status));
+        + " " + cal.get(UCAL_HOUR_OF_DAY, status)
+        + ":" + cal.get(UCAL_MINUTE, status)
+        + " zone(hrs) " + cal.get(UCAL_ZONE_OFFSET, status)/(60.0*60.0*1000.0)
+        + " dst(hrs) " + cal.get(UCAL_DST_OFFSET, status)/(60.0*60.0*1000.0)
+        + ", time(millis)=" + cal.getTime(status));
     return str;
 }
 

@@ -1,6 +1,8 @@
+// © 2016 and later: Unicode, Inc. and others.
+// License & terms of use: http://www.unicode.org/copyright.html
 /********************************************************************
  * COPYRIGHT: 
- * Copyright (c) 1997-2006, International Business Machines Corporation and
+ * Copyright (c) 1997-2013, International Business Machines Corporation and
  * others. All Rights Reserved.
  ********************************************************************/
 /***************************************************************************
@@ -15,6 +17,10 @@
 */
 #ifndef _CRESTSTN
 #define _CRESTSTN
+
+#include "unicode/utypes.h"
+#include "unicode/ures.h"
+
 /* C TEST FOR NEW RESOURCEBUNDLE API*/
 #include "cintltst.h"
 
@@ -45,6 +51,8 @@ static void TestAliasConflict(void);
 
 static void TestFallback(void);
 
+static void TestPreventFallback(void);
+
 static void TestBinaryCollationData(void);
 
 static void TestNewTypes(void);
@@ -62,6 +70,8 @@ static void TestGetVersionColl(void);
 static void TestEmptyBundle(void);
 
 static void TestDirectAccess(void);
+
+static void TestTicket9804(void);
 
 static void TestResourceLevelAliasing(void);
 

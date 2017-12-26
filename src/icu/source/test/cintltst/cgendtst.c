@@ -1,6 +1,8 @@
+// © 2016 and later: Unicode, Inc. and others.
+// License & terms of use: http://www.unicode.org/copyright.html
 /********************************************************************
  * COPYRIGHT:
- * Copyright (c) 1997-2012, International Business Machines Corporation and
+ * Copyright (c) 1997-2014, International Business Machines Corporation and
  * others. All Rights Reserved.
  ********************************************************************/
 /********************************************************************************
@@ -12,6 +14,7 @@
 /* C API TEST FOR GENDER INFO */
 
 #include "unicode/utypes.h"
+#include "cmemory.h"
 
 #if !UCONFIG_NO_FORMATTING
 
@@ -19,8 +22,6 @@
 #include "unicode/ugender.h"
 
 static const UGender kAllFemale[] = {UGENDER_FEMALE, UGENDER_FEMALE};
-
-#define LENGTHOF(array) (int32_t)(sizeof(array) / sizeof((array)[0]))
 
 void addGendInfoForTest(TestNode** root);
 static void TestGenderInfo(void);
@@ -40,7 +41,7 @@ static void TestGenderInfo(void) {
     log_err_status(status, "Fail to create UGenderInfo - %s (Are you missing data?)", u_errorName(status));
     return;
   }
-  actual = ugender_getListGender(actual_gi, kAllFemale, LENGTHOF(kAllFemale), &status);
+  actual = ugender_getListGender(actual_gi, kAllFemale, UPRV_LENGTHOF(kAllFemale), &status);
   if (U_FAILURE(status)) {
     log_err("Fail to get gender of list - %s\n", u_errorName(status));
     return;

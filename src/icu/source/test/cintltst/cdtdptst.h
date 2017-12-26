@@ -1,6 +1,8 @@
+// © 2016 and later: Unicode, Inc. and others.
+// License & terms of use: http://www.unicode.org/copyright.html
 /********************************************************************
  * COPYRIGHT: 
- * Copyright (c) 1997-2001, International Business Machines Corporation and
+ * Copyright (c) 1997-2014, International Business Machines Corporation and
  * others. All Rights Reserved.
  ********************************************************************/
 /********************************************************************************
@@ -17,6 +19,7 @@
 #define _CDTFRRGSTST
 
 #include "unicode/utypes.h"
+#include "unicode/udat.h"
 
 #if !UCONFIG_NO_FORMATTING
 
@@ -51,6 +54,11 @@ void TestQuotePattern161(void);
 
 /*Internal functions used*/
 void tryPat994(UDateFormat* format, const char* pat, const char* s, UDate expected);
+
+/*
+ * Testing udat_getBooleanAttribute and  unum_setBooleanAttribute()
+ */
+void TestBooleanAttributes(void);
 
 #endif /* #if !UCONFIG_NO_FORMATTING */
 
