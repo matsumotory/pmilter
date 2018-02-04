@@ -2,9 +2,9 @@
 
 Pmilter is a simple and programmable mail filter server software. You can control smtp server like postfix or sendmail via some mruby scripts. Pmilter is one-binary. So you can deploy and setup environment very easily. Enjoy!!
 
-## milter install and run
+## pmilter build and run
 
-- install
+- build
 
 ```
 make mruby
