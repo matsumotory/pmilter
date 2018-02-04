@@ -14,7 +14,7 @@
 #include "libmilter/mfdef.h"
 
 #define PMILTER_NAME "pmilter"
-#define PMILTER_VERSION "0.0.1"
+#define PMILTER_VERSION "0.0.2"
 #define PMILTER_DESCRIPTION PMILTER_NAME "/" PMILTER_VERSION
 #define PMILTER_VERSION_NUM 0000001
 
